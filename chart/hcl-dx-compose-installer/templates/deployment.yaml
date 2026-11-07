@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "installer.fullname" . }}
+  labels: {{- include "installer.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "installer.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "installer.selector" . | nindent 8 }}
+        {{- with .Values.podLabels }}{{ toYaml . | nindent 8 }}{{ end }}
+      annotations:
+        {{- if .Values.auth.enabled }}
+        checksum/auth: {{ include (print $.Template.BasePath "/auth.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}{{ toYaml . | nindent 8 }}{{ end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      automountServiceAccountToken: false
+      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: installer
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext: {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 30
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            {{- if .Values.auth.enabled }}
+            - {name: auth-conf, mountPath: /etc/nginx/auth, readOnly: true}
+            - {name: auth-htpasswd, mountPath: /etc/nginx/htpasswd, readOnly: true}
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 64Mi}
+        {{- if .Values.auth.enabled }}
+        - name: auth-conf
+          configMap: {name: {{ include "installer.fullname" . }}-auth}
+        - name: auth-htpasswd
+          secret: {secretName: {{ include "installer.authSecret" . }}}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}

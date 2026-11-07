@@ -1,0 +1,16 @@
+{{- if .Values.route.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "installer.fullname" . }}
+  labels: {{- include "installer.labels" . | nindent 4 }}
+spec:
+  {{- with .Values.route.host }}
+  host: {{ . }}
+  {{- end }}
+  to: {kind: Service, name: {{ include "installer.fullname" . }}}
+  port: {targetPort: http}
+  tls:
+    termination: {{ .Values.route.tls.termination }}
+    insecureEdgeTerminationPolicy: {{ .Values.route.tls.insecureEdgeTerminationPolicy }}
+{{- end }}

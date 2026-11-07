@@ -1,0 +1,14 @@
+HCL DX Compose Installer {{ .Chart.AppVersion }} is running.
+{{- if .Values.ingress.enabled }}
+Open: http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}{{ .Values.ingress.path }}
+{{- else if .Values.route.enabled }}
+Open the Route: oc -n {{ .Release.Namespace }} get route {{ include "installer.fullname" . }}
+{{- else }}
+Open it with a port-forward:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "installer.fullname" . }} 8080:{{ .Values.service.port }}
+  then http://localhost:8080
+{{- end }}
+Everything is generated in the browser: what users type (credentials included) never reaches this pod.
+{{- if not .Values.auth.enabled }}
+Anyone who can reach the page can use it; set auth.enabled=true to ask for a user and password.
+{{- end }}

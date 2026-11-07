@@ -1,0 +1,124 @@
+name: build
+# Tests, container image (amd64 + arm64) and Helm chart.
+#   push to main  -> image :main
+#   tag vX.Y.Z    -> image :X.Y.Z, :X.Y, :latest and the chart oci://ghcr.io/europesip/charts/hcl-dx-compose-installer
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/europesip/hcl-dx-compose-installer
+  CHARTS: oci://ghcr.io/europesip/charts
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with: {repository: europesip/hcl-dx-compose-labs, path: labs}
+      - uses: actions/setup-node@v6
+        with: {node-version: 24, cache: npm}
+      - run: npm ci
+      - name: Same version in package.json and the chart
+        run: |
+          p=$(node -p 'require("./package.json").version')
+          c=$(sed -n 's/^appVersion: "\(.*\)"/\1/p' chart/hcl-dx-compose-installer/Chart.yaml)
+          echo "package=$p chart=$c"; [ "$p" = "$c" ]
+      - name: Unit tests
+        run: npm test
+      - name: Engine in sync with the wizard of the labs (warning only)
+        continue-on-error: true
+        run: node scripts/sync-engine.mjs labs/docs/index.html --check
+      - name: Golden test against the wizard of the labs (same files for the same answers)
+        run: |
+          npx playwright install --with-deps chromium
+          node scripts/sync-engine.mjs labs/docs/index.html
+          WIZARD=labs/docs/index.html node test/golden.e2e.mjs
+      - run: npm run build
+
+  image:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - name: Build for the test
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: test:installer
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Test the container (non-root, read-only root file system, headers, UI)
+        run: |
+          docker run -d --name inst -p 8080:8080 --read-only --tmpfs /tmp --user 12345:0 --cap-drop ALL test:installer
+          for i in $(seq 1 30); do curl -sf localhost:8080/healthz && break; sleep 1; done
+          curl -sI localhost:8080/ | tee h.txt
+          grep -qi "content-security-policy:.*connect-src 'none'" h.txt
+          grep -qi "x-content-type-options: nosniff" h.txt
+          curl -sf localhost:8080/ | grep -q '<div id="root">'
+          npm ci && npx playwright install --with-deps chromium
+          node test/ui.e2e.mjs http://localhost:8080/ /tmp/e2e
+          ls -la /tmp/e2e; test -s /tmp/e2e/dx-compose-labs-install.zip; test -s /tmp/e2e/Guia-de-instalacion-DX-Compose.docx
+          unzip -l /tmp/e2e/dx-compose-labs-install.zip | grep -E "install.sh|RUNBOOK.md|Guia-de-instalacion"
+          docker rm -f inst
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with: {name: ui-e2e, path: /tmp/e2e, if-no-files-found: ignore}
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+      - uses: docker/login-action@v4
+        if: github.event_name != 'pull_request'
+        with: {registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}"}
+      - name: Build and publish (amd64 + arm64)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: VERSION=${{ steps.meta.outputs.version }}
+          cache-from: type=gha
+
+  chart:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+      - name: Lint and render
+        run: |
+          C=chart/hcl-dx-compose-installer
+          helm lint $C
+          helm template t $C > /dev/null
+          helm template t $C --set ingress.enabled=true --set ingress.tls.enabled=true --set auth.enabled=true \
+            --set auth.htpasswd='u:$2y$05$x' --set networkPolicy.enabled=true --set podDisruptionBudget.enabled=true > /dev/null
+          ! helm template t $C --set auth.enabled=true 2>/dev/null     # auth needs a secret or an htpasswd line
+      - name: Publish (tags only, and only a chart version that is not published yet)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
+          v=$(helm show chart chart/hcl-dx-compose-installer | sed -n 's/^version: //p')
+          if helm show chart "$CHARTS/hcl-dx-compose-installer" --version "$v" >/dev/null 2>&1; then
+            echo "chart $v is already published: not overwritten"; exit 0
+          fi
+          helm package chart/hcl-dx-compose-installer
+          helm push hcl-dx-compose-installer-$v.tgz "$CHARTS"
