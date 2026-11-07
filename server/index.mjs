@@ -7,7 +7,7 @@
 import http from "node:http";
 import {spawn, execFile} from "node:child_process";
 import {randomUUID, timingSafeEqual} from "node:crypto";
-import {readFile, writeFile, stat, readdir, mkdir} from "node:fs/promises";
+import {readFile, writeFile, stat, readdir, mkdir, rm} from "node:fs/promises";
 import {createReadStream, existsSync} from "node:fs";
 import {join, extname, resolve, dirname} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -76,6 +76,8 @@ function startJob({kind, action, params = {}, creds = {}}){
   if (params.instanceType) { if (!RE.type.test(params.instanceType)) throw new Error("invalid instance type"); env.INSTANCE_TYPE = env.NODE_TYPE = params.instanceType; }
   if (params.nodes) { if (!RE.int.test(String(params.nodes))) throw new Error("invalid nodes"); env.NODES = String(params.nodes); }
   if (params.diskGb) { if (!RE.int.test(String(params.diskGb))) throw new Error("invalid disk"); env.DISK_GB = String(params.diskGb); }
+  if (params.vpcMode) { if (!["name", "default"].includes(params.vpcMode)) throw new Error("invalid VPC mode"); env.VPC_MODE = params.vpcMode; }
+  if (params.vpcName) { if (!/^[A-Za-z0-9._-]{1,64}$/.test(params.vpcName)) throw new Error("invalid VPC name"); env.VPC_NAME = params.vpcName; }
   if (params.allowedCidr) { if (!RE.cidr.test(params.allowedCidr)) throw new Error("invalid CIDR"); env.ALLOWED_CIDR = params.allowedCidr; }
   if (kind === "rosa") {     // Red Hat sign-in: service account, offline token or device code (see server/aws/lib.sh)
     const mode = creds.rhAuth || "token";
@@ -91,6 +93,8 @@ function startJob({kind, action, params = {}, creds = {}}){
   }
 
   const id = randomUUID(), script = join(AWS_DIR, scripts[action === "create" ? 0 : 1]);
+  // The ROSA CLI keeps its Red Hat login in a file: one per job, deleted when the job ends
+  if (kind === "rosa") env.OCM_CONFIG = join(WORK, "ocm", `${id}.json`);
   const j = {id, kind, action, name, region, status: "running", steps: [], lines: [], result: null, error: "", started: Date.now(), ended: 0, files: [], clients: new Set()};
   jobs.set(id, j);
   const secrets = [creds.secretAccessKey, creds.sessionToken, creds.rhcsToken, creds.rhClientSecret].filter(Boolean);
@@ -103,7 +107,7 @@ function startJob({kind, action, params = {}, creds = {}}){
     else if (line.startsWith("::result:: ")) { try { j.result = JSON.parse(line.slice(11)); } catch { /* ignore */ } }
     else { j.lines.push(line); if (j.lines.length > 5000) j.lines.splice(0, 1000); emit("line", line); }
   };
-  mkdir(env.HOME, {recursive: true}).then(() => {
+  Promise.all([mkdir(env.HOME, {recursive: true}), mkdir(join(WORK, "ocm"), {recursive: true})]).then(() => {
     const p = spawn("bash", [script], {env, cwd: WORK, detached: true, stdio: ["ignore", "pipe", "pipe"]});
     j.pid = p.pid;
     for (const s of [p.stdout, p.stderr]) {
@@ -113,6 +117,7 @@ function startJob({kind, action, params = {}, creds = {}}){
       s.on("end", () => { if (buf) onLine(buf); });
     }
     p.on("close", async code => {
+      if (env.OCM_CONFIG) await rm(env.OCM_CONFIG, {force: true}).catch(() => {});
       j.status = code === 0 ? "done" : (j.status === "cancelled" ? "cancelled" : "failed");
       if (code !== 0 && !j.error) j.error = j.lines.filter(l => /ERROR|error/.test(l)).slice(-1)[0] || `exit code ${code}`;
       j.ended = Date.now();
@@ -153,6 +158,7 @@ async function api(req, res, url){
   const path = url.pathname;
   if (path === "/api/info") return send(res, 200, {version: VERSION, aws: AWS_ENABLED});
   if (path === "/api/myip") {
+    if (!AWS_ENABLED) return send(res, 404, {error: "disabled"});   // without AWS the server makes no outbound connection
     // The public IP of the browser (through the Ingress: X-Forwarded-For / X-Real-IP). When the page is
     // used on the same network or machine (a private address), the public IP of this server is the same one.
     const isPublic = ip => /^\d{1,3}(\.\d{1,3}){3}$/.test(ip) && !/^(10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/.test(ip);

@@ -12,7 +12,7 @@ const IPV4 = 0.005;             // per public IPv4 address and hour
 const EKS = 0.10, NAT = 0.048, NLB = 0.0252, ROSA_HCP = 0.25, ROSA_VCPU = 0.171 / 4;
 
 export const AWS_KINDS = {
-  ec2: {defaults: {instanceType: "m6i.4xlarge", diskGb: 200}, minutes: 10, tested: true},
+  ec2: {defaults: {instanceType: "m6i.4xlarge", diskGb: 200, vpcMode: "name", vpcName: ""}, minutes: 10, tested: true},
   eks: {defaults: {instanceType: "m6i.2xlarge", nodes: 2}, minutes: 25, tested: true},
   rosa: {defaults: {instanceType: "m6i.2xlarge", nodes: 2}, minutes: 45, tested: false},
 };

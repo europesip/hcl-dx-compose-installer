@@ -21,6 +21,11 @@ NAME=dx-compose-poc REGION=eu-west-1 ./ec2-destroy.sh    # deletes everything ta
 
 They cost money while they exist: delete them when you finish.
 
+**Network of the EC2 instance (`VPC_MODE`).** By default (`name`) the instance goes in the VPC named `VPC_NAME` (the
+name of the environment if empty). If it does not exist, a dedicated VPC is created (one public subnet and an Internet
+gateway) and deleted with the environment; if it exists, it is used as it is (it needs a public subnet) and it is never
+deleted. `VPC_MODE=default` uses the default VPC of the region. EKS and ROSA always create their own VPC.
+
 **ROSA and your Red Hat account.** ROSA is managed by Red Hat, so creating and deleting the cluster needs a sign-in to
 your Red Hat account (OpenShift Cluster Manager). The page and `rosa-create.sh` / `rosa-destroy.sh` accept three ways:
 

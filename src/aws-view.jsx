@@ -4,6 +4,7 @@ import {useEffect, useRef, useState} from "react";
 import {Nav, Card, Title, H2, Choice, Button, Field, Input, Secret, Select, Check, Callout, Code, Badge, Segmented, cx,
         IconServer, IconCloud, IconLayers, IconDownload, IconTrash, IconWarn, IconCheck, Spinner} from "./ui.jsx";
 import {AWS_KINDS, EC2_TYPES, REGIONS, estimate, money, api} from "./aws.js";
+import {SecurityNote} from "./security.jsx";
 
 const STEPS = {create: {ec2: 7, eks: 8, rosa: 9}, destroy: {ec2: 4, eks: 5, rosa: 4}};
 const load = () => { try { return JSON.parse(localStorage.getItem("dxi-aws") || "{}"); } catch { return {}; } };
@@ -61,7 +62,7 @@ export function EnvAws({t, lang, form, set, go, back, info}){
     catch (e) { setCheckErr(e.message); } finally { setChecking(false); }
   }
   async function start(action, k = kind, name = p.name){
-    const params = action === "create" ? {...p, region} : {name, region};
+    const params = action === "create" ? {...p, vpcName: p.vpcName || p.name, region} : {name, region};
     try {
       const j = await api("/api/jobs", {method: "POST", body: {kind: k, action, params, creds}});
       setJob(j); setShowLog(false); follow(j.id);
@@ -75,13 +76,14 @@ export function EnvAws({t, lang, form, set, go, back, info}){
   const credsOk = !!who;
   const nameOk = /^[a-z][a-z0-9-]{1,30}[a-z0-9]$/.test(p.name);
   const rhOk = creds.rhAuth === "device" || (creds.rhAuth === "sa" ? creds.rhClientId.length >= 8 && creds.rhClientSecret.length >= 8 : creds.rhcsToken.length > 20);
-  const canCreate = credsOk && nameOk && accept && !running && (kind !== "rosa" || rhOk) && (kind !== "ec2" || who.defaultVpc);
+  const canCreate = credsOk && nameOk && accept && !running && (kind !== "rosa" || rhOk) && (kind !== "ec2" || p.vpcMode !== "default" || who.defaultVpc);
   const kinds = [["ec2", t.kEc2, t.kEc2T, <IconServer key="1" />], ["eks", t.kEks, t.kEksT, <IconCloud key="2" />], ["rosa", t.kRosa, t.kRosaT, <IconLayers key="3" />]];
 
   const credsCard = (
           <Card className="space-y-4">
             <H2>{t.awsCreds}</H2>
             <p className="text-xs text-slate-500">{t.credsHint}</p>
+            <SecurityNote t={t} lang={lang} kind="aws" />
             <Field label={t.accessKey}><Input mono value={creds.accessKeyId} onChange={e => { setCreds({...creds, accessKeyId: e.target.value.trim()}); setWho(null); }} placeholder="AKIA…" /></Field>
             <Field label={t.secretKey}><Secret value={creds.secretAccessKey} onChange={e => { setCreds({...creds, secretAccessKey: e.target.value.trim()}); setWho(null); }} /></Field>
             <Field label={`${t.sessionToken} (${t.optional})`}><Secret value={creds.sessionToken} onChange={e => setCreds({...creds, sessionToken: e.target.value.trim()})} /></Field>
@@ -91,7 +93,7 @@ export function EnvAws({t, lang, form, set, go, back, info}){
             </div>
             {checkErr && <Callout tone="error">{checkErr}</Callout>}
             {who && <Callout tone="ok"><b>{t.account}:</b> {who.account}<br /><span className="break-all text-xs">{who.arn}</span></Callout>}
-            {who && kind === "ec2" && !who.defaultVpc && <Callout tone="warn">{t.noDefaultVpc}</Callout>}
+            {who && kind === "ec2" && p.vpcMode === "default" && !who.defaultVpc && <Callout tone="warn">{t.noDefaultVpc}</Callout>}
           </Card>
   );
 
@@ -143,8 +145,14 @@ export function EnvAws({t, lang, form, set, go, back, info}){
                 ? <Field label={t.diskGb}><Input mono value={p.diskGb} onChange={e => setP({...p, diskGb: e.target.value.replace(/\D/g, "")})} /></Field>
                 : <Field label={t.nodes}><Select value={p.nodes} onChange={e => setP({...p, nodes: Number(e.target.value)})}>{[2, 3, 4].map(n => <option key={n}>{n}</option>)}</Select></Field>}
             </div>
+            {kind === "ec2" && (
+              <Field label={t.vpc} hint={p.vpcMode === "default" ? t.vpcDefaultHint : t.vpcNameHint}>
+                <Segmented value={p.vpcMode || "name"} onChange={v => setP({...p, vpcMode: v})} options={[["name", t.vpcByName], ["default", t.vpcDefault]]} />
+                {p.vpcMode !== "default" && <Input mono className="mt-2" value={p.vpcName} placeholder={p.name} onChange={e => setP({...p, vpcName: e.target.value.trim()})} />}
+              </Field>
+            )}
             {kind === "ec2" && <Field label={t.allowedCidr} hint={t.allowedHint}><Input mono value={p.allowedCidr} onChange={e => setP({...p, allowedCidr: e.target.value.trim()})} placeholder="203.0.113.10/32" /></Field>}
-            {kind === "rosa" && <RedHatAuth t={t} creds={creds} setCreds={setCreds} />}
+            {kind === "rosa" && <RedHatAuth t={t} lang={lang} creds={creds} setCreds={setCreds} />}
             <div className="rounded-xl bg-slate-50 p-3 text-xs dark:bg-navy-950">
               {est.lines.map(([l, v]) => <div key={l} className="flex justify-between gap-3 py-0.5 text-slate-600 dark:text-slate-400"><span>{l}</span><span className="font-mono">{money(v, lang)}{t.perHour}</span></div>)}
               <div className="mt-1 flex justify-between border-t border-slate-200 pt-1.5 font-semibold text-slate-900 dark:border-navy-800 dark:text-white"><span>≈ {money(est.day, lang)}{t.perDay}</span><span>{money(est.hour, lang)}{t.perHour}</span></div>
@@ -170,7 +178,7 @@ export function EnvAws({t, lang, form, set, go, back, info}){
                 <Field label={t.envName}><Input mono value={delName} onChange={e => setDelName(e.target.value.toLowerCase())} placeholder="dx-compose-poc" /></Field>
                 <Button variant="danger" disabled={!credsOk || !/^[a-z][a-z0-9-]{1,30}[a-z0-9]$/.test(delName)} onClick={() => askDelete(delKind, delName)}><IconTrash className="h-4 w-4" />{t.deleteExisting}</Button>
               </div>
-              {delKind === "rosa" && <div className="mt-4"><RedHatAuth t={t} creds={creds} setCreds={setCreds} /></div>}
+              {delKind === "rosa" && <div className="mt-4"><RedHatAuth t={t} lang={lang} creds={creds} setCreds={setCreds} /></div>}
             </Card>
           )}
         </div>
@@ -182,12 +190,13 @@ export function EnvAws({t, lang, form, set, go, back, info}){
 }
 
 // ROSA: the installer has to sign in to the Red Hat account (OpenShift Cluster Manager) to create and delete the cluster
-function RedHatAuth({t, creds, setCreds}){
+function RedHatAuth({t, lang, creds, setCreds}){
   const m = creds.rhAuth;
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-navy-700">
       <div className="text-sm font-semibold text-slate-900 dark:text-white">{t.rhTitle}</div>
       <p className="text-xs text-slate-600 dark:text-slate-400">{t.rhWhy}</p>
+      <SecurityNote t={t} lang={lang} kind="redhat" />
       <Segmented value={m} onChange={v => setCreds({...creds, rhAuth: v})} options={[["sa", t.rhSa], ["device", t.rhDevice], ["token", t.rhTokenMode]]} />
       {m === "sa" && <>
         <p className="text-xs text-slate-600 dark:text-slate-400">{t.rhSaHow}</p>

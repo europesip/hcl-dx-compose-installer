@@ -38,7 +38,13 @@ Search), showing each command and waiting for Enter. It comes with the presenter
 **Are my credentials sent anywhere?**
 The installation is generated in your browser: what you type in its steps is not sent to any server. AWS keys go
 only to the installer's own server (the container or pod you run) when you ask it to create or delete an AWS
-environment, and only for that operation. Details: [How it works](how-it-works.md).
+environment, and only for that operation, never to disk or logs. The code is public so that you can check it, and
+without the AWS functions the installer can run with no outbound access at all. Details: [Security](security.md).
+
+**How do I use it more safely?**
+Use the original EUROPESIP image (or build it from the source), turn on its authentication if it is reachable from
+outside, and use ephemeral credentials (AWS session tokens, a Red Hat device code, an OpenRouter key with a limit) or
+rotate them when the installation is done. See [Security](security.md).
 
 **Should I protect the page?**
 Yes, if the machine or cluster where you deploy it can be reached from outside: turn on its user and password

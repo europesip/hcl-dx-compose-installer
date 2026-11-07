@@ -7,7 +7,8 @@
 #
 # Variables: NAME, REGION, INSTANCE_TYPE (m6i.4xlarge), DISK_GB (200), ALLOWED_CIDR (comma-separated CIDRs that
 # can use SSH and the Kubernetes API; the public IP of the machine that runs this script is always added),
-# OUT (folder for the SSH key and the kubeconfig).
+# VPC_MODE (name: the VPC named VPC_NAME, by default NAME, created if it does not exist and then deleted with the
+# environment; default: the default VPC of the region), OUT (folder for the SSH key and the kubeconfig).
 # It costs money while it exists: delete it with ec2-destroy.sh when you finish.
 DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$DIR/lib.sh"
@@ -16,6 +17,11 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 : "${K3S_VERSION:=v1.35.5+k3s1}"
 : "${HELM_VERSION:=v4.3.1}"
 : "${LONGHORN_VERSION:=1.12.1}"
+: "${VPC_MODE:=name}"          # name: the VPC with the tag Name=VPC_NAME (created if it does not exist) | default: the default VPC
+: "${VPC_NAME:=$NAME}"
+: "${VPC_CIDR:=10.42.0.0/16}"  # only for a new VPC
+case "$VPC_MODE" in name|default) ;; *) die "VPC_MODE must be name or default";; esac
+[[ "$VPC_NAME" =~ ^[A-Za-z0-9._-]{1,64}$ ]] || die "invalid VPC_NAME: $VPC_NAME"
 need aws ssh curl python3
 check_name
 whoami_aws
@@ -33,10 +39,48 @@ step "Checking that $NAME does not exist yet"
 existing=$(aws_ ec2 describe-instances --filters "Name=tag:$TAG_KEY,Values=$NAME" "Name=instance-state-name,Values=pending,running,stopping,stopped" --query 'Reservations[].Instances[].InstanceId')
 [ -z "$existing" ] || die "there is already an instance tagged $TAG_KEY=$NAME ($existing): delete it first (ec2-destroy.sh) or use another NAME"
 
-step "Network: default VPC and a security group"
-VPC=$(aws_ ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId')
-[ -n "$VPC" ] && [ "$VPC" != None ] || die "the region $REGION has no default VPC: create one (aws ec2 create-default-vpc) or use another region"
-SUBNET=$(aws_ ec2 describe-subnets --filters Name=vpc-id,Values="$VPC" Name=default-for-az,Values=true --query 'Subnets[0].SubnetId')
+if [ "$VPC_MODE" = default ]; then
+  step "Network: the default VPC and a security group"
+  VPC=$(aws_ ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId')
+  [ -n "$VPC" ] && [ "$VPC" != None ] || die "the region $REGION has no default VPC: choose a VPC by name (VPC_MODE=name) or create the default one (aws ec2 create-default-vpc)"
+  SUBNET=$(aws_ ec2 describe-subnets --filters Name=vpc-id,Values="$VPC" Name=default-for-az,Values=true --query 'Subnets[0].SubnetId')
+else
+  step "Network: VPC $VPC_NAME and a security group"
+  VPC=$(aws_ ec2 describe-vpcs --filters "Name=tag:Name,Values=$VPC_NAME" --query 'Vpcs[0].VpcId')
+  if [ -z "$VPC" ] || [ "$VPC" = None ]; then
+    # A new VPC for this environment: one public subnet with an Internet gateway. It carries the tag
+    # dx-installer=NAME, so ec2-destroy.sh deletes it with the instance.
+    log "the VPC $VPC_NAME does not exist: creating it ($VPC_CIDR)"
+    VPC=$(aws_ ec2 create-vpc --cidr-block "$VPC_CIDR" --query Vpc.VpcId \
+          --tag-specifications "ResourceType=vpc,Tags=[{Key=$TAG_KEY,Value=$NAME},{Key=Name,Value=$VPC_NAME}]")
+    aws_ ec2 wait vpc-available --vpc-ids "$VPC"
+    aws_ ec2 modify-vpc-attribute --vpc-id "$VPC" --enable-dns-hostnames '{"Value":true}'
+    IGW=$(aws_ ec2 create-internet-gateway --tag-specifications "$(tags internet-gateway)" --query InternetGateway.InternetGatewayId)
+    aws_ ec2 attach-internet-gateway --internet-gateway-id "$IGW" --vpc-id "$VPC"
+    AZ=$(aws_ ec2 describe-availability-zones --filters Name=state,Values=available --query 'AvailabilityZones[0].ZoneName')
+    SUBNET=$(aws_ ec2 create-subnet --vpc-id "$VPC" --cidr-block "${VPC_CIDR%.*/*}.0/24" --availability-zone "$AZ" \
+             --tag-specifications "$(tags subnet)" --query Subnet.SubnetId)
+    aws_ ec2 modify-subnet-attribute --subnet-id "$SUBNET" --map-public-ip-on-launch
+    RT=$(aws_ ec2 create-route-table --vpc-id "$VPC" --tag-specifications "$(tags route-table)" --query RouteTable.RouteTableId)
+    aws_ ec2 create-route --route-table-id "$RT" --destination-cidr-block 0.0.0.0/0 --gateway-id "$IGW" >/dev/null
+    aws_ ec2 associate-route-table --route-table-id "$RT" --subnet-id "$SUBNET" >/dev/null
+  else
+    # An existing VPC (it is never deleted by ec2-destroy.sh): a subnet whose route table goes to an Internet gateway
+    log "using the existing VPC $VPC_NAME ($VPC)"
+    aws_ ec2 describe-internet-gateways --filters "Name=attachment.vpc-id,Values=$VPC" --query 'InternetGateways[0].InternetGatewayId' | grep -q '^igw-' \
+      || die "the VPC $VPC_NAME has no Internet gateway: the instance needs one (and a public subnet)"
+    SUBNET=""
+    for rt in $(aws_ ec2 describe-route-tables --filters "Name=vpc-id,Values=$VPC" "Name=route.gateway-id,Values=igw-*" --query 'RouteTables[].RouteTableId'); do
+      SUBNET=$(aws_ ec2 describe-route-tables --route-table-ids "$rt" --query 'RouteTables[0].Associations[?SubnetId!=`null`].SubnetId | [0]')
+      [ -n "$SUBNET" ] && [ "$SUBNET" != None ] && break
+      # the main route table also serves the subnets without an explicit association
+      if [ "$(aws_ ec2 describe-route-tables --route-table-ids "$rt" --query 'RouteTables[0].Associations[?Main==`true`] | length(@)')" != 0 ]; then
+        SUBNET=$(aws_ ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC" --query 'Subnets[0].SubnetId'); break
+      fi
+    done
+    [ -n "$SUBNET" ] && [ "$SUBNET" != None ] || die "the VPC $VPC_NAME has no public subnet (a route 0.0.0.0/0 to the Internet gateway)"
+  fi
+fi
 SG=$(aws_ ec2 describe-security-groups --filters Name=vpc-id,Values="$VPC" Name=group-name,Values="$NAME" --query 'SecurityGroups[0].GroupId')
 if [ -z "$SG" ] || [ "$SG" = None ]; then
   SG=$(aws_ ec2 create-security-group --group-name "$NAME" --description "HCL DX Compose PoC ($NAME)" --vpc-id "$VPC" \

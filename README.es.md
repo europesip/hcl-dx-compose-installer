@@ -59,13 +59,30 @@ Descomprime lo que descargaste y ejecútalo en una máquina con `kubectl` y `hel
 unzip dx-compose-install.zip && cd dx-install && ./install.sh     # o, para el webinar: ./prepare.sh y después ./demo.sh
 ```
 
+## 🔒 Seguridad
+
+Introducir credenciales de la nube o de otros sistemas (registro de HCL, OpenRouter, Red Hat, AWS) siempre es un riesgo,
+y más en una herramienta de terceros. Lo sabemos, y por eso:
+
+- **El código es público y gratuito** (MIT): cualquiera puede comprobar que las credenciales no se envían ni se guardan
+  en ninguna parte.
+- **La instalación se genera en tu navegador.** Los valores del registro, de OpenRouter y las contraseñas no salen de
+  él; van a los scripts de tu zip.
+- **Las credenciales de AWS y Red Hat solo van a tu propio instalador**, para la operación que pidas: nunca a disco ni
+  a los logs.
+- **Puedes limitar su salida a Internet:** sin las funciones de AWS, el pod (NetworkPolicy) o el contenedor no se
+  conecta a nada.
+- **Usa la imagen original** (`ghcr.io/europesip/hcl-dx-compose-installer`) o constrúyela desde el código.
+- **Buena práctica:** usa credenciales efímeras, o rótalas al acabar la instalación.
+
+Todo el detalle: **[Seguridad del instalador](docs/security.es.md)**.
+
 ## Preguntas frecuentes
 
 - **¿Sirve para producción?** No: pruebas de concepto, desarrollo y pruebas.
 - **¿No tienes Kubernetes?** El instalador lo crea. Lo recomendado es WSL2 en tu PC: 24 GB de RAM y 8 núcleos.
 - **¿AWS cuesta dinero?** Sí, desde ~0,89 USD/hora. Bórralo desde la página al terminar.
-- **¿Se envían mis credenciales a algún sitio?** La instalación se genera en tu navegador. Las claves de AWS solo van a
-  tu propio instalador, para la operación que le pidas.
+- **¿Se envían mis credenciales a algún sitio?** No: ver [Seguridad](docs/security.es.md).
 
 Más preguntas: **[Preguntas frecuentes](docs/faq.es.md)**.
 
@@ -75,6 +92,7 @@ Más preguntas: **[Preguntas frecuentes](docs/faq.es.md)**.
 |---|---|
 | [Docker y Helm](docs/deploy.es.md) | Todas las opciones para ejecutar el instalador, la autenticación, qué hacer con la descarga |
 | [Entornos de AWS](docs/aws.es.md) | Qué crea cada opción de AWS, su precio, cómo borrarla, ROSA y tu cuenta de Red Hat |
+| [Seguridad](docs/security.es.md) | Adónde va cada credencial, salida a Internet limitada, la imagen original, buenas prácticas |
 | [Cómo funciona](docs/how-it-works.es.md) | Tus datos, el código, desarrollo y CI |
 | [Laboratorios de HCL DX Compose](https://github.com/europesip/hcl-dx-compose-labs) | Las guías para aprender cada paso a mano |
 | [ÓRBITA](https://github.com/europesip/orbita) | Una intranet para HCL DX Compose que el instalador puede añadir |

@@ -59,13 +59,28 @@ Unzip what you downloaded and run it on a machine with `kubectl` and `helm` poin
 unzip dx-compose-install.zip && cd dx-install && ./install.sh     # or, for the webinar: ./prepare.sh, then ./demo.sh
 ```
 
+## 🔒 Security
+
+Typing credentials for the cloud or other systems (HCL registry, OpenRouter, Red Hat, AWS) is always a risk, all the
+more in a third-party tool. We know, and that is why:
+
+- **The code is public and free** (MIT): anyone can check that credentials are not sent or stored anywhere.
+- **The installation is generated in your browser.** Registry, OpenRouter and password values never leave it; they go
+  into the scripts of your zip.
+- **AWS and Red Hat credentials go only to your own installer**, for the operation you ask for: never to disk or logs.
+- **You can limit its outbound access:** without the AWS functions, the pod (NetworkPolicy) or container connects to
+  nothing at all.
+- **Use the original image** (`ghcr.io/europesip/hcl-dx-compose-installer`) or build it from the source.
+- **Good practice:** use ephemeral credentials, or rotate them when the installation is done.
+
+All the details: **[Security of the installer](docs/security.md)**.
+
 ## FAQ
 
 - **Is it for production?** No: proofs of concept, development and tests.
 - **No Kubernetes?** The installer creates it. WSL2 on your PC is the recommended option: 24 GB of RAM and 8 cores.
 - **Does AWS cost money?** Yes, from ~0.89 USD/hour. Delete it from the page when you finish.
-- **Are my credentials sent anywhere?** The installation is generated in your browser. AWS keys go only to your own
-  installer, for the operation you ask for.
+- **Are my credentials sent anywhere?** No: see [Security](docs/security.md).
 
 More questions: **[FAQ](docs/faq.md)**.
 
@@ -75,6 +90,7 @@ More questions: **[FAQ](docs/faq.md)**.
 |---|---|
 | [Docker and Helm](docs/deploy.md) | Every option to run the installer, authentication, what to do with the download |
 | [AWS environments](docs/aws.md) | What each AWS option creates, its price, how to delete it, ROSA and your Red Hat account |
+| [Security](docs/security.md) | Where each credential goes, limited outbound access, the original image, good practice |
 | [How it works](docs/how-it-works.md) | Your data, the code, development and CI |
 | [HCL DX Compose labs](https://github.com/europesip/hcl-dx-compose-labs) | The guides to learn every step by hand |
 | [ÓRBITA](https://github.com/europesip/orbita) | An intranet for HCL DX Compose that the installer can add |

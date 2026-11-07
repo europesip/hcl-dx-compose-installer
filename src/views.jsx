@@ -6,6 +6,7 @@ import {applyPreset, gates, NAME_KEYS, depsOf} from "./state.js";
 import {ownChecks, wslCmds, linuxCmds, LAB0_GUIDE} from "./guides.js";
 import {generate, zipBytes, download, ZIP_NAME, ZIP_NAME_WEBINAR, WORD_NAME_EN, WORD_NAME_ES} from "./bundle.js";
 import {stageLabel} from "./engine/stages.js";
+import {SecurityNote} from "./security.jsx";
 
 const C = t => ({copyLabel: t.copy, copiedLabel: t.copied});
 const Bullet = ({children}) => <li className="flex gap-2.5"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-blue" /><span>{children}</span></li>;
@@ -253,7 +254,7 @@ export function DeployCustom({t, form, set, go, back}){
 }
 
 // ---------------------------------------------------------------------------------------------
-export function Details({t, form, set, go, back}){
+export function Details({t, lang, form, set, go, back}){
   const [adv, setAdv] = useState(false);
   const needsHost = form.platform !== "poc";
   const F = (k, label, o = {}) => (
@@ -270,6 +271,7 @@ export function Details({t, form, set, go, back}){
           <H2>{t.harbor}</H2>
           {F("HCL_HARBOR_USER", t.harborUser, {placeholder: "name@company.com"})}
           {F("HCL_HARBOR_TOKEN", t.harborToken, {secret: true})}
+          <SecurityNote t={t} lang={lang} kind="harbor" />
         </Card>
         <Card className="space-y-4">
           <H2>{t.access}</H2>
@@ -280,6 +282,7 @@ export function Details({t, form, set, go, back}){
           <Card className="space-y-4">
             <H2>{t.openrouter}</H2>
             {F("OPENROUTER_API_KEY", t.openrouter, {secret: true, hint: t.openrouterHint, placeholder: "sk-or-v1-…"})}
+            <SecurityNote t={t} lang={lang} kind="openrouter" />
           </Card>
         )}
         {form.dir === "ad" && (

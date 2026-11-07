@@ -39,7 +39,13 @@ en Word.
 **¿Se envían mis credenciales a algún sitio?**
 La instalación se genera en tu navegador: lo que escribes en sus pasos no se envía a ningún servidor. Las claves de AWS
 solo van al servidor del propio instalador (el contenedor o pod que tú ejecutas) cuando le pides crear o borrar un
-entorno de AWS, y solo para esa operación. Detalle: [Cómo funciona](how-it-works.es.md).
+entorno de AWS, y solo para esa operación, nunca a disco ni a los logs. El código es público para que lo compruebes, y
+sin las funciones de AWS el instalador puede funcionar sin ninguna salida a Internet. Detalle: [Seguridad](security.es.md).
+
+**¿Cómo lo uso de forma más segura?**
+Usa la imagen original de EUROPESIP (o constrúyela desde el código), activa su autenticación si es accesible desde
+fuera, y usa credenciales efímeras (session tokens de AWS, el código de dispositivo de Red Hat, una clave de OpenRouter
+con límite) o rótalas al acabar la instalación. Ver [Seguridad](security.es.md).
 
 **¿Debo proteger la página?**
 Sí, si la máquina o el clúster donde lo despliegas es accesible desde fuera: activa su usuario y contraseña
