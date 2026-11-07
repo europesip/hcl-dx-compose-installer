@@ -200,3 +200,23 @@ test("Claude directly (Anthropic API): LiteLLM values, secret, no Qwen/RAG, and 
   const br = await xml(make("webinar", {LLM_PROVIDER: "bedrock", BEDROCK_API_KEY: "bk-123456"}, "en"), "en");
   assert.ok(br.includes("routes them to the chosen LLM (Claude Sonnet 4.6 / Claude Haiku 4.5) through AWS Bedrock"));
 });
+
+test("MCP Server over HTTPS as documented by HCL; custom MCP servers stay on HTTP", () => {
+  const g = make("all");
+  const v = g.files["lab-iq/custom-iq-values.yaml"].text;
+  assert.match(v, /\n  mcpServer:\n(?:    #.*\n)*    httpsEnabled: true\n    tlsCertSecret: "dx-tls-cert"\n/);
+  const reg = g.steps.map(s => s.cmd).join("\n");
+  assert.match(reg, /https:\/\/dx-iq-mcp-server:3000,http:\/\/europesip-mcp\./);
+  assert.ok(!/http:\/\/dx-iq-mcp-server/.test(g.entries.map(e => e.text).join("\n")));
+  const s = g.files["lab-search/custom-search-values.yaml"].text;
+  assert.match(s, /fileProcessor: true/); assert.match(s, /haproxyProtocol: "?https"?/);
+});
+
+test("Word guide: important notes on LITELLM_BASE_URL, the documentation contradiction and Search", async () => {
+  const {unzipSync, strFromU8} = await import("./unzip.mjs");
+  for (const [lang, xs] of [["es", ["LITELLM_BASE_URL es OBLIGATORIA", "Contradicción en la documentación de HCL", "Usamos la segunda", "Activa el File Processor", "Protocolo del HAProxy", "Notas importantes"]],
+                            ["en", ["LITELLM_BASE_URL is MANDATORY", "Contradiction in the HCL documentation", "We use the second option", "Enable the File Processor", "HAProxy protocol"]]]) {
+    const xml = strFromU8(unzipSync(new Uint8Array(await buildWord(make("webinar", {}, lang), lang, [], {as: "buffer"})))["word/document.xml"]);
+    for (const x of xs) assert.ok(xml.includes(x), x);
+  }
+});

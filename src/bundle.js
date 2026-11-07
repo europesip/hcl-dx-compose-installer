@@ -35,7 +35,19 @@ const FOLDER_RE = FOLDERS.map(([a, b]) => [new RegExp(`(?<![\\w.-])${a}/`, "g"),
 // "Lab 2B", "Lab 3" and so on in the comments and messages: the name of the folder instead
 const LABEL_RE = [[/\(Lab 2 guide, 2B step 3\)/g, "(RUNBOOK.md)"], [/\bLab 0\b/g, "lab-poc"], [/\bLab 1B\b/g, "lab-scriptapp"], [/\bLab 1\b/g, "lab-base"],
   [/\bLab 2A\b/g, "lab-ldap"], [/\bLab 2B?\b/g, "lab-bbdd"], [/\bLab 3B\b/g, "lab-mcp"], [/\bLab 3A?\b/g, "lab-iq"], [/\bLab 4\b/g, "lab-search"], [/\bLab 5\b/g, "lab-orbita"]];
-export const renameText = text => typeof text !== "string" ? text : [...FOLDER_RE, ...LABEL_RE].reduce((x, [re, b]) => x.replace(re, b), text);
+// The HCL MCP Server over HTTPS, as in the example values of the HCL documentation ("Deploying IQ services"):
+// the engine keeps the HTTP of the frozen wizard; the installer enables HTTPS in its output (the custom MCP
+// servers, such as the EUROPESIP one, stay on HTTP).
+const HCL_RE = [[/http:\/\/([\w.-]+-mcp-server):3000/g, "https://$1:3000"]];
+const MCP_HTTPS = `  mcpServer:
+    # HTTPS, as in the example values of the HCL documentation ("Deploying IQ services"): the MCP Server uses
+    # the HAProxy certificate (dx-tls-cert) and the chart writes https://<IQ_RELEASE>-mcp-server:3000 in the
+    # Integrator ConfigMap. Custom MCP servers can stay on HTTP.
+    httpsEnabled: true
+    tlsCertSecret: "dx-tls-cert"
+`;
+const alignFile = (p, text) => p.endsWith("lab-iq/custom-iq-values.yaml") ? text.replace(/\n  mcpServer:\n/, "\n" + MCP_HTTPS) : text;
+export const renameText = text => typeof text !== "string" ? text : [...FOLDER_RE, ...LABEL_RE, ...HCL_RE].reduce((x, [re, b]) => x.replace(re, b), text);
 const renamePath = p => FOLDER_RE.reduce((x, [re, b]) => x.replace(re, b), p);
 const renameStep = st => ({...st, title: renameText(st.title), note: renameText(st.note), cmd: renameText(st.cmd), manual: renameText(st.manual)});
 
@@ -45,7 +57,7 @@ export function generate(form, lang){
   const check = engine.validate(s);
   engine.ensureLitellmKey();                 // the same key in every file of this page load
   const files = Object.fromEntries(Object.entries(engine.bundleFiles(s)).map(([p, f]) =>
-    [renamePath(p), /\.sql$/.test(p) ? f : {...f, text: renameText(f.text)}]));   // the HCL table script is left as it is
+    [renamePath(p), /\.sql$/.test(p) ? f : {...f, text: alignFile(renamePath(p), renameText(f.text))}]));   // the HCL table script is left as it is
   const raw = engine.directSteps(s).map(renameStep);
   const webinar = form.preset === "webinar";
   const pgSql = !!engine.pgSqlFor(s);

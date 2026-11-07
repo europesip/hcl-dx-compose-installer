@@ -14,6 +14,12 @@ const T = {
     llmChoice: "The installer lets us choose the provider for the demo: OpenRouter, AWS Bedrock or Claude directly (Anthropic API). It only offers the options available in each one (for example, the Qwen models and the IQ memory only with OpenRouter).",
     llmCredit: "Before the demo, take special care that the account of the provider has a minimum of credit for the test, and that this credit has not been used up beforehand (by earlier tests or by someone else with the same key).",
     prov: {openrouter: "OpenRouter", bedrock: "AWS Bedrock", anthropic: "the Anthropic API (Claude directly)"},
+    important: "Important notes",
+    baseUrl: "IMPORTANT · LITELLM_BASE_URL is MANDATORY, although the HCL documentation does not mention it. The documentation only sets the LiteLLM URL in configuration.litellm.liteLlmUrl. With only that, IQ answers “The LLM service is temporarily unavailable” and LiteLLM never receives the request (tested on CF239 with IQ 1.0.3, also with LiteLLM in the same namespace as DX). lab-iq/custom-iq-values.yaml therefore also sets LITELLM_BASE_URL in environment.pod.integrator, with the same URL. Do not remove it.",
+    keyDocs: "Contradiction in the HCL documentation about the LiteLLM key and URL. “Deploying IQ services” sets LITELLM_API_KEY and LITELLM_URL as environment variables in environment.pod.integrator, while “Preparing LiteLLM access” and “IQ environment variables” use the iq-litellm-api-secret secret and configuration.litellm.liteLlmUrl. With the first option the chart defines both variables twice and its own definitions win. We use the second option: the key in the iq-litellm-api-secret secret (lab-iq/secrets.yaml) and the URL in liteLlmUrl.",
+    mcpTls: "The HCL MCP Server runs over HTTPS (mcpServer.httpsEnabled: true with the dx-tls-cert certificate), as in the example values of the HCL documentation.",
+    fileProc: "IMPORTANT · Enable the File Processor: it is a mandatory dependency, but the hcl-dx-search chart disables it by default (applications.fileProcessor: false). The Search Middleware always looks for it, and the HCL page “Installing the Search V2 backend” does not say it must be enabled. lab-search/custom-search-values.yaml sets applications.fileProcessor: true.",
+    haproxy: "IMPORTANT · HAProxy protocol: with DX published through an Ingress or a Route, the DX HAProxy Service is ClusterIP and only listens on 443 with TLS. If configuration.automatedSetup.haproxyProtocol is left empty (the default), the Search chart chooses http, the crawlers call port 80 and index 0 documents. This is not in the HCL documentation either. lab-search/custom-search-values.yaml sets haproxyProtocol: https.",
     gen: "How this document was made",
     genP: [
       "This document and the installation zip that goes with it were generated automatically by the HCL DX Compose Installer, a wizard that EUROPESIP developed to run these labs, from the options chosen in it.",
@@ -103,6 +109,12 @@ const T = {
     llmChoice: "El instalador nos permite escoger el proveedor para la demo: OpenRouter, AWS Bedrock o directamente Claude (API de Anthropic). Solo nos deja escoger las opciones disponibles en cada uno (por ejemplo, los modelos Qwen y la memoria de IQ solo con OpenRouter).",
     llmCredit: "Antes de la demo, ten especial cuidado de que la cuenta del proveedor tenga un mínimo de crédito para hacer la prueba, y de que ese crédito no se haya consumido con anterioridad (en pruebas previas o por otra persona con la misma clave).",
     prov: {openrouter: "OpenRouter", bedrock: "AWS Bedrock", anthropic: "la API de Anthropic (Claude directo)"},
+    important: "Notas importantes",
+    baseUrl: "IMPORTANTE · LITELLM_BASE_URL es OBLIGATORIA, aunque la documentación de HCL no la menciona. La documentación solo fija la URL de LiteLLM en configuration.litellm.liteLlmUrl. Solo con eso, IQ responde «The LLM service is temporarily unavailable» y a LiteLLM nunca le llega la petición (probado en CF239 con IQ 1.0.3, también con LiteLLM en el mismo namespace que DX). Por eso lab-iq/custom-iq-values.yaml fija además LITELLM_BASE_URL en environment.pod.integrator, con la misma URL. No la quites.",
+    keyDocs: "Contradicción en la documentación de HCL sobre la clave y la URL de LiteLLM. «Deploying IQ services» pone LITELLM_API_KEY y LITELLM_URL como variables de entorno en environment.pod.integrator, mientras que «Preparing LiteLLM access» e «IQ environment variables» usan el secret iq-litellm-api-secret y configuration.litellm.liteLlmUrl. Con la primera opción el chart define las dos variables dos veces y ganan las suyas. Usamos la segunda: la clave en el secret iq-litellm-api-secret (lab-iq/secrets.yaml) y la URL en liteLlmUrl.",
+    mcpTls: "El MCP Server de HCL funciona por HTTPS (mcpServer.httpsEnabled: true con el certificado dx-tls-cert), como en los values de ejemplo de la documentación de HCL.",
+    fileProc: "IMPORTANTE · Activa el File Processor: es una dependencia obligatoria, pero el chart hcl-dx-search lo trae desactivado por defecto (applications.fileProcessor: false). El Search Middleware lo busca siempre, y la página de HCL «Installing the Search V2 backend» no dice que haya que activarlo. lab-search/custom-search-values.yaml fija applications.fileProcessor: true.",
+    haproxy: "IMPORTANTE · Protocolo del HAProxy: con DX publicado mediante un Ingress o una Route, el Service del HAProxy de DX es ClusterIP y solo escucha en el 443 con TLS. Si configuration.automatedSetup.haproxyProtocol se deja vacío (el valor por defecto), el chart de Search elige http, los crawlers llaman al puerto 80 e indexan 0 documentos. Tampoco está en la documentación de HCL. lab-search/custom-search-values.yaml fija haproxyProtocol: https.",
     gen: "Cómo se ha hecho este documento",
     genP: [
       "Este documento y el ZIP de instalación que lo acompaña se han generado automáticamente con el Instalador de HCL DX Compose, un asistente que EUROPESIP ha desarrollado para hacer estos laboratorios, a partir de las opciones escogidas en él.",
@@ -384,6 +396,9 @@ export function buildScript(gen, lang, summaryRows, {mask = true} = {}){
     B.push({t: "h2", text: t.why}); B.push({t: "p", text: st[n].why});
     B.push({t: "h2", text: t.tell}); B.push({t: "bullets", items: st[n].points});
     if (n === 0) B.push({t: "callout", tone: "warn", text: t.llmCredit});
+    // Where the lab departs from the HCL documentation, and why (issues.md of the labs)
+    if (n === 4) { B.push({t: "h2", text: t.important}); B.push({t: "callout", tone: "error", text: t.baseUrl}); B.push({t: "callout", tone: "warn", text: t.keyDocs}); B.push({t: "callout", tone: "info", text: t.mcpTls}); }
+    if (n === 5) { B.push({t: "h2", text: t.important}); B.push({t: "callout", tone: "error", text: t.fileProc}); B.push({t: "callout", tone: "error", text: t.haproxy}); }
     B.push({t: "h2", text: t.steps});
     list.forEach(stepBlocks);
   }
