@@ -27,10 +27,22 @@ function stageOf(id){
 }
 const EXTRA = {en: "Extra", es: "Extra"};
 
+// Small improvements over the engine commands that the frozen wizard does not have (the golden test
+// compares the engine itself): the portal check waits until the new Ingress answers (it gives 404 for
+// a few seconds after it is created), so a live demo does not show a false error.
+function polish(st){
+  if (st.id === "1-6") {
+    const url = (st.cmd.match(/https:\/\/\S+\/wps\/portal/) || [])[0];
+    if (url) return {...st, cmd: st.cmd.replace(/curl -sk -o \/dev\/null -w '[^']*' \S+/,
+      `for i in $(seq 1 30); do c=$(curl -sk -o /dev/null -w '%{http_code}' ${url}); [ "$c" != 404 ] && [ "$c" != 000 ] && break; sleep 5; done\necho "${url} -> HTTP $c"`)};
+  }
+  return st;
+}
+
 // Give every step its stage, its label and a new id. Steps are kept in the engine order, then
 // sorted by stage (the order of the engine is already by stage except for the fast demo).
 export function renumber(steps, lang){
-  const out = steps.map((st, i) => { const [stage, extra] = stageOf(st.id); return {...st, origId: st.id, stage, extra, _i: i}; });
+  const out = steps.map((st, i) => { const [stage, extra] = stageOf(st.id); return {...polish(st), origId: st.id, stage, extra, _i: i}; });
   out.sort((a, b) => a.stage - b.stage || a._i - b._i);
   const n = {};
   return out.map(({_i, ...st}) => {
