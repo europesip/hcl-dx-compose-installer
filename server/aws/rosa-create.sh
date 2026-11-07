@@ -7,7 +7,9 @@
 #   - StorageClass dx-deploy-rwo (EBS gp3) and dx-deploy-rwx (EFS, AWS EFS CSI Driver Operator);
 #   - a cluster-admin user and a kubeconfig.
 #
-#   RHCS_TOKEN=<your token from console.redhat.com/openshift/token> NAME=dx-rosa ./rosa-create.sh
+#   RHCS_CLIENT_ID=... RHCS_CLIENT_SECRET=... NAME=dx-rosa ./rosa-create.sh   (a Red Hat service account)
+#   RHCS_TOKEN=<offline token> NAME=dx-rosa ./rosa-create.sh                    (console.redhat.com/openshift/token/rosa)
+#   RH_DEVICE_CODE=1 NAME=dx-rosa ./rosa-create.sh                              (approve a code in your browser)
 #
 # It costs money while it exists (ROSA service fee per hour and per worker vCPU, EC2, NAT gateways,
 # load balancers, disks, EFS): delete it with rosa-destroy.sh when you finish.
@@ -17,11 +19,8 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 : "${NODES:=2}"
 need aws rosa oc python3
 check_name
-[ -n "${RHCS_TOKEN:-}" ] || die "RHCS_TOKEN is empty: get your token at https://console.redhat.com/openshift/token/rosa"
 whoami_aws
-
-step "Red Hat account"
-rosa login --token "$RHCS_TOKEN" 2>&1 | sed 's/^/  /'
+rh_login
 rosa whoami 2>&1 | grep -E "OCM Account (Email|Username)|AWS Account ID" | sed 's/^/  /' || true
 rosa verify quota --region "$REGION" 2>&1 | tail -1 | sed 's/^/  /'
 if rosa describe cluster -c "$NAME" >/dev/null 2>&1; then die "the ROSA cluster $NAME already exists"; fi
@@ -137,7 +136,7 @@ HCL DX Compose on ROSA HCP ($NAME, $REGION) · experimental
   DX host name  : $HOST  (the default router of the cluster)
   Platform      : openshift  ·  StorageClasses: dx-deploy-rwo (EBS gp3) / dx-deploy-rwx (EFS $FS)
 It costs money while it exists. Delete everything with:
-  RHCS_TOKEN=... NAME=$NAME REGION=$REGION ./rosa-destroy.sh
+  RHCS_CLIENT_ID=... RHCS_CLIENT_SECRET=... NAME=$NAME REGION=$REGION ./rosa-destroy.sh   (or RHCS_TOKEN / RH_DEVICE_CODE=1)
 EOF
 sed 's/^/  /' "$OUT/README.txt"
 python3 - "$NAME" "$REGION" "$HOST" "$KC" "$FS" <<'EOF'

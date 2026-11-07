@@ -32,3 +32,28 @@ whoami_aws(){
   log "account and identity: $id"
   log "region: $REGION"
 }
+
+# Red Hat sign-in for ROSA (the ROSA CLI talks to OpenShift Cluster Manager), in this order:
+#   RHCS_CLIENT_ID + RHCS_CLIENT_SECRET  a service account (console.redhat.com/iam/service-accounts), recommended
+#   RHCS_TOKEN                           an offline token (console.redhat.com/openshift/token/rosa)
+#   RH_DEVICE_CODE=1                     device code: shows a link and a code to approve in your browser
+# Untested end to end (it needs a Red Hat account with ROSA enabled in the AWS account).
+rh_login(){
+  step "Signing in to Red Hat"
+  if [ -n "${RHCS_CLIENT_ID:-}" ]; then
+    rosa login --client-id "$RHCS_CLIENT_ID" --client-secret "${RHCS_CLIENT_SECRET:?RHCS_CLIENT_SECRET is empty}" 2>&1 | sed 's/^/  /'
+  elif [ -n "${RHCS_TOKEN:-}" ]; then
+    rosa login --token "$RHCS_TOKEN" 2>&1 | sed 's/^/  /'
+  elif [ "${RH_DEVICE_CODE:-}" = 1 ]; then
+    log "Open the link below, sign in with your Red Hat account and approve the code (it expires in a few minutes)"
+    rosa login --use-device-code 2>&1 | while IFS= read -r l; do
+      echo "  $l"
+      u=$(grep -oE 'https://[^ "]+' <<<"$l" | head -1 || true); c=$(grep -oE '\b[A-Z0-9]{4}-[A-Z0-9]{4}\b' <<<"$l" | head -1 || true)
+      if [ -n "$u" ]; then echo "::device-url:: $u"; fi
+      if [ -n "$c" ]; then echo "::device-code:: $c"; fi
+    done
+  else
+    die "no Red Hat credentials: set RHCS_CLIENT_ID/RHCS_CLIENT_SECRET, RHCS_TOKEN or RH_DEVICE_CODE=1"
+  fi
+  rosa whoami >/dev/null 2>&1 || die "the Red Hat sign-in failed"
+}

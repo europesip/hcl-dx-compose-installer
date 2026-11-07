@@ -143,6 +143,18 @@ NAME=dx-compose-poc REGION=eu-west-1 ./ec2-destroy.sh    # deletes everything ta
 
 They cost money while they exist: delete them when you finish.
 
+**ROSA and your Red Hat account.** ROSA is managed by Red Hat, so creating and deleting the cluster needs a sign-in to
+your Red Hat account (OpenShift Cluster Manager). The page and `rosa-create.sh` / `rosa-destroy.sh` accept three ways:
+
+| Way | Variables | How to get it |
+|---|---|---|
+| **Service account** (recommended for automation) | `RHCS_CLIENT_ID`, `RHCS_CLIENT_SECRET` | console.redhat.com › Identity & Access Management › Service accounts; give it access to OpenShift Cluster Manager in User Access (for example, the OCM Cluster Provisioner role) |
+| **Device code** | `RH_DEVICE_CODE=1` | Nothing to paste: a link and a code appear (on the page or in the output); approve them in your browser with your Red Hat account |
+| **Offline token** | `RHCS_TOKEN` | console.redhat.com/openshift/token/rosa (deprecated by Red Hat in favour of service accounts, still works) |
+
+ROSA must also be enabled once in your AWS account (AWS console › Red Hat OpenShift Service on AWS › Get started).
+The ROSA path has not been tested end to end yet.
+
 ## How it works
 
 | Path | What it is |

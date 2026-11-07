@@ -54,7 +54,7 @@ const RE = {
 const FILES = ["kubeconfig", "README.txt", "cluster-admin.txt"];   // + <name>.pem
 
 function publicJob(j){
-  return {id: j.id, kind: j.kind, action: j.action, name: j.name, region: j.region, status: j.status, steps: j.steps,
+  return {id: j.id, kind: j.kind, action: j.action, name: j.name, region: j.region, status: j.status, steps: j.steps, device: j.device,
     result: j.result, error: j.error, started: j.started, ended: j.ended, files: j.files};
 }
 
@@ -77,16 +77,29 @@ function startJob({kind, action, params = {}, creds = {}}){
   if (params.nodes) { if (!RE.int.test(String(params.nodes))) throw new Error("invalid nodes"); env.NODES = String(params.nodes); }
   if (params.diskGb) { if (!RE.int.test(String(params.diskGb))) throw new Error("invalid disk"); env.DISK_GB = String(params.diskGb); }
   if (params.allowedCidr) { if (!RE.cidr.test(params.allowedCidr)) throw new Error("invalid CIDR"); env.ALLOWED_CIDR = params.allowedCidr; }
-  if (kind === "rosa") { if (!/^[A-Za-z0-9._-]{20,4096}$/.test(creds.rhcsToken || "")) throw new Error("invalid Red Hat token"); env.RHCS_TOKEN = creds.rhcsToken; }
+  if (kind === "rosa") {     // Red Hat sign-in: service account, offline token or device code (see server/aws/lib.sh)
+    const mode = creds.rhAuth || "token";
+    if (mode === "sa") {
+      if (!/^[A-Za-z0-9._@-]{8,256}$/.test(creds.rhClientId || "") || !/^[\x21-\x7e]{8,512}$/.test(creds.rhClientSecret || "")) throw new Error("invalid Red Hat service account");
+      env.RHCS_CLIENT_ID = creds.rhClientId; env.RHCS_CLIENT_SECRET = creds.rhClientSecret;
+    } else if (mode === "device") {
+      env.RH_DEVICE_CODE = "1";
+    } else {
+      if (!/^[A-Za-z0-9._-]{20,4096}$/.test(creds.rhcsToken || "")) throw new Error("invalid Red Hat token");
+      env.RHCS_TOKEN = creds.rhcsToken;
+    }
+  }
 
   const id = randomUUID(), script = join(AWS_DIR, scripts[action === "create" ? 0 : 1]);
   const j = {id, kind, action, name, region, status: "running", steps: [], lines: [], result: null, error: "", started: Date.now(), ended: 0, files: [], clients: new Set()};
   jobs.set(id, j);
-  const secrets = [creds.secretAccessKey, creds.sessionToken, creds.rhcsToken].filter(Boolean);
+  const secrets = [creds.secretAccessKey, creds.sessionToken, creds.rhcsToken, creds.rhClientSecret].filter(Boolean);
   const emit = (type, data) => { for (const c of j.clients) c.write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`); };
   const onLine = raw => {
     let line = raw; for (const s of secrets) line = line.split(s).join("********");
     if (line.startsWith("::step:: ")) { const st = line.slice(9); j.steps.push(st); emit("step", st); }
+    else if (line.startsWith("::device-url:: ")) { j.device = {...(j.device || {}), url: line.slice(15).trim()}; emit("device", j.device); }
+    else if (line.startsWith("::device-code:: ")) { j.device = {...(j.device || {}), code: line.slice(16).trim()}; emit("device", j.device); }
     else if (line.startsWith("::result:: ")) { try { j.result = JSON.parse(line.slice(11)); } catch { /* ignore */ } }
     else { j.lines.push(line); if (j.lines.length > 5000) j.lines.splice(0, 1000); emit("line", line); }
   };
@@ -174,6 +187,7 @@ async function api(req, res, url){
     if (m[2] === "/events") {
       res.writeHead(200, {...SECURITY, "Content-Type": "text/event-stream", "Cache-Control": "no-store", Connection: "keep-alive", "X-Accel-Buffering": "no"});
       for (const s of j.steps) res.write(`event: step\ndata: ${JSON.stringify(s)}\n\n`);
+      if (j.device) res.write(`event: device\ndata: ${JSON.stringify(j.device)}\n\n`);
       for (const l of j.lines.slice(-500)) res.write(`event: line\ndata: ${JSON.stringify(l)}\n\n`);
       if (j.status !== "running") { res.write(`event: end\ndata: ${JSON.stringify(publicJob(j))}\n\n`); return res.end(); }
       j.clients.add(res);

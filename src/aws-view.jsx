@@ -1,7 +1,7 @@
 // AWS: estimate, credentials, create the environment (the installer server runs server/aws/*.sh and
 // streams their output), use it and delete it.
 import {useEffect, useRef, useState} from "react";
-import {Nav, Card, Title, H2, Choice, Button, Field, Input, Secret, Select, Check, Callout, Code, Badge, cx,
+import {Nav, Card, Title, H2, Choice, Button, Field, Input, Secret, Select, Check, Callout, Code, Badge, Segmented, cx,
         IconServer, IconCloud, IconLayers, IconDownload, IconTrash, IconWarn, IconCheck, Spinner} from "./ui.jsx";
 import {AWS_KINDS, EC2_TYPES, REGIONS, estimate, money, api} from "./aws.js";
 
@@ -12,7 +12,7 @@ const save = v => { try { localStorage.setItem("dxi-aws", JSON.stringify(v)); } 
 export function EnvAws({t, lang, form, set, go, back, info}){
   const saved = load();
   const [kind, setKind] = useState(form.awsKind || "ec2");
-  const [creds, setCreds] = useState({accessKeyId: "", secretAccessKey: "", sessionToken: "", rhcsToken: ""});
+  const [creds, setCreds] = useState({accessKeyId: "", secretAccessKey: "", sessionToken: "", rhAuth: "sa", rhClientId: "", rhClientSecret: "", rhcsToken: ""});
   const [region, setRegion] = useState(saved.region || "eu-west-1");
   const [who, setWho] = useState(null), [checking, setChecking] = useState(false), [checkErr, setCheckErr] = useState("");
   const [p, setP] = useState(() => ({name: saved.name || "dx-compose-poc", ...AWS_KINDS[kind].defaults, allowedCidr: ""}));
@@ -37,6 +37,7 @@ export function EnvAws({t, lang, form, set, go, back, info}){
     const src = new EventSource(`/api/jobs/${id}/events`);
     es.current = src;
     setJob(j => ({...j, steps: [], lines: []}));
+    src.addEventListener("device", e => setJob(j => ({...j, device: JSON.parse(e.data)})));
     src.addEventListener("step", e => setJob(j => ({...j, steps: [...(j.steps || []), JSON.parse(e.data)]})));
     src.addEventListener("line", e => setJob(j => ({...j, lines: [...(j.lines || []).slice(-800), JSON.parse(e.data)]})));
     src.addEventListener("end", e => {
@@ -73,7 +74,8 @@ export function EnvAws({t, lang, form, set, go, back, info}){
   const est = estimate(kind, p);
   const credsOk = !!who;
   const nameOk = /^[a-z][a-z0-9-]{1,30}[a-z0-9]$/.test(p.name);
-  const canCreate = credsOk && nameOk && accept && !running && (kind !== "rosa" || creds.rhcsToken.length > 20) && (kind !== "ec2" || who.defaultVpc);
+  const rhOk = creds.rhAuth === "device" || (creds.rhAuth === "sa" ? creds.rhClientId.length >= 8 && creds.rhClientSecret.length >= 8 : creds.rhcsToken.length > 20);
+  const canCreate = credsOk && nameOk && accept && !running && (kind !== "rosa" || rhOk) && (kind !== "ec2" || who.defaultVpc);
   const kinds = [["ec2", t.kEc2, t.kEc2T, <IconServer key="1" />], ["eks", t.kEks, t.kEksT, <IconCloud key="2" />], ["rosa", t.kRosa, t.kRosaT, <IconLayers key="3" />]];
 
   const credsCard = (
@@ -142,7 +144,7 @@ export function EnvAws({t, lang, form, set, go, back, info}){
                 : <Field label={t.nodes}><Select value={p.nodes} onChange={e => setP({...p, nodes: Number(e.target.value)})}>{[2, 3, 4].map(n => <option key={n}>{n}</option>)}</Select></Field>}
             </div>
             {kind === "ec2" && <Field label={t.allowedCidr} hint={t.allowedHint}><Input mono value={p.allowedCidr} onChange={e => setP({...p, allowedCidr: e.target.value.trim()})} placeholder="203.0.113.10/32" /></Field>}
-            {kind === "rosa" && <Field label={t.rhToken}><Secret value={creds.rhcsToken} onChange={e => setCreds({...creds, rhcsToken: e.target.value.trim()})} /></Field>}
+            {kind === "rosa" && <RedHatAuth t={t} creds={creds} setCreds={setCreds} />}
             <div className="rounded-xl bg-slate-50 p-3 text-xs dark:bg-navy-950">
               {est.lines.map(([l, v]) => <div key={l} className="flex justify-between gap-3 py-0.5 text-slate-600 dark:text-slate-400"><span>{l}</span><span className="font-mono">{money(v, lang)}{t.perHour}</span></div>)}
               <div className="mt-1 flex justify-between border-t border-slate-200 pt-1.5 font-semibold text-slate-900 dark:border-navy-800 dark:text-white"><span>≈ {money(est.day, lang)}{t.perDay}</span><span>{money(est.hour, lang)}{t.perHour}</span></div>
@@ -168,12 +170,35 @@ export function EnvAws({t, lang, form, set, go, back, info}){
                 <Field label={t.envName}><Input mono value={delName} onChange={e => setDelName(e.target.value.toLowerCase())} placeholder="dx-compose-poc" /></Field>
                 <Button variant="danger" disabled={!credsOk || !/^[a-z][a-z0-9-]{1,30}[a-z0-9]$/.test(delName)} onClick={() => askDelete(delKind, delName)}><IconTrash className="h-4 w-4" />{t.deleteExisting}</Button>
               </div>
+              {delKind === "rosa" && <div className="mt-4"><RedHatAuth t={t} creds={creds} setCreds={setCreds} /></div>}
             </Card>
           )}
         </div>
       )}
 
       <Nav t={t} back={back} next={() => go("deploy")} nextDisabled={!env || running} />
+    </div>
+  );
+}
+
+// ROSA: the installer has to sign in to the Red Hat account (OpenShift Cluster Manager) to create and delete the cluster
+function RedHatAuth({t, creds, setCreds}){
+  const m = creds.rhAuth;
+  return (
+    <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-navy-700">
+      <div className="text-sm font-semibold text-slate-900 dark:text-white">{t.rhTitle}</div>
+      <p className="text-xs text-slate-600 dark:text-slate-400">{t.rhWhy}</p>
+      <Segmented value={m} onChange={v => setCreds({...creds, rhAuth: v})} options={[["sa", t.rhSa], ["device", t.rhDevice], ["token", t.rhTokenMode]]} />
+      {m === "sa" && <>
+        <p className="text-xs text-slate-600 dark:text-slate-400">{t.rhSaHow}</p>
+        <Field label={t.rhClientId}><Input mono value={creds.rhClientId} onChange={e => setCreds({...creds, rhClientId: e.target.value.trim()})} /></Field>
+        <Field label={t.rhClientSecret}><Secret value={creds.rhClientSecret} onChange={e => setCreds({...creds, rhClientSecret: e.target.value.trim()})} /></Field>
+      </>}
+      {m === "device" && <p className="text-xs text-slate-600 dark:text-slate-400">{t.rhDeviceHow}</p>}
+      {m === "token" && <>
+        <p className="text-xs text-slate-600 dark:text-slate-400">{t.rhTokenHow}</p>
+        <Field label={t.rhToken}><Secret value={creds.rhcsToken} onChange={e => setCreds({...creds, rhcsToken: e.target.value.trim()})} /></Field>
+      </>}
     </div>
   );
 }
@@ -194,6 +219,12 @@ function JobPanel({t, job, kind, showLog, setShowLog, cancel}){
         </div>
         {tone === "running" && <Button variant="secondary" onClick={cancel}>{t.cancel}</Button>}
       </div>
+      {job.device && job.status === "running" && (
+        <Callout tone="info" title={t.rhDeviceNow} className="mt-4">
+          {job.device.code && <div className="my-2 font-mono text-2xl font-bold tracking-widest">{job.device.code}</div>}
+          {job.device.url && <a href={job.device.url} target="_blank" rel="noreferrer" className="break-all font-semibold underline">{job.device.url}</a>}
+        </Callout>
+      )}
       <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-navy-800">
         <div className={cx("h-2 rounded-full transition-all duration-700", tone === "error" ? "bg-rose-500" : "brand-gradient", tone === "running" && "animate-pulse")} style={{width: `${tone === "error" ? 100 : pct}%`}} />
       </div>

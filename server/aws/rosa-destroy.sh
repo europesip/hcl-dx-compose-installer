@@ -2,14 +2,13 @@
 # EXPERIMENTAL. Deletes the ROSA HCP cluster NAME and what rosa-create.sh created for it: volumes,
 # EFS, the cluster, operator roles, OIDC configuration, the network stack and the account roles.
 #
-#   RHCS_TOKEN=... NAME=dx-rosa REGION=eu-west-1 ./rosa-destroy.sh
+#   RHCS_CLIENT_ID=... RHCS_CLIENT_SECRET=... NAME=dx-rosa REGION=eu-west-1 ./rosa-destroy.sh  (or RHCS_TOKEN / RH_DEVICE_CODE=1)
 DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$DIR/lib.sh"
 need aws rosa
 check_name
-[ -n "${RHCS_TOKEN:-}" ] || die "RHCS_TOKEN is empty"
 whoami_aws
-rosa login --token "$RHCS_TOKEN" >/dev/null
+rh_login
 
 if rosa describe cluster -c "$NAME" >/dev/null 2>&1; then
   if [ -f "$OUT/kubeconfig" ] && command -v oc >/dev/null; then

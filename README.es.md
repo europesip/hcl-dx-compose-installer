@@ -144,6 +144,18 @@ NAME=dx-compose-poc REGION=eu-west-1 ./ec2-destroy.sh    # borra todo lo etiquet
 
 Cuestan dinero mientras existen: bórralos al terminar.
 
+**ROSA y tu cuenta de Red Hat.** ROSA lo gestiona Red Hat, así que crear y borrar el clúster requiere entrar en tu cuenta
+de Red Hat (OpenShift Cluster Manager). La página y `rosa-create.sh` / `rosa-destroy.sh` admiten tres formas:
+
+| Forma | Variables | Cómo conseguirla |
+|---|---|---|
+| **Cuenta de servicio** (recomendada para automatizar) | `RHCS_CLIENT_ID`, `RHCS_CLIENT_SECRET` | console.redhat.com › Identity & Access Management › Service accounts; dale acceso a OpenShift Cluster Manager en User Access (por ejemplo, el rol OCM Cluster Provisioner) |
+| **Código de dispositivo** | `RH_DEVICE_CODE=1` | Sin pegar nada: aparecen un enlace y un código (en la página o en la salida); apruébalos en tu navegador con tu cuenta de Red Hat |
+| **Token offline** | `RHCS_TOKEN` | console.redhat.com/openshift/token/rosa (obsoleto para Red Hat en favor de las cuentas de servicio, sigue funcionando) |
+
+Además, ROSA tiene que estar habilitado una vez en tu cuenta de AWS (consola de AWS › Red Hat OpenShift Service on AWS ›
+Get started). La vía de ROSA aún no se ha probado de principio a fin.
+
 ## Cómo funciona
 
 | Ruta | Qué es |
