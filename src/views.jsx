@@ -1,5 +1,5 @@
 // The views of the installer, one per screen
-import {useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {Modal, Nav, Card, Title, H2, Choice, Button, Field, Input, Secret, Select, Check, Toggle, Segmented, Callout, Code, Badge, cx,
         IconServer, IconPlus, IconLaptop, IconLinux, IconCloud, IconLayers, IconSliders, IconPresent, IconDownload, IconDoc, IconZip, IconSpark, IconCheck, Spinner} from "./ui.jsx";
 import {applyPreset, gates, NAME_KEYS, depsOf} from "./state.js";
@@ -386,7 +386,6 @@ export function Details({t, lang, form, set, go, back}){
 export function Download({t, lang, form, back, restart}){
   const gen = useMemo(() => generate(form, lang), [form, lang]);
   const [mask, setMask] = useState(true);
-  const [busy, setBusy] = useState("");
   const [open, setOpen] = useState({});
   const {err, warn} = gen.check;
   const webinar = gen.webinar;
@@ -400,25 +399,50 @@ export function Download({t, lang, form, back, restart}){
   };
   const word = async (as, m) => { const {buildWord} = await import("./word.js"); return buildWord(gen, lang, summary, {mask: m, as, logos: await logos()}); };
   const pdf = async m => { const {buildPdf} = await import("./pdf.js"); return buildPdf(gen, lang, summary, {mask: m, logos: await logos()}); };
-  const dlZip = async () => {
-    setBusy("zip");
-    try {
-      const entries = [...gen.entries];
-      if (webinar) {
-        entries.push({name: "dx-install/" + wordName, data: new Uint8Array(await (await word("blob", false)).arrayBuffer())});
-        entries.push({name: "dx-install/" + pdfName, data: new Uint8Array(await (await pdf(false)).arrayBuffer())});
-      }
-      download(webinar ? ZIP_NAME_WEBINAR : ZIP_NAME, zipBytes(entries), "application/zip");
-    } finally { setBusy(""); }
-  };
-  const dlWord = async () => { setBusy("word"); try { download(wordName, await word("blob", mask)); } finally { setBusy(""); } };
-  const dlPdf = async () => { setBusy("pdf"); try { download(pdfName, await pdf(mask)); } finally { setBusy(""); } };
+  // Build the files as soon as the page opens (and again when the choices change), then offer them as links
+  const [files, setFiles] = useState({}), [prepErr, setPrepErr] = useState("");
+  const sig = JSON.stringify([form, lang]);
+  useEffect(() => {
+    if (err.length) return;
+    let alive = true;
+    const url = blob => URL.createObjectURL(blob);
+    setFiles(f => ({runbook: f.runbook})); setPrepErr("");
+    (async () => {
+      try {
+        const out = {runbook: url(new Blob([gen.runbook], {type: "text/markdown"}))};
+        if (alive) setFiles(f => ({...f, runbook: out.runbook}));
+        const entries = [...gen.entries];
+        if (webinar) {
+          const [w, p2] = await Promise.all([word("blob", false), pdf(false)]);
+          entries.push({name: "dx-install/" + wordName, data: new Uint8Array(await w.arrayBuffer())});
+          entries.push({name: "dx-install/" + pdfName, data: new Uint8Array(await p2.arrayBuffer())});
+        }
+        out.zip = url(new Blob([zipBytes(entries)], {type: "application/zip"}));
+        if (alive) setFiles(f => ({...f, zip: out.zip}));
+      } catch (e) { console.error(e); if (alive) setPrepErr(String(e && e.message || e)); }
+    })();
+    return () => { alive = false; };
+  }, [sig]);
+  // The Word and PDF scripts depend on the "hide credentials" choice too
+  useEffect(() => {
+    if (err.length || !webinar) return;
+    let alive = true;
+    setFiles(f => ({...f, word: undefined, pdf: undefined}));
+    (async () => {
+      try {
+        const [w, p2] = await Promise.all([word("blob", mask), pdf(mask)]);
+        if (alive) setFiles(f => ({...f, word: URL.createObjectURL(w), pdf: URL.createObjectURL(p2)}));
+      } catch (e) { console.error(e); if (alive) setPrepErr(String(e && e.message || e)); }
+    })();
+    return () => { alive = false; };
+  }, [sig, mask]);
   const groups = webinar ? [[t.webP1t, gen.prep], [t.webP2t, gen.demo]] : [[null, gen.steps]];
 
   return (
     <div>
       <Title sub={t.dlSub}>{t.dlTitle}</Title>
       {err.length > 0 && <Callout tone="error" title={t.errors} className="mb-5"><ul className="list-disc space-y-1 pl-5">{err.map(e => <li key={e}>{e}</li>)}</ul></Callout>}
+      {prepErr && <Callout tone="error" title={t.prepFailed} className="mb-5">{prepErr}</Callout>}
       {(warn.length > 0 || gen.pgMissing || form.lab3b) && <Callout tone="warn" title={t.warnings} className="mb-5"><ul className="list-disc space-y-1 pl-5">
         {gen.pgMissing && <li>{t.pgNote}</li>}
         {form.lab3b && <li>{t.mcpNote}</li>}
@@ -431,13 +455,13 @@ export function Download({t, lang, form, back, restart}){
             </dl>
           </Card>
           <div className="grid gap-4 sm:grid-cols-2">
-            <DownloadCard icon={<IconZip />} title={t.dlZip} text={webinar ? t.dlZipWebT : t.dlZipT} onClick={dlZip} busy={busy === "zip"} disabled={err.length > 0} t={t} primary />
-            <DownloadCard icon={<IconDoc />} title={t.dlRunbook} text={t.dlRunbookT} onClick={() => download("RUNBOOK.md", gen.runbook, "text/markdown")} disabled={err.length > 0} t={t} />
+            <DownloadCard icon={<IconZip />} title={t.dlZip} text={webinar ? t.dlZipWebT : t.dlZipT} href={files.zip} name={webinar ? ZIP_NAME_WEBINAR : ZIP_NAME} disabled={err.length > 0} t={t} primary />
+            <DownloadCard icon={<IconDoc />} title={t.dlRunbook} text={t.dlRunbookT} href={files.runbook} name="RUNBOOK.md" disabled={err.length > 0} t={t} />
             {webinar && (
               <div className="sm:col-span-2">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <DownloadCard icon={<IconPresent />} title={t.dlWord} text={t.dlWordT} onClick={dlWord} busy={busy === "word"} disabled={err.length > 0} t={t} />
-                  <DownloadCard icon={<IconDoc />} title={t.dlPdf} text={t.dlPdfT} onClick={dlPdf} busy={busy === "pdf"} disabled={err.length > 0} t={t} />
+                  <DownloadCard icon={<IconPresent />} title={t.dlWord} text={t.dlWordT} href={files.word} name={wordName} disabled={err.length > 0} t={t} />
+                  <DownloadCard icon={<IconDoc />} title={t.dlPdf} text={t.dlPdfT} href={files.pdf} name={pdfName} disabled={err.length > 0} t={t} />
                 </div>
                 <div className="mb-1 mt-4 pl-2"><Check checked={mask} onChange={setMask}>{t.maskCreds}</Check></div>
               </div>
@@ -484,18 +508,19 @@ function stagesOf(steps){
   return [...m.entries()];
 }
 
-function DownloadCard({icon, title, text, onClick, busy, disabled, primary, t}){
-  return (
-    <button type="button" onClick={onClick} disabled={disabled || busy}
-      className={cx("flex h-full w-full items-start gap-4 rounded-2xl border-2 p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-50",
-        primary ? "border-transparent brand-gradient text-white shadow-lg shadow-brand-blue/20 hover:brightness-110" : "border-slate-200 bg-white hover:border-brand-blue dark:border-navy-700 dark:bg-navy-900")}>
-      <span className={cx("grid h-11 w-11 shrink-0 place-items-center rounded-xl", primary ? "bg-white/20" : "bg-slate-100 text-brand-blue dark:bg-navy-800 dark:text-blue-300")}>{busy ? <Spinner className="h-5 w-5" /> : icon}</span>
-      <span>
-        <span className="flex items-center gap-2 font-semibold">{title} <IconDownload className="h-4 w-4 opacity-70" /></span>
-        <span className={cx("mt-1 block text-sm", primary ? "text-white/85" : "text-slate-600 dark:text-slate-400")}>{busy ? t.building : text}</span>
-      </span>
-    </button>
-  );
+function DownloadCard({icon, title, text, href, name, disabled, primary, t}){
+  const ready = !!href && !disabled;
+  const cls = cx("flex h-full w-full items-start gap-4 rounded-2xl border-2 p-5 text-left transition",
+    primary ? "border-transparent brand-gradient text-white shadow-lg shadow-brand-blue/20" : "border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900",
+    ready ? (primary ? "hover:brightness-110" : "hover:border-brand-blue") : "cursor-wait opacity-60");
+  const body = (<>
+    <span className={cx("grid h-11 w-11 shrink-0 place-items-center rounded-xl", primary ? "bg-white/20" : "bg-slate-100 text-brand-blue dark:bg-navy-800 dark:text-blue-300")}>{ready || disabled ? icon : <Spinner className="h-5 w-5" />}</span>
+    <span>
+      <span className="flex items-center gap-2 font-semibold">{title} <IconDownload className="h-4 w-4 opacity-70" /></span>
+      <span className={cx("mt-1 block text-sm", primary ? "text-white/85" : "text-slate-600 dark:text-slate-400")}>{ready || disabled ? text : t.building}</span>
+    </span>
+  </>);
+  return ready ? <a href={href} download={name} className={cls}>{body}</a> : <div className={cls} aria-busy={!disabled}>{body}</div>;
 }
 
 export function summaryRows(t, form, gen, lang){

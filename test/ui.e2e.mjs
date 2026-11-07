@@ -29,7 +29,7 @@ await shot("4-details"); await next();
 await p.waitForSelector("text=PostgreSQL necesita un script de HCL"); await shot("4b-pg-dialog"); await p.click("button:has-text('Entendido')");
 await shot("5-download-webinar");
 if (!(await p.textContent("main")).includes("table script from HCL")) throw new Error("the download page should remind the PostgreSQL script");
-const files = [await save("button:has-text('Instalación (.zip)')"), await save("button:has-text('Guion del webinar (Word)')"), await save("button:has-text('Guion del webinar (PDF)')"), await save("button:has-text('Cada paso con su comando')")];
+const files = [await save("a:has-text('Instalación (.zip)')"), await save("a:has-text('Guion del webinar (Word)')"), await save("a:has-text('Guion del webinar (PDF)')"), await save("a:has-text('Cada paso con su comando')")];
 
 // 2. WSL PoC, everything
 await p.evaluate(() => localStorage.clear()); await p.reload();
@@ -39,8 +39,8 @@ await p.click("text=k3s funciona"); await next();
 await p.click("text=Todo"); await next();
 await p.click("text=He leído y acepto la licencia");
 await next(); await p.click("button:has-text('Entendido')"); await shot("7-download-all");
-if (await p.$("button:has-text('Guion del webinar')")) throw new Error("only the webinar has a Word script");
-files.push(await save("button:has-text('Instalación (.zip)')"));
+if (await p.$("text=Guion del webinar (Word)")) throw new Error("only the webinar has a Word script");
+files.push(await save("a:has-text('Instalación (.zip)')"));
 
 // 2b. Custom: switch LDAP off and on again, and the MCP dialog
 await p.evaluate(() => localStorage.setItem("dxi-view", JSON.stringify("deploy"))); await p.reload();
