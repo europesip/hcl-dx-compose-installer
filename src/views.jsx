@@ -42,6 +42,7 @@ function HostsHelp({t, host}){
 
 // ---------------------------------------------------------------------------------------------
 export function Welcome({t, go}){
+  const [noOpen, setNoOpen] = useState(false);
   const cards = [[t.w1t, t.w1, <IconLayers key="a" />], [t.w2t, t.w2, <IconServer key="b" />], [t.w3t, t.w3, <IconSpark key="c" />]];
   return (
     <div>
@@ -51,7 +52,8 @@ export function Welcome({t, go}){
         <div className="relative max-w-3xl">
           <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide ring-1 ring-white/20">HCL DX Compose · CF239</span>
           <h1 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl">{t.heroTitle}</h1>
-          <p className="mt-4 text-base text-slate-300 sm:text-lg">{t.heroSub}</p>
+          <p className="mt-4 text-base text-slate-300 sm:text-lg">{t.heroSubA}<button type="button" onClick={() => setNoOpen(true)}
+            className="font-semibold text-white underline decoration-brand-pink decoration-2 underline-offset-4 hover:text-pink-200">{t.heroSubLink}</button>{t.heroSubB}</p>
           <Button onClick={() => go("env")} className="mt-8 px-7 py-3 text-base">{t.start}</Button>
         </div>
       </section>
@@ -68,6 +70,9 @@ export function Welcome({t, go}){
         <ul className="grid gap-2 text-sm text-slate-700 dark:text-slate-300 md:grid-cols-3">{t.wNeed.map(x => <Bullet key={x}>{x}</Bullet>)}</ul>
         <p className="mt-4 text-xs text-slate-500">{t.wNote}</p>
       </Card>
+      <Modal open={noOpen} title={t.noTitle} onClose={() => setNoOpen(false)} actions={<Button onClick={() => setNoOpen(false)}>{t.noOk}</Button>}>
+        {t.noBody.map(x => <p key={x}>{x}</p>)}
+      </Modal>
     </div>
   );
 }

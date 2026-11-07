@@ -35,7 +35,7 @@ The installer only needs to connect to the Internet for the AWS functions. Witho
 ## Use the original image
 
 Use only the official image, **`ghcr.io/europesip/hcl-dx-compose-installer`**, published by the GitHub Actions of this
-repository. Pin a version (`:2.0.2`) or its digest. If you prefer, build it yourself from the source code:
+repository. Pin a version (`:2.0.3`) or its digest. If you prefer, build it yourself from the source code:
 
 ```bash
 git clone https://github.com/europesip/hcl-dx-compose-installer.git && cd hcl-dx-compose-installer
