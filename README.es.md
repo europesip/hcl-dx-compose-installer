@@ -1,207 +1,89 @@
-# Instalador de HCL DX Compose
+<p align="center"><img src="public/europesip-logo.svg" alt="EUROPESIP" width="260"></p>
 
-[English](README.md) · **Español**
+<h1 align="center">Instalador de HCL DX Compose</h1>
 
-Un instalador web guiado para **HCL DX Compose**, de [EUROPESIP](https://www.europesip.com). Te lleva del
-entorno al portal funcionando, pantalla a pantalla, en inglés o en español (empieza en el idioma de tu
-navegador):
+<p align="center"><b>De cero a un HCL DX Compose funcionando, paso a paso.</b><br>
+Un instalador web guiado para pruebas de concepto y entornos de pruebas, de <a href="https://www.europesip.com">EUROPESIP</a>.</p>
 
-1. **Qué es DX Compose** y qué necesita (Kubernetes).
-2. **Tu entorno.**
-   - **Tu propio clúster:** los requisitos, los comandos para validarlo (StorageClasses RWO y RWX,
-     Ingress) y una confirmación antes de seguir.
-   - **Sin clúster:** te ayuda a crear uno.
-     - En tu **PC con Windows (WSL2)** o en una **máquina Linux**: un k3s de un nodo, con las guías y
-       cada comando.
-     - En **AWS**, con una estimación de precio y un aviso claro de costes:
-       - **una única instancia EC2** con k3s y Longhorn;
-       - **Amazon EKS**;
-       - **ROSA** (Red Hat OpenShift en AWS, experimental).
+<p align="center"><a href="README.md">English</a> · <b>Español</b> · <a href="docs/faq.es.md">Preguntas frecuentes</a> · <a href="docs/deploy.es.md">Docker y Helm</a> · <a href="docs/aws.es.md">AWS</a> · <a href="docs/how-it-works.es.md">Cómo funciona</a></p>
 
-     El instalador crea el entorno de AWS por ti, muestra el progreso, te da el kubeconfig y lo borra
-     todo al terminar.
-3. **Despliegues rápidos:**
-   - **Todo**: todas las etapas y todos los extras;
-   - **Personalizado**: eliges las etapas;
-   - **Webinar · Showroom**: exactamente lo que muestra el webinar, en dos fases (una preparación antes
-     de la sesión y la demo).
-4. **Tus datos**: el registro de HCL, OpenRouter (para el asistente de IA), contraseñas.
-5. **Descarga** una instalación lista para ejecutar:
-   - **Todo / Personalizado**: `dx-compose-install.zip`, con `install.sh`, `uninstall.sh`, `RUNBOOK.md`
-     y todos los ficheros (values de Helm, Secrets, LDIF, properties) ya rellenos.
-   - **Webinar**: `dx-compose-webinar.zip`, con `prepare.sh` (fase 1: todos los pre-requisitos salvo
-     LiteLLM, y se detiene), `demo.sh` (fase 2: etapas 0 a 5, comando a comando) y el **guion del
-     presentador en Word**. El guion recoge cada etapa, qué contar, los comandos, los valores de los
-     YAML en los que fijarse y los secrets que se crean.
+<p align="center"><img src="docs/images/welcome.es.jpg" alt="La página de bienvenida del instalador" width="860"></p>
 
-Las etapas son las mismas en todos los modos:
+## Qué hace
 
-| Etapa | Qué hace |
-|---|---|
-| 0 · Pre-requisitos | Namespaces y las dependencias que necesiten las etapas elegidas (OpenLDAP, PostgreSQL, LiteLLM) |
-| 1 · Instalación base de DX | DX Compose, sus secrets, los charts de HCL desde hclcr.io y el acceso externo |
-| 2 · Configuración del LDAP | DX se autentica contra OpenLDAP (usuarios de demo) o tu Active Directory |
-| 3 · Transferencia a base de datos externa | El Web Engine pasa de Derby a PostgreSQL u Oracle |
-| 4 · Asistente de IA | HCL DX IQ con LiteLLM y OpenRouter (extras: MCP de EUROPESIP, sesiones de IQ, RAG) |
-| 5 · Búsqueda | OpenSearch y Search V2 |
-| Extras | Script Application de ejemplo (Hello DX), [ÓRBITA](https://github.com/europesip/orbita) |
+- 🧭 **Te guía pantalla a pantalla**, en español o en inglés (empieza en el idioma de tu navegador).
+- ☸️ **Prepara tu entorno.** Comprueba tu clúster, o te crea uno: en tu PC (WSL2), en una máquina Linux o en AWS
+  (EC2 + k3s, EKS, ROSA), con estimación de coste y borrado con un clic.
+- 🚀 **Instala lo que elijas:** Todo, Personalizado o la demo **Webinar · Showroom**, en etapas claras:
+  0 Pre-requisitos · 1 Base DX · 2 LDAP · 3 Base de datos externa · 4 Asistente de IA · 5 Búsqueda.
+- 📦 **Te entrega una instalación lista para ejecutar:** scripts rellenos con tus valores, un RUNBOOK y, para el webinar,
+  el guion del presentador en Word.
 
-> Está pensado para **pruebas de concepto y entornos de pruebas**, no para producción.
+<table>
+<tr>
+<td width="50%"><img src="docs/images/environment.es.jpg" alt="Elige dónde crear el entorno"><br><sub><b>Tu entorno</b>: tu PC, una máquina Linux o AWS</sub></td>
+<td width="50%"><img src="docs/images/aws.es.jpg" alt="Opciones de AWS con estimación de precio"><br><sub><b>AWS</b>: estimación de precio, progreso en directo, bórralo al terminar</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/images/deployment.es.jpg" alt="Despliegues rápidos"><br><sub><b>Despliegues rápidos</b>: Todo, Personalizado o Webinar</sub></td>
+<td width="50%"><img src="docs/images/download.es.jpg" alt="Descarga la instalación"><br><sub><b>Descarga</b>: zip, RUNBOOK y el guion del webinar</sub></td>
+</tr>
+</table>
 
-## Tus datos
+## Pon en marcha el instalador
 
-- **Datos de la instalación:** la instalación (scripts, RUNBOOK, guion de Word) se genera **en tu
-  navegador**. Lo que escribes en los pasos de la instalación, credenciales incluidas, no se envía a
-  ningún servidor. Tus elecciones se recuerdan en tu navegador (nunca las credenciales).
-- **Claves de AWS:** solo se envían cuando pides al instalador crear o borrar un entorno de AWS. Van al
-  servidor del propio instalador (el pod o contenedor que tú ejecutas), que se las pasa al AWS CLI solo
-  para esa operación. Nunca se escriben en disco ni en los logs.
-- **Auditoría:** el código fuente está aquí para que lo audites.
-
-> ⚠️ **¿Accesible desde fuera? Activa la autenticación.** Si despliegas el instalador en una máquina o clúster accesible
-> desde Internet o desde otras redes, activa su usuario y contraseña (`auth.enabled=true` en el chart de Helm, o
-> `AUTH_USER` / `AUTH_PASSWORD` en Docker). Si no, cualquiera que llegue a la página puede usarla, incluidas sus funciones
-> de AWS con sus propias claves (o desactívalas con `aws.enabled=false`).
-
-## Ejecutarlo con Docker
+**Opción 1 · En tu máquina Windows o Mac, con Docker**
 
 ```bash
 docker run --rm -p 8080:8080 ghcr.io/europesip/hcl-dx-compose-installer:2.0.0
 ```
 
-Abre http://localhost:8080. La imagen se ejecuta con un usuario sin privilegios y funciona con el sistema de
-ficheros raíz de solo lectura (`--read-only --tmpfs /tmp`). Incluye las herramientas para los entornos de
-AWS: AWS CLI, eksctl, ROSA CLI, oc, kubectl, Helm y ssh.
+Después abre http://localhost:8080.
 
-Autenticación básica (opcional): `-e AUTH_USER=admin -e AUTH_PASSWORD='S3cret!'`. Sin las funciones de AWS:
-`-e AWS_ENABLED=false`.
-
-## Instalarlo en Kubernetes u OpenShift (Helm)
+**Opción 2 · En un clúster Kubernetes u OpenShift, con Helm**
 
 ```bash
-helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer \
-  --version 2.0.0 -n dx-installer --create-namespace \
-  --set ingress.enabled=true --set ingress.className=nginx --set ingress.host=installer.example.com \
-  --set auth.enabled=true --set auth.username=admin --set auth.password='S3cret!'   # si es accesible desde fuera
+helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer --version 2.0.0 \
+  -n dx-installer --create-namespace --set ingress.enabled=true --set ingress.host=installer.example.com \
+  --set auth.enabled=true --set auth.username=admin --set auth.password='S3cret!'
 ```
 
-| Valor | Por defecto | Qué hace |
-|---|---|---|
-| `image.repository` / `image.tag` | `ghcr.io/europesip/hcl-dx-compose-installer` / appVersion del chart | Imagen (usa un espejo en clústeres sin Internet) |
-| `imagePullSecrets` | `[]` | Para un registro privado |
-| `replicaCount` | `1` | Réplicas (los trabajos de AWS viven en el pod que los lanzó: deja 1 si los usas) |
-| `service.type` / `service.port` / `service.nodePort` | `ClusterIP` / `80` | `ClusterIP`, `NodePort` o `LoadBalancer` |
-| `ingress.enabled` / `className` / `host` / `annotations` | `false` | Ingress de Kubernetes |
-| `ingress.tls.enabled` / `ingress.tls.secretName` | `false` | HTTPS; sin nombre de secret: el certificado por defecto del controlador |
-| `route.enabled` / `route.host` / `route.tls.termination` | `false` / generado / `edge` | Route de OpenShift en lugar del Ingress |
-| `auth.enabled` / `auth.username` / `auth.password` / `auth.existingSecret` | `false` | Autenticación básica (o un Secret con las claves `username` y `password`) |
-| `aws.enabled` | `true` | Crear y borrar entornos de AWS desde la página |
-| `workDir.sizeLimit` | `1Gi` | Espacio para los trabajos de AWS (clave SSH, kubeconfig, logs) |
-| `resources` | peticiones 20m / 96Mi | CPU y memoria |
-| `podSecurityContext` / `securityContext` | sin root, FS raíz de solo lectura, sin capabilities, seccomp | Funciona con la SCC `restricted-v2` de OpenShift |
-| `nodeSelector` / `tolerations` / `affinity` / `priorityClassName` | vacíos | Planificación |
-| `networkPolicy.enabled` / `networkPolicy.from` | `false` | Solo deja entrar tráfico al puerto del pod; de salida solo DNS y HTTPS/SSH/6443 (AWS), nada sin AWS |
-| `podDisruptionBudget.enabled` | `false` | PDB con `minAvailable` |
+> 🔒 ¿Accesible desde fuera? Deja `auth.enabled=true`. Todas las opciones del chart y de la imagen:
+> **[Docker y Helm](docs/deploy.es.md)**.
 
-## Después, ejecuta la instalación
+## Después, instala DX Compose
 
-En una máquina con `bash`, `kubectl`, `helm`, `openssl`, `curl` y `python3` apuntando a tu clúster:
+Descomprime lo que descargaste y ejecútalo en una máquina con `kubectl` y `helm` apuntando a tu clúster:
 
 ```bash
-unzip dx-compose-install.zip && cd dx-install
-./install.sh            # todos los pasos, etapa a etapa
-./install.sh --list     # lista de pasos
-./install.sh --from 4-1 # continuar desde un paso
-./install.sh --pause    # muestra cada comando y espera a Enter
-./uninstall.sh          # borra todo lo que creó
+unzip dx-compose-install.zip && cd dx-install && ./install.sh     # o, para el webinar: ./prepare.sh y después ./demo.sh
 ```
 
-Webinar:
+## Preguntas frecuentes
 
-```bash
-unzip dx-compose-webinar.zip && cd dx-install
-./prepare.sh            # fase 1, antes de la sesión: se detiene con el entorno preparado
-./demo.sh               # fase 2, el día de la demo: etapas 0 a 5, comando a comando
-./uninstall.sh          # después del webinar
-```
+- **¿Sirve para producción?** No: pruebas de concepto, desarrollo y pruebas.
+- **¿No tienes Kubernetes?** El instalador lo crea. Lo recomendado es WSL2 en tu PC: 24 GB de RAM y 8 núcleos.
+- **¿AWS cuesta dinero?** Sí, desde ~0,89 USD/hora. Bórralo desde la página al terminar.
+- **¿Se envían mis credenciales a algún sitio?** La instalación se genera en tu navegador. Las claves de AWS solo van a
+  tu propio instalador, para la operación que le pidas.
 
-## Entornos de AWS desde tu propia máquina
+Más preguntas: **[Preguntas frecuentes](docs/faq.es.md)**.
 
-Los scripts que ejecuta la página están en [`server/aws`](server/aws). Puedes ejecutarlos tú con el AWS CLI
-(y eksctl para EKS, rosa y oc para ROSA):
+## Saber más
 
-```bash
-cd server/aws
-NAME=dx-compose-poc REGION=eu-west-1 ./ec2-create.sh     # o eks-create.sh / rosa-create.sh
-NAME=dx-compose-poc REGION=eu-west-1 ./ec2-destroy.sh    # borra todo lo etiquetado dx-installer=NAME
-```
-
-| Script | Qué crea | Precio aprox. (eu-west-1) |
-|---|---|---|
-| `ec2-create.sh` | una m6i.4xlarge (Ubuntu 24.04, 200 GB gp3) con k3s, Helm, Longhorn y las StorageClasses `dx-deploy-rwo` / `dx-deploy-rwx`, Traefik; DX en `dx-demo.<IP>.nip.io` | ~0,89 USD/hora |
-| `eks-create.sh` | EKS con 2 × m6i.2xlarge en su propia VPC, EBS CSI (RWO), EFS CSI y un sistema de ficheros EFS (RWX), ingress-nginx tras un NLB, un kubeconfig con su propio token | ~1,08 USD/hora |
-| `rosa-create.sh` | ROSA con planos de control alojados, 2 workers, EBS y EFS (experimental) | ~2 USD/hora |
-
-Cuestan dinero mientras existen: bórralos al terminar.
-
-**ROSA y tu cuenta de Red Hat.** ROSA lo gestiona Red Hat, así que crear y borrar el clúster requiere entrar en tu cuenta
-de Red Hat (OpenShift Cluster Manager). La página y `rosa-create.sh` / `rosa-destroy.sh` admiten tres formas:
-
-| Forma | Variables | Cómo conseguirla |
-|---|---|---|
-| **Cuenta de servicio** (recomendada para automatizar) | `RHCS_CLIENT_ID`, `RHCS_CLIENT_SECRET` | console.redhat.com › Identity & Access Management › Service accounts; dale acceso a OpenShift Cluster Manager en User Access (por ejemplo, el rol OCM Cluster Provisioner) |
-| **Código de dispositivo** | `RH_DEVICE_CODE=1` | Sin pegar nada: aparecen un enlace y un código (en la página o en la salida); apruébalos en tu navegador con tu cuenta de Red Hat |
-| **Token offline** | `RHCS_TOKEN` | console.redhat.com/openshift/token/rosa (obsoleto para Red Hat en favor de las cuentas de servicio, sigue funcionando) |
-
-Además, ROSA tiene que estar habilitado una vez en tu cuenta de AWS (consola de AWS › Red Hat OpenShift Service on AWS ›
-Get started). La vía de ROSA aún no se ha probado de principio a fin.
-
-## Cómo funciona
-
-| Ruta | Qué es |
+| | |
 |---|---|
-| `src/App.jsx`, `src/views.jsx`, `src/aws-view.jsx`, `src/ui.jsx`, `src/i18n.js` | Interfaz (React + Tailwind CSS, inglés y español) |
-| `src/state.js` | Valores del formulario, despliegues rápidos, dependencias entre etapas |
-| `src/engine/core.js` | Motor de generación: ficheros de los labs, pasos, `install.sh` |
-| `src/engine/stages.js` | Etapas 0-5 y extras, las dos fases del webinar, `RUNBOOK.md` |
-| `src/bundle.js`, `src/zip.js` | El zip, el enmascarado de credenciales, los valores clave de cada YAML |
-| `src/word.js` | Guion del webinar en Word |
-| `src/aws.js`, `server/aws/*.sh` | Tamaños y estimaciones de precio de AWS; los scripts que crean y borran los entornos |
-| `server/index.mjs` | Servidor: la página, y la API que ejecuta los scripts de AWS y emite su salida |
-| `Dockerfile`, `chart/hcl-dx-compose-installer` | Imagen del contenedor y chart de Helm |
+| [Docker y Helm](docs/deploy.es.md) | Todas las opciones para ejecutar el instalador, la autenticación, qué hacer con la descarga |
+| [Entornos de AWS](docs/aws.es.md) | Qué crea cada opción de AWS, su precio, cómo borrarla, ROSA y tu cuenta de Red Hat |
+| [Cómo funciona](docs/how-it-works.es.md) | Tus datos, el código, desarrollo y CI |
+| [Laboratorios de HCL DX Compose](https://github.com/europesip/hcl-dx-compose-labs) | Las guías para aprender cada paso a mano |
+| [ÓRBITA](https://github.com/europesip/orbita) | Una intranet para HCL DX Compose que el instalador puede añadir |
 
-El motor nació como la opción C del asistente de configuración de los
-[labs](https://github.com/europesip/hcl-dx-compose-labs), que ahora está congelado.
-`test/golden.e2e.mjs` comprueba que, para el mismo estado, el motor sigue generando los mismos ficheros y
-comandos que ese asistente.
+Las contribuciones son bienvenidas: abre un issue o un pull request.
 
-## Desarrollo
+## Licencia y contacto
 
-```bash
-npm ci
-PORT=8080 npm start &               # el servidor (API), con las herramientas de AWS en el PATH
-npm run dev                         # http://localhost:5173 (envía /api a :8080)
-npm test                            # pruebas unitarias
-WIZARD=/ruta/a/hcl-dx-compose-labs/docs/index.html node test/golden.e2e.mjs
-npm run build && npm start          # build de producción en http://localhost:8080
-```
+[MIT](LICENSE) · [NOTICE](NOTICE). HCL, HCL Digital Experience y HCL DX Compose son marcas de HCL Technologies; este
+proyecto no es un producto de HCL.
 
-GitHub Actions ejecuta las pruebas, la prueba de equivalencia y el build. Construye la imagen (amd64 y
-arm64) y prueba el contenedor: herramientas, cabeceras, API, solo lectura, y la interfaz completa con las
-descargas. Después publica `ghcr.io/europesip/hcl-dx-compose-installer` (`:main` en cada push; `:X.Y.Z` y
-el chart de Helm con un tag `vX.Y.Z`).
-
-## Contribuir
-
-Las contribuciones son bienvenidas: opciones nuevas, entornos, idiomas o correcciones. Abre un issue o un
-pull request.
-
-## Licencia
-
-[MIT](LICENSE). Ver [NOTICE](NOTICE). HCL, HCL Digital Experience y HCL DX Compose son marcas de HCL
-Technologies; este proyecto no es un producto de HCL. Los charts y las imágenes de HCL se descargan del
-registro de HCL con tu propia cuenta de HCL.
-
-## Contacto
-
-EUROPESIP · https://www.europesip.com · info@europesip.com
+**EUROPESIP** · https://www.europesip.com · info@europesip.com

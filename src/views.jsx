@@ -121,7 +121,7 @@ export function EnvCreate({t, form, set, go, back}){
     <div>
       <Title sub={t.createSub}>{t.createTitle}</Title>
       <div className="grid gap-5 md:grid-cols-3">
-        <Choice selected={pick === "wsl"} onClick={() => set({envSource: "wsl"})} icon={<IconLaptop />} title={t.cWsl}>{t.cWslT}</Choice>
+        <Choice selected={pick === "wsl"} onClick={() => set({envSource: "wsl"})} icon={<IconLaptop />} title={t.cWsl} badge={t.recommended}>{t.cWslT}</Choice>
         <Choice selected={pick === "linux"} onClick={() => set({envSource: "linux"})} icon={<IconLinux />} title={t.cLinux}>{t.cLinuxT}</Choice>
         <Choice selected={pick === "aws"} onClick={() => set({envSource: "aws"})} icon={<IconCloud />} title={t.cAws}>{t.cAwsT}</Choice>
       </div>
