@@ -77,7 +77,7 @@ const T = {
       ["Ingress", s.openshift ? "The OpenShift router" : `IngressClass ${s.INGRESS_CLASS}`], ["StorageClasses", `${s.SC_RWO} (ReadWriteOnce) and ${s.SC_RWX} (ReadWriteMany, for DAM)`],
       ["Free resources", "Base DX ~5 CPU / 11 GiB; with every stage, a start-up peak of ~8 CPU / 14 GiB"]],
     prep: "Phase 1 · Preparing the environment",
-    prepP: "Run it a few days before the webinar, from the dx-install folder. It installs every prerequisite except LiteLLM, and stops. In the session it is shown as already done (slides 6 and 7).",
+    prepP: "Run it a few days before the webinar, from the dx-install folder. It installs every prerequisite except LiteLLM, and stops. In the session it is shown as already done (slides 6 to 8).",
     prepCmd: "unzip dx-compose-webinar.zip && cd dx-install\n./prepare.sh",
     ready: "Checkpoint: when prepare.sh ends with “Environment ready for the session”, stop. Nothing else is installed until the day of the webinar.",
     demo: "Phase 2 · The live demo",
@@ -166,7 +166,7 @@ const T = {
       ["Ingress", s.openshift ? "El router de OpenShift" : `IngressClass ${s.INGRESS_CLASS}`], ["StorageClasses", `${s.SC_RWO} (ReadWriteOnce) y ${s.SC_RWX} (ReadWriteMany, para DAM)`],
       ["Recursos libres", "Base DX ~5 CPU / 11 GiB; con todas las etapas, un pico de arranque de ~8 CPU / 14 GiB"]],
     prep: "Fase 1 · Preparar el entorno",
-    prepP: "Ejecútala unos pocos días antes del webinar, desde la carpeta dx-install. Instala todos los pre-requisitos salvo LiteLLM y se detiene. En la sesión se presenta como ya hecho (diapositivas 6 y 7).",
+    prepP: "Ejecútala unos pocos días antes del webinar, desde la carpeta dx-install. Instala todos los pre-requisitos salvo LiteLLM y se detiene. En la sesión se presenta como ya hecho (diapositivas 6 a 8).",
     prepCmd: "unzip dx-compose-webinar.zip && cd dx-install\n./prepare.sh",
     ready: "Punto de control: cuando prepare.sh termina con «Entorno preparado para la sesión», detente. No se instala nada más hasta el día del webinar.",
     demo: "Fase 2 · La demo en directo",
@@ -192,68 +192,68 @@ const T = {
 // Each stage: the slides it goes with, its time, what the audience sees, why it is done and what to tell
 const STAGE = {
   en: [
-    {slides: "6-7", time: "3 min", show: "The prepared environment, and LiteLLM answering",
+    {slides: "6-10", time: "3 min", show: "The prepared environment, and LiteLLM answering",
      why: "HCL DX IQ needs an LLM proxy as a prerequisite. Everything else was prepared before the session, so the demo starts by checking it and installing the one piece left: LiteLLM.",
      points: ["Prepared before the session: the namespaces, OpenLDAP with the demo users, PostgreSQL 18 (CloudNativePG) and the HCL pull secret. We check them.",
               "LiteLLM is not HCL software: it is the open-source BerriAI proxy, installed with its public chart. It publishes the two logical models IQ asks for, iq-general-purpose and iq-summary, and routes them to Claude through OpenRouter.",
               "Changing the model never touches IQ: only litellm-values.yaml."]},
-    {slides: "8-9", time: "~6 min*", show: "The DX pods starting, then the portal at /wps/portal as wpsadmin",
+    {slides: "11", time: "~6 min*", show: "The DX pods starting, then the portal at /wps/portal as wpsadmin",
      why: "The base of everything: DX Compose CF239 with its embedded Derby database and the basic user registry, published through an Ingress.",
      points: ["The official charts come from the HCL registry (hclcr.io) with a helm pull; the cluster pulls the images itself with the regcred pull secret.",
               "Three secrets: the pull secret, the wpsadmin credentials and the TLS certificate of the DX HAProxy (self-signed in a PoC).",
               "One helm upgrade --install with custom-values.yaml: walk through the host name, the StorageClasses and the applications enabled.",
               "While it starts, explain the pods: Web Engine, HAProxy, DAM, the Persistence Node, Ring API, image processor and License Manager. Then the Ingress that re-encrypts towards HAProxy."]},
-    {slides: "10", time: "~5 min", show: "Signing in as macarena (an LDAP user) and the Administrator role for dxadmins",
+    {slides: "12", time: "~5 min", show: "Signing in as macarena (an LDAP user) and the Administrator role for dxadmins",
      why: "In production DX authenticates against the corporate directory. The chart has a native LDAP block, so nothing is configured by hand in XML, and the bind credentials live in a Kubernetes Secret.",
      points: ["Native LDAP block of the chart (configuration.webEngine.ldap, type other), bind credentials in the dx-ldap-bind secret.",
               "Every upgrade carries all the layers so far: one more -f per stage, never --reuse-values.",
               "The basic registry is kept, so wpsadmin can still sign in. Then give the Administrator role to the dxadmins group."]},
-    {slides: "11", time: "~13 min", show: "The transfer in the Web Engine log, and the tables counted in PostgreSQL",
+    {slides: "13", time: "~13 min", show: "The transfer in the Web Engine log, and the tables counted in PostgreSQL",
      why: "Derby is fine to start, but a real installation keeps the Web Engine data in an external database. The chart moves it with a single upgrade.",
      points: ["Two secrets with the dbtype and dbdomain properties, and useExternalDatabase: true in the values.",
               "The transfer runs once when the Web Engine starts and is recorded: later upgrades do not repeat it.",
               "PostgreSQL needs the table script from HCL (early release, not validated yet for the Web Engine); otherwise Derby or Oracle.",
               "Result: about 465 tables transferred."]},
-    {slides: "12", time: "~8 min", show: "The IQ button in the DX toolbar answering “Which WCM libraries are there?”",
+    {slides: "14", time: "~8 min", show: "The IQ button in the DX toolbar answering “Which WCM libraries are there?”",
      why: "HCL DX IQ brings an AI assistant to DX. Its LLM goes through LiteLLM and OpenRouter instead of AWS Bedrock, so any provider can be used.",
      points: ["IQ = the Integrator and its MCP Server (chart hcl-dx-iq 1.0.3), next to DX.",
               "The IQ values: the LiteLLM URL and the two models; then one DX upgrade so that HAProxy routes the IQ chat.",
               "Demo: ask IQ about the WCM libraries, in the portal and from the terminal. IQ acts with the permissions of the user who asks."]},
-    {slides: "13", time: "~7 min", show: "The Search Center and the search API explorer",
+    {slides: "15", time: "~7 min", show: "The Search Center and the search API explorer",
      why: "Search V2 replaces the classic portal search with OpenSearch, secured with mutual TLS.",
      points: ["hcl-dx-search 2.37.0: OpenSearch, the Search Middleware and the File Processor.",
               "Mutual TLS: a lab CA and the admin, node and client certificates, created as secrets.",
               "One more DX upgrade enables Search V2; the crawlers index WCM, JCR, the portal and DAM every 15 minutes."]},
   ],
   es: [
-    {slides: "6-7", time: "3 min", show: "El entorno preparado, y LiteLLM respondiendo",
+    {slides: "6-10", time: "3 min", show: "El entorno preparado, y LiteLLM respondiendo",
      why: "HCL DX IQ necesita un proxy de LLM como pre-requisito. Todo lo demás se preparó antes de la sesión, así que la demo empieza comprobándolo e instalando la única pieza que falta: LiteLLM.",
      points: ["Preparado antes de la sesión: los namespaces, OpenLDAP con los usuarios de demo, PostgreSQL 18 (CloudNativePG) y el pull secret de HCL. Lo comprobamos.",
               "LiteLLM no es software de HCL: es el proxy open source de BerriAI, instalado con su chart público. Publica los dos modelos lógicos que pide IQ, iq-general-purpose e iq-summary, y los enruta a Claude a través de OpenRouter.",
               "Cambiar el modelo nunca toca IQ: solo litellm-values.yaml."]},
-    {slides: "8-9", time: "~6 min*", show: "Los pods de DX arrancando, y después el portal en /wps/portal como wpsadmin",
+    {slides: "11", time: "~6 min*", show: "Los pods de DX arrancando, y después el portal en /wps/portal como wpsadmin",
      why: "La base de todo: DX Compose CF239 con su base de datos Derby embebida y el registro básico de usuarios, publicado con un Ingress.",
      points: ["Los charts oficiales vienen del registro de HCL (hclcr.io) con un helm pull; las imágenes las descarga el propio clúster con el pull secret regcred.",
               "Tres secrets: el pull secret, las credenciales de wpsadmin y el certificado TLS del HAProxy de DX (autofirmado en una PoC).",
               "Un único helm upgrade --install con custom-values.yaml: recorre el nombre de host, las StorageClasses y las aplicaciones activadas.",
               "Mientras arranca, explica los pods: Web Engine, HAProxy, DAM, el Persistence Node, Ring API, image processor y License Manager. Después, el Ingress que re-cifra hacia HAProxy."]},
-    {slides: "10", time: "~5 min", show: "Entrar como macarena (usuario del LDAP) y el rol Administrator para dxadmins",
+    {slides: "12", time: "~5 min", show: "Entrar como macarena (usuario del LDAP) y el rol Administrator para dxadmins",
      why: "En producción DX se autentica contra el directorio corporativo. El chart tiene un bloque LDAP nativo, así que no se configura nada a mano en XML, y las credenciales de bind van en un Secret de Kubernetes.",
      points: ["Bloque LDAP nativo del chart (configuration.webEngine.ldap, type other), credenciales de bind en el secret dx-ldap-bind.",
               "Cada upgrade lleva todas las capas hasta el momento: un -f más por etapa, nunca --reuse-values.",
               "Se mantiene el registro básico, así que wpsadmin sigue pudiendo entrar. Después, da el rol Administrator al grupo dxadmins."]},
-    {slides: "11", time: "~13 min", show: "La transferencia en el log del Web Engine, y las tablas contadas en PostgreSQL",
+    {slides: "13", time: "~13 min", show: "La transferencia en el log del Web Engine, y las tablas contadas en PostgreSQL",
      why: "Derby sirve para empezar, pero una instalación real guarda los datos del Web Engine en una base de datos externa. El chart los traslada con un único upgrade.",
      points: ["Dos secrets con las propiedades dbtype y dbdomain, y useExternalDatabase: true en los values.",
               "La transferencia se hace una vez al arrancar el Web Engine y queda registrada: los siguientes upgrades no la repiten.",
               "PostgreSQL necesita el table script de HCL (early release, aún no validado para el Web Engine); si no, Derby u Oracle.",
               "Resultado: unas 465 tablas transferidas."]},
-    {slides: "12", time: "~8 min", show: "El botón de IQ en la barra de DX respondiendo «¿Qué bibliotecas de WCM hay?»",
+    {slides: "14", time: "~8 min", show: "El botón de IQ en la barra de DX respondiendo «¿Qué bibliotecas de WCM hay?»",
      why: "HCL DX IQ lleva un asistente de IA a DX. Su LLM pasa por LiteLLM y OpenRouter en lugar de AWS Bedrock, así que se puede usar cualquier proveedor.",
      points: ["IQ = el Integrator y su MCP Server (chart hcl-dx-iq 1.0.3), junto a DX.",
               "Los values de IQ: la URL de LiteLLM y los dos modelos; después, un upgrade de DX para que HAProxy enrute el chat de IQ.",
               "Demo: pregunta a IQ por las bibliotecas de WCM, en el portal y desde la terminal. IQ actúa con los permisos del usuario que pregunta."]},
-    {slides: "13", time: "~7 min", show: "El Search Center y el explorador de la API de búsqueda",
+    {slides: "15", time: "~7 min", show: "El Search Center y el explorador de la API de búsqueda",
      why: "Search V2 sustituye la búsqueda clásica del portal por OpenSearch, protegida con TLS mutuo.",
      points: ["hcl-dx-search 2.37.0: OpenSearch, el Search Middleware y el File Processor.",
               "TLS mutuo: una CA del lab y los certificados admin, node y client, creados como secrets.",
@@ -380,7 +380,6 @@ export function buildScript(gen, lang, summaryRows, {mask = true} = {}){
     B.push({t: "break"});
     B.push({t: "h1", text: `${n} · ${names[n]}`});
     B.push({t: "slide", text: `${t.slide(st[n].slides)} · ⏱ ${st[n].time} · ${t.expect}: ${st[n].show}`});
-    if (n === 0) B.push({t: "p", text: t.slideNote, tone: "muted"});
     if (STAGE_DOCS[n].length) B.push({t: "links", title: t.docs, items: STAGE_DOCS[n]});
     B.push({t: "h2", text: t.why}); B.push({t: "p", text: st[n].why});
     B.push({t: "h2", text: t.tell}); B.push({t: "bullets", items: st[n].points});
@@ -391,7 +390,7 @@ export function buildScript(gen, lang, summaryRows, {mask = true} = {}){
 
   // Closing and after the webinar
   B.push({t: "break"}); B.push({t: "h1", text: t.close});
-  B.push({t: "slide", text: `${t.slide("14-17")}`}); t.closeP.forEach(x => B.push({t: "p", text: x}));
+  B.push({t: "slide", text: `${t.slide("16-19")}`}); t.closeP.forEach(x => B.push({t: "p", text: x}));
   B.push({t: "h2", text: t.refs}); B.push({t: "bullets", items: t.refsL});
   B.push({t: "h1", text: t.after}); B.push({t: "bullets", items: t.afterL});
   B.push({t: "p", text: `https://${s.DX_HOST}/wps/portal`, tone: "key"});
