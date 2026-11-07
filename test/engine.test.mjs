@@ -137,3 +137,20 @@ test("PostgreSQL script: in the zip for EUROPESIP/HCL users, flagged as missing 
   assert.equal(other.pgMissing, true);
   assert.match(other.runbook, /table script from HCL/);
 });
+
+test("AWS Bedrock: litellm-values with the existing model IDs and the region, the key in litellm-env, no Qwen or RAG", () => {
+  for (const [region, pre] of [["us-east-1", "us"], ["eu-west-1", "eu"]]) {
+    const g = make("all", {LLM_PROVIDER: "bedrock", BEDROCK_API_KEY: "bedrock-key-123", BEDROCK_REGION: region, IQ_LLM: "qwen"});
+    const v = g.files["3-iq/litellm-values.yaml"].text;
+    assert.match(v, new RegExp(`model: bedrock/${pre}\\.anthropic\\.claude-sonnet-4-6\\n`));
+    assert.match(v, new RegExp(`model: bedrock/${pre}\\.anthropic\\.claude-haiku-4-5-20251001-v1:0`));
+    assert.match(v, new RegExp(`aws_region_name: ${region}`));
+    assert.ok(!v.includes("20250514"), "not the wrong documented Sonnet ID");
+    assert.ok(!/openrouter\.ai/.test(v.split("proxy_config:")[1]));
+    assert.match(g.files["3-iq/secrets.yaml"].text, /AWS_BEARER_TOKEN_BEDROCK: 'bedrock-key-123'/);
+    assert.equal(g.s.IQ_LLM, "claude"); assert.equal(g.s.iqrag, false);
+    assert.ok(!Object.keys(g.files).some(f => f.includes("qwen") || f.includes("rag")));
+    assert.ok(!maskText(g.entries.map(e => e.text).join("\n"), secretValues(g.s)).includes("bedrock-key-123"));
+  }
+  assert.match(make("webinar").files["3-iq/secrets.yaml"].text, /OPENROUTER_API_KEY/);   // OpenRouter stays the default
+});

@@ -201,7 +201,18 @@ const secretNames = cmd => [...new Set([...cmd.matchAll(/create secret (?:generi
 const compact = text => text.split("\n").filter(l => l.trim() && !/^\s*#/.test(l)).join("\n");
 
 export function buildScript(gen, lang, summaryRows, {mask = true} = {}){
-  const t = T[lang] || T.en, st = STAGE[lang] || STAGE.en, names = STAGES[lang] || STAGES.en;
+  let t = T[lang] || T.en, st = STAGE[lang] || STAGE.en;
+  const names = STAGES[lang] || STAGES.en;
+  if (gen.s.LLM_PROVIDER === "bedrock") {   // the texts that name OpenRouter, for an installation with AWS Bedrock
+    const R = [["routes them to Claude through OpenRouter", "routes them to Claude on AWS Bedrock"], ["los enruta a Claude a través de OpenRouter", "los enruta a Claude en AWS Bedrock"],
+      ["Its LLM goes through LiteLLM and OpenRouter instead of AWS Bedrock, so any provider can be used.", "Its LLM goes through LiteLLM to Claude on AWS Bedrock, the configuration HCL documents."],
+      ["Su LLM pasa por LiteLLM y OpenRouter en lugar de AWS Bedrock, así que se puede usar cualquier proveedor.", "Su LLM pasa por LiteLLM hacia Claude en AWS Bedrock, la configuración que documenta HCL."],
+      ["the OpenRouter API key", "the Bedrock API key"], ["la clave de API de OpenRouter", "la clave de API de Bedrock"],
+      ["delete the OpenRouter key", "delete the Bedrock API key"], ["borra la clave de OpenRouter", "borra la clave de API de Bedrock"],
+      ["OpenRouter key", "Bedrock API key"], ["clave de OpenRouter", "clave de API de Bedrock"], ["openrouter.ai", "AWS Bedrock"]];
+    const fix = v => typeof v === "string" ? R.reduce((x, [a, b]) => x.split(a).join(b), v) : Array.isArray(v) ? v.map(fix) : typeof v === "function" ? (...x) => fix(v(...x)) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fix(x)])) : v;
+    t = fix(t); st = fix(st);
+  }
   const {s, files} = gen, prep = gen.prep || [], demo = gen.demo || gen.steps;
   const values = mask ? secretValues(s) : [];
   const m = x => mask ? maskText(String(x), values) : String(x);

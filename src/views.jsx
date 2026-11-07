@@ -269,13 +269,13 @@ export function DeployCustom({t, form, set, go, back}){
           {form.db === "oracle" && <p className="text-xs text-amber-700 dark:text-amber-300">{t.oraNote}</p>}
         </StageCard>
         <StageCard n={4} t={t} on={form.lab3} onToggle={v => set({lab3: v})}>
-          <Field label={t.llm}><Segmented value={form.IQ_LLM} onChange={v => set({IQ_LLM: v})} options={[["claude", t.llmClaude], ["qwen", t.llmQwen]]} /></Field>
+          <Field label={t.llm} hint={form.LLM_PROVIDER === "bedrock" ? `Qwen: ${t.noBedrock}` : ""}><Segmented value={form.IQ_LLM} onChange={v => set({IQ_LLM: v})} options={form.LLM_PROVIDER === "bedrock" ? [["claude", "Claude (AWS Bedrock)"]] : [["claude", t.llmClaude], ["qwen", t.llmQwen]]} /></Field>
           <div className="space-y-2 pt-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t.extras}</div>
             <Check checked={form.lab3b} disabled={!!g.lab3b} onChange={v => v ? setMcpAsk(true) : set({lab3b: false})}>{t.xMcp}</Check>
-            <button type="button" onClick={() => setMcpRead(true)} className="ml-8 text-xs font-semibold text-brand-blue hover:underline dark:text-blue-300">ⓘ {t.mcpInfo}</button>
+            <button type="button" onClick={() => setMcpRead(true)} className="ml-8 text-xs font-semibold text-brand-blue hover:underline dark:text-blue-300"><span className="mr-1 inline-grid h-4 w-4 place-items-center rounded-full border border-current text-[10px] font-bold align-middle">i</span>{t.mcpInfo}</button>
             <Check checked={form.iqdb} disabled={!!g.iqdb} onChange={v => set({iqdb: v})}>{t.xIqdb}</Check>
-            <Check checked={form.iqrag} disabled={!!g.iqrag} onChange={v => set({iqrag: v})} hint={g.iqrag ? t.needIqdb : t.ragWarn}>{t.xRag}</Check>
+            <Check checked={form.iqrag} disabled={!!g.iqrag} onChange={v => set({iqrag: v})} hint={g.iqrag === "noBedrock" ? t.noBedrock : g.iqrag ? t.needIqdb : t.ragWarn}>{t.xRag}</Check>
           </div>
         </StageCard>
         <StageCard n={5} t={t} on={form.lab4} onToggle={v => set({lab4: v})} />
@@ -304,7 +304,7 @@ function PgText({t}){
 
 // ---------------------------------------------------------------------------------------------
 export function Details({t, lang, form, set, go, back}){
-  const [adv, setAdv] = useState(false), [pgAsk, setPgAsk] = useState(false);
+  const [adv, setAdv] = useState(false), [pgAsk, setPgAsk] = useState(false), [aiAsk, setAiAsk] = useState(false);
   const needsHost = form.platform !== "poc";
   const pgMissing = form.db === "postgres" && !PG_OK.test((form.HCL_HARBOR_USER || "").trim());
   const F = (k, label, o = {}) => (
@@ -334,9 +334,20 @@ export function Details({t, lang, form, set, go, back}){
         </Card>
         {form.lab3 && (
           <Card className="space-y-4">
-            <H2>{t.openrouter}</H2>
-            {F("OPENROUTER_API_KEY", t.openrouter, {secret: true, hint: t.openrouterHint, placeholder: "sk-or-v1-…"})}
-            <SecurityNote t={t} lang={lang} kind="openrouter" />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <H2 className="mb-0">{t.aiProvider}</H2>
+              <button type="button" onClick={() => setAiAsk(true)} className="text-xs font-semibold text-brand-blue hover:underline dark:text-blue-300"><span className="mr-1 inline-grid h-4 w-4 place-items-center rounded-full border border-current text-[10px] font-bold align-middle">i</span>{t.aiWhich}</button>
+            </div>
+            <Segmented value={form.LLM_PROVIDER || "openrouter"} onChange={v => set({LLM_PROVIDER: v})} options={[["openrouter", t.aiOpenRouter], ["bedrock", t.aiBedrock]]} />
+            <p className="text-xs text-slate-500">{t.aiNeed}</p>
+            {form.LLM_PROVIDER === "bedrock" ? <>
+              {F("BEDROCK_API_KEY", t.bedrockKey, {secret: true, hint: t.bedrockKeyHint})}
+              <Field label={t.bedrockRegion}><Segmented value={form.BEDROCK_REGION || "us-east-1"} onChange={v => set({BEDROCK_REGION: v})} options={[["us-east-1", t.bedrockUs], ["eu-west-1", t.bedrockEu]]} /></Field>
+              <SecurityNote t={t} lang={lang} kind="aws" />
+            </> : <>
+              {F("OPENROUTER_API_KEY", t.openrouter, {secret: true, hint: t.openrouterHint, placeholder: "sk-or-v1-…"})}
+              <SecurityNote t={t} lang={lang} kind="openrouter" />
+            </>}
           </Card>
         )}
         {form.dir === "ad" && (
@@ -373,6 +384,14 @@ export function Details({t, lang, form, set, go, back}){
         )}
       </div>
       <Nav t={t} back={back} next={() => pgMissing ? setPgAsk(true) : go("download")} />
+      <Modal open={aiAsk} title={t.aiTitle} onClose={() => setAiAsk(false)} actions={<Button onClick={() => setAiAsk(false)}>{t.pgOk}</Button>}>
+        <p className="font-semibold text-slate-900 dark:text-white">{t.aiPre}</p>
+        <p className="pt-2 font-semibold text-slate-900 dark:text-white">{t.aiOrT}</p>
+        <ul className="list-disc space-y-1 pl-5">{t.aiOr.map(x => <li key={x}>{x}</li>)}</ul>
+        <p className="pt-2 font-semibold text-slate-900 dark:text-white">{t.aiBrT}</p>
+        <ul className="list-disc space-y-1 pl-5">{t.aiBr.map(x => <li key={x}>{x}</li>)}</ul>
+        <Callout tone="warn" className="mt-3">{t.aiKeys}</Callout>
+      </Modal>
       <Modal open={pgAsk} title={t.pgTitle} onClose={() => setPgAsk(false)}
         actions={<><Button variant="secondary" onClick={() => { setPgAsk(false); set({preset: "custom"}); go("deploy-custom"); }}>{t.pgChange}</Button>
                    <Button onClick={() => { setPgAsk(false); go("download"); }}>{t.pgOk}</Button></>}>
@@ -446,6 +465,7 @@ export function Download({t, lang, form, back, restart}){
       {(warn.length > 0 || gen.pgMissing || form.lab3b) && <Callout tone="warn" title={t.warnings} className="mb-5"><ul className="list-disc space-y-1 pl-5">
         {gen.pgMissing && <li>{t.pgNote}</li>}
         {form.lab3b && <li>{t.mcpNote}</li>}
+        {form.lab3 && form.LLM_PROVIDER === "bedrock" && form.preset === "all" && <li>{t.ragBedrockNote}</li>}
         {warn.map(e => <li key={e}>{e}</li>)}</ul></Callout>}
       <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
         <div className="space-y-5">
