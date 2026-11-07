@@ -1,9 +1,9 @@
 apiVersion: v2
 name: hcl-dx-compose-installer
-description: Web installer for HCL DX Compose and the EUROPESIP labs. Generates, in the browser, a ready-to-run installation (scripts, RUNBOOK.md and a Word guide).
+description: Web installer for HCL DX Compose by EUROPESIP. Guides you from the environment (your cluster, a PC or AWS) to a ready-to-run installation.
 type: application
-version: 1.0.0
-appVersion: "1.0.0"
+version: 2.0.0
+appVersion: "2.0.0"
 home: https://github.com/europesip/hcl-dx-compose-installer
 sources:
   - https://github.com/europesip/hcl-dx-compose-installer
@@ -13,4 +13,4 @@ maintainers:
   - name: EUROPESIP
     url: https://www.europesip.com
 annotations:
-  artifacthub.io/license: Apache-2.0
+  artifacthub.io/license: MIT

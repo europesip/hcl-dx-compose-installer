@@ -1,17 +1,15 @@
 HCL DX Compose Installer
-Copyright 2026 EUROPESIP (https://www.europesip.com)
+Copyright 2026 EUROPESIP (https://www.europesip.com) · MIT License (see LICENSE)
 
-This installer was originally developed by EUROPESIP and is released as open source under the
-Apache License, Version 2.0 (see LICENSE). Under section 4(d) of the licence, any redistribution or
-derivative work must keep this NOTICE file and the attribution to EUROPESIP as the original author.
-
-It includes, in src/engine/wizard-engine.js, the generation engine and the lab files of the
+The generation engine (src/engine/core.js) and the lab files it contains come from the
 configuration wizard of HCL DX Compose Labs (https://github.com/europesip/hcl-dx-compose-labs),
-Copyright 2026 EUROPESIP, Apache License 2.0.
+also by EUROPESIP.
 
 Third-party material:
-- React, React DOM (MIT), docx (MIT) and Vite (MIT) are used to build the page; nginx (BSD-2-Clause)
-  serves it in the container image.
+- React, React DOM, Tailwind CSS, docx and Vite (MIT) build the page; Node.js runs the server.
+- The container image includes the AWS CLI (Apache-2.0), eksctl (Apache-2.0), the ROSA CLI
+  (Apache-2.0), the OpenShift client oc (Apache-2.0), kubectl (Apache-2.0) and Helm (Apache-2.0).
+- The EUROPESIP logo is a trademark of EUROPESIP.
 - HCL Digital Experience (DX Compose), its Helm charts and container images are licensed products of
   HCL Software, NOT included here: every user downloads them from hclcr.io with their own account.
 - HCL, Digital Experience and other product names are trademarks of their respective owners.

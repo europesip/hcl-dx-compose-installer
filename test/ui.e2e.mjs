@@ -1,26 +1,52 @@
-// UI test: walks the five steps in Spanish, selects every lab and downloads the zip, the Word
-// guide and RUNBOOK.md. Also checks the security headers when served by the container.
+// UI test: walks the flow in Spanish twice (your own cluster + Webinar, and a WSL PoC + Everything)
+// and downloads the zips, the Word script and RUNBOOK.md. Also checks the API of the server.
 //   node test/ui.e2e.mjs http://localhost:8080/ /tmp/out
-import { chromium } from 'playwright';
-import { mkdirSync } from 'node:fs';
-const [url, out = '/tmp/installer-e2e'] = process.argv.slice(2); mkdirSync(out, {recursive: true});
-const b = await chromium.launch(); const ctx = await b.newContext({acceptDownloads: true, viewport: {width: 1280, height: 900}});
-const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type()==='error' && errs.push(m.text()));
-await p.goto(url + '?lang=es'); await p.evaluate(()=>localStorage.clear()); await p.reload();
-await p.screenshot({path: out + '/1-platform.png', fullPage: true});
-await p.fill('input[placeholder="dx.example.com"]', 'dx-demo.apps.promox.europesip-lab.com');
-await p.click('text=Siguiente'); await p.screenshot({path: out + '/2-what.png', fullPage: true});
-for (const lbl of ["PostgreSQL 18", "MCP Server de EUROPESIP"]) { await p.click(`label.choice:has(b:has-text("${lbl}"))`); console.log(lbl, await p.$$eval("label.choice input", is => is.map(i => i.checked ? 1 : 0).join(""))); }
-for (const lbl of ['Lab 1B', 'Lab 3B', 'Sesiones de IQ en PostgreSQL', 'Memoria de IQ', 'Lab 5']) await p.click(`label.choice:has(b:has-text("${lbl}"))`);
-console.log(await p.$$eval('label.choice input', is => is.map(i => i.checked ? 1 : 0).join(''))); await p.click('label.licence'); await p.screenshot({path: out + '/2b-what-selected.png', fullPage: true});
-await p.click('text=Siguiente'); await p.screenshot({path: out + '/3-creds.png', fullPage: true});
-await p.click('text=Siguiente'); await p.click('text=Siguiente'); await p.screenshot({path: out + '/5-review.png', fullPage: true});
-const [d1] = await Promise.all([p.waitForEvent('download'), p.click('button.big')]); await d1.saveAs(out + '/' + d1.suggestedFilename());
-const [d2] = await Promise.all([p.waitForEvent('download'), p.click('button:has-text("Guía en Word")')]); await d2.saveAs(out + '/' + d2.suggestedFilename());
-const [d3] = await Promise.all([p.waitForEvent('download'), p.click('button:has-text("RUNBOOK.md")')]); await d3.saveAs(out + '/' + d3.suggestedFilename());
-await p.click('.lang button:has-text("English")'); await p.screenshot({path: out + '/5-review-en.png', fullPage: false});
-const r = await p.request.get(url); const csp = r.headers()['content-security-policy'] || '';
-console.log('CSP:', csp ? csp.slice(0, 60) + '…' : '(none: not served by the container)');
+import {chromium} from "playwright";
+import {mkdirSync} from "node:fs";
+const [url, out = "/tmp/installer-e2e"] = process.argv.slice(2); mkdirSync(out, {recursive: true});
+const b = await chromium.launch();
+const ctx = await b.newContext({acceptDownloads: true, viewport: {width: 1280, height: 900}, locale: "es-ES"});
+const p = await ctx.newPage(); const errs = [];
+p.on("pageerror", e => errs.push(e.message)); p.on("console", m => m.type() === "error" && errs.push(m.text()));
+const shot = async n => { await p.waitForTimeout(500); await p.screenshot({path: `${out}/${n}.png`, fullPage: true}); };
+const next = () => p.click("main button:has-text('Siguiente')");
+const save = async selector => { const [d] = await Promise.all([p.waitForEvent("download"), p.click(selector)]); await d.saveAs(out + "/" + d.suggestedFilename()); return d.suggestedFilename(); };
+
+// 1. Own cluster, webinar
+await p.goto(url); await p.evaluate(() => localStorage.clear()); await p.reload();
+if (!(await p.textContent("h1")).includes("Instala HCL DX Compose")) throw new Error("the browser language (es) was not detected");
+await shot("1-welcome");
+await p.click("text=Empezar"); await p.click("text=Sí, tengo un clúster"); await next();
+await p.selectOption("select", "nginx");
+await p.fill("input[placeholder='dx-demo.example.com']", "dx-demo.apps.example.com");
+await p.click("text=He comprobado"); await shot("2-own"); await next();
+await p.click("text=Webinar · Showroom"); await shot("3-deploy"); await next();
+await p.fill("input[placeholder='name@company.com']", "someone@example.com");
+await (await p.$$("input[type=password]"))[0].fill("harbor-token-123");
+await p.fill("input[placeholder='sk-or-v1-…']", "sk-or-v1-test");
+await shot("4-details"); await next(); await shot("5-download-webinar");
+const files = [await save("button:has-text('Instalación (.zip)')"), await save("button:has-text('Guion del webinar')"), await save("button:has-text('Cada paso con su comando')")];
+
+// 2. WSL PoC, everything
+await p.evaluate(() => localStorage.clear()); await p.reload();
+await p.click("text=Empezar"); await p.click("text=No, ayúdame a crear uno"); await next();
+await p.click("text=Mi PC con Windows (WSL2)"); await next(); await shot("6-wsl");
+await p.click("text=k3s funciona"); await next();
+await p.click("text=Todo"); await next();
+await p.click("text=He leído y acepto la licencia");
+await next(); await shot("7-download-all");
+if (await p.$("button:has-text('Guion del webinar')")) throw new Error("only the webinar has a Word script");
+files.push(await save("button:has-text('Instalación (.zip)')"));
+
+// 3. AWS view and the API
+await p.evaluate(() => { localStorage.setItem("dxi-view", JSON.stringify("env-aws")); }); await p.reload(); await shot("8-aws");
+const info = await (await p.request.get(url + "api/info")).json();
+const check = await p.request.post(url + "api/aws/check", {data: {creds: {accessKeyId: "AKIAAAAAAAAAAAAAAAAA", secretAccessKey: "x".repeat(40)}, region: "eu-west-1"}});
+const r = await p.request.get(url); const csp = r.headers()["content-security-policy"] || "";
+await p.click("header button:has-text('en')"); await shot("9-aws-en");
+console.log("files:", files.join(", "));
+console.log("api/info:", JSON.stringify(info), "· aws/check with a fake key:", check.status());
+console.log("CSP:", csp ? csp.slice(0, 70) + "…" : "(none)");
+if (check.status() !== 400) errs.push("aws/check should reject a fake key");
 if (errs.length) { console.error(errs); process.exitCode = 1; }
-console.log('downloads:', d1.suggestedFilename(), d2.suggestedFilename(), d3.suggestedFilename(), 'errors:', errs);
 await b.close();

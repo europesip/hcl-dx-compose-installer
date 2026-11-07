@@ -1,18 +1,7 @@
-{{- if .Values.auth.enabled }}
-{{- if and (not .Values.auth.existingSecret) (not .Values.auth.htpasswd) }}
-{{- fail "auth.enabled needs auth.existingSecret or auth.htpasswd" }}
+{{- if and .Values.auth.enabled (not .Values.auth.existingSecret) }}
+{{- if or (not .Values.auth.username) (not .Values.auth.password) }}
+{{- fail "auth.enabled needs auth.existingSecret, or auth.username and auth.password" }}
 {{- end }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "installer.fullname" . }}-auth
-  labels: {{- include "installer.labels" . | nindent 4 }}
-data:
-  auth.conf: |
-    auth_basic {{ .Values.auth.realm | quote }};
-    auth_basic_user_file /etc/nginx/htpasswd/htpasswd;
-{{- if not .Values.auth.existingSecret }}
----
 apiVersion: v1
 kind: Secret
 metadata:
@@ -20,6 +9,6 @@ metadata:
   labels: {{- include "installer.labels" . | nindent 4 }}
 type: Opaque
 stringData:
-  htpasswd: {{ .Values.auth.htpasswd | quote }}
-{{- end }}
+  username: {{ .Values.auth.username | quote }}
+  password: {{ .Values.auth.password | quote }}
 {{- end }}

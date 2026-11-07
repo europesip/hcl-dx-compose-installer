@@ -34,13 +34,9 @@ jobs:
           echo "package=$p chart=$c"; [ "$p" = "$c" ]
       - name: Unit tests
         run: npm test
-      - name: Engine in sync with the wizard of the labs (warning only)
-        continue-on-error: true
-        run: node scripts/sync-engine.mjs labs/docs/index.html --check
-      - name: Golden test against the wizard of the labs (same files for the same answers)
+      - name: Golden test against the frozen wizard of the labs (same lab files and commands)
         run: |
           npx playwright install --with-deps chromium
-          node scripts/sync-engine.mjs labs/docs/index.html
           WIZARD=labs/docs/index.html node test/golden.e2e.mjs
       - run: npm run build
 
@@ -59,18 +55,22 @@ jobs:
           tags: test:installer
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Test the container (non-root, read-only root file system, headers, UI)
+      - name: Test the container (non-root, read-only root file system, tools, headers, API, UI)
         run: |
           docker run -d --name inst -p 8080:8080 --read-only --tmpfs /tmp --user 12345:0 --cap-drop ALL test:installer
           for i in $(seq 1 30); do curl -sf localhost:8080/healthz && break; sleep 1; done
+          docker exec inst sh -c 'aws --version && eksctl version && rosa version && oc version --client && kubectl version --client && helm version --short && ssh -V'
           curl -sI localhost:8080/ | tee h.txt
-          grep -qi "content-security-policy:.*connect-src 'none'" h.txt
+          grep -qi "content-security-policy:.*connect-src 'self'" h.txt
           grep -qi "x-content-type-options: nosniff" h.txt
           curl -sf localhost:8080/ | grep -q '<div id="root">'
+          curl -sf localhost:8080/api/info | grep -q '"aws":true'
+          curl -sf localhost:8080/api/aws/scripts.zip -o s.zip && unzip -l s.zip | grep -q ec2-create.sh
           npm ci && npx playwright install --with-deps chromium
           node test/ui.e2e.mjs http://localhost:8080/ /tmp/e2e
-          ls -la /tmp/e2e; test -s /tmp/e2e/dx-compose-labs-install.zip; test -s /tmp/e2e/Guia-de-instalacion-DX-Compose.docx
-          unzip -l /tmp/e2e/dx-compose-labs-install.zip | grep -E "install.sh|RUNBOOK.md|Guia-de-instalacion"
+          ls -la /tmp/e2e; test -s /tmp/e2e/dx-compose-webinar.zip; test -s /tmp/e2e/Guion-webinar-DX-Compose.docx; test -s /tmp/e2e/dx-compose-install.zip
+          unzip -l /tmp/e2e/dx-compose-webinar.zip | grep -E "prepare.sh|demo.sh|RUNBOOK.md|Guion-webinar"
+          unzip -l /tmp/e2e/dx-compose-install.zip | grep -E "install.sh|RUNBOOK.md"
           docker rm -f inst
       - uses: actions/upload-artifact@v5
         if: always()
@@ -110,8 +110,9 @@ jobs:
           helm lint $C
           helm template t $C > /dev/null
           helm template t $C --set ingress.enabled=true --set ingress.tls.enabled=true --set auth.enabled=true \
-            --set auth.htpasswd='u:$2y$05$x' --set networkPolicy.enabled=true --set podDisruptionBudget.enabled=true > /dev/null
-          ! helm template t $C --set auth.enabled=true 2>/dev/null     # auth needs a secret or an htpasswd line
+            --set auth.username=u --set auth.password=p --set networkPolicy.enabled=true --set podDisruptionBudget.enabled=true > /dev/null
+          helm template t $C --set aws.enabled=false --set networkPolicy.enabled=true | grep -q 'egress: \[\]'
+          ! helm template t $C --set auth.enabled=true 2>/dev/null     # auth needs a secret or a user and password
       - name: Publish (tags only, and only a chart version that is not published yet)
         if: startsWith(github.ref, 'refs/tags/v')
         run: |

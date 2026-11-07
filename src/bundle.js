@@ -1,15 +1,30 @@
-// What the installer downloads, built on the wizard engine (src/engine/wizard-engine.js):
-//   - the dx-install/ zip of option C (install.sh, uninstall.sh, RUNBOOK.md and every file filled
-//     in), plus the Word guide inside it;
-//   - RUNBOOK.md on its own;
-//   - the Word guide on its own (src/word.js).
-import {createEngine} from "./engine/wizard-engine.js";
+// What the installer downloads, built on the engine (src/engine/core.js) and its stages:
+//   - All / Custom: the dx-install/ zip (install.sh, uninstall.sh, RUNBOOK.md and every file filled in);
+//   - Webinar: the same zip with prepare.sh (phase 1) and demo.sh (phase 2, stages 0-5), plus the
+//     Word script of the webinar inside it (src/word.js).
+import {createEngine} from "./engine/core.js";
+import {renumber, webinarPhases, buildRunbook} from "./engine/stages.js";
 import {toEngineState, SECRET_KEYS} from "./state.js";
+export {zipBytes} from "./zip.js";
 
 export const engine = createEngine();
-export const ZIP_NAME = "dx-compose-labs-install.zip";
-export const WORD_NAME_EN = "DX-Compose-installation-guide.docx";
-export const WORD_NAME_ES = "Guia-de-instalacion-DX-Compose.docx";
+export const ZIP_NAME = "dx-compose-install.zip";
+export const ZIP_NAME_WEBINAR = "dx-compose-webinar.zip";
+export const WORD_NAME_EN = "DX-Compose-webinar-script.docx";
+export const WORD_NAME_ES = "Guion-webinar-DX-Compose.docx";
+
+const DIRS = {
+  en: {"install.sh": "runs every step, by stages", "prepare.sh": "webinar phase 1: the prerequisites except LiteLLM", "demo.sh": "webinar phase 2: stages 0 to 5, one command at a time",
+       "uninstall.sh": "deletes everything that was installed", "RUNBOOK.md": "this document", "charts/": "HCL charts, downloaded by the first steps"},
+  es: {"install.sh": "ejecuta todos los pasos, por etapas", "prepare.sh": "fase 1 del webinar: los pre-requisitos salvo LiteLLM", "demo.sh": "fase 2 del webinar: etapas 0 a 5, comando a comando",
+       "uninstall.sh": "borra todo lo instalado", "RUNBOOK.md": "este documento", "charts/": "charts de HCL, los descargan los primeros pasos"},
+};
+
+const finishPrep = lang => lang === "es"
+  ? ["echo \"${G}${B}✔ Entorno preparado para la sesión en $(( (SECONDS-T0)/60 )) min.${N}\"",
+     "echo \"  Detente aquí. El día de la demo: ./demo.sh (etapas 0 a 5, empezando por el paso 0 con LiteLLM).\""]
+  : ["echo \"${G}${B}✔ Environment ready for the session in $(( (SECONDS-T0)/60 )) min.${N}\"",
+     "echo \"  Stop here. On the day of the demo: ./demo.sh (stages 0 to 5, starting with step 0 and LiteLLM).\""];
 
 export function generate(form, lang){
   engine.setLang(lang);
@@ -17,10 +32,31 @@ export function generate(form, lang){
   const check = engine.validate(s);
   engine.ensureLitellmKey();                 // the same key in every file of this page load
   const files = engine.bundleFiles(s);
-  const steps = engine.directSteps(s);
-  const entries = engine.buildDirectZip(s);  // [{name: "dx-install/...", text, mode}]
-  const runbook = entries.find(e => e.name === "dx-install/RUNBOOK.md").text;
-  return {s, check, files, steps, entries, runbook, litellmKey: engine.litellmKey};
+  const raw = engine.directSteps(s);
+  const webinar = form.preset === "webinar";
+  const pgSql = !!engine.pgSqlFor(s);
+  const out = [], P = "dx-install/";
+  let steps, prep, demo, runbook;
+  const dirs = {};
+  if (webinar) {
+    ({prep, demo} = webinarPhases(raw, s, lang));
+    steps = [...prep, ...demo];
+    out.push({name: P + "prepare.sh", mode: 0o100755, text: engine.buildInstallSh(s, prep, {name: "prepare.sh", headline: lang === "es" ? "preparación del webinar" : "webinar preparation",
+      purpose: "Webinar phase 1: installs every prerequisite except LiteLLM, then stops (the environment is ready for the session).", finish: finishPrep(lang), reinstall: "prepare.sh"})});
+    out.push({name: P + "demo.sh", mode: 0o100755, text: engine.buildInstallSh(s, demo, {name: "demo.sh", pause: true, verify: true, headline: lang === "es" ? "demo del webinar" : "webinar demo",
+      purpose: "Webinar phase 2 (the day of the demo): stages 0 to 5, showing each command and waiting for Enter.", reinstall: "prepare.sh"})});
+    out.push({name: P + "uninstall.sh", mode: 0o100755, text: engine.buildUninstallSh(s, "prepare.sh")});
+    for (const k of ["prepare.sh", "demo.sh", "uninstall.sh"]) dirs[k] = DIRS[lang][k];
+  } else {
+    steps = renumber(raw, lang);
+    out.push({name: P + "install.sh", mode: 0o100755, text: engine.buildInstallSh(s, steps, {headline: lang === "es" ? "instalación" : "installation"})});
+    out.push({name: P + "uninstall.sh", mode: 0o100755, text: engine.buildUninstallSh(s, "install.sh")});
+    for (const k of ["install.sh", "uninstall.sh"]) dirs[k] = DIRS[lang][k];
+  }
+  runbook = buildRunbook(s, webinar ? {prep, demo} : {steps}, files, lang, {pgSql, dirs});
+  out.unshift({name: P + "RUNBOOK.md", text: runbook});
+  for (const [p, f] of Object.entries(files)) out.push({name: P + p, text: f.text, mode: f.mode});
+  return {s, check, files, steps, prep, demo, webinar, entries: out, runbook, litellmKey: engine.litellmKey};
 }
 
 // Values that must not appear in a document meant to be shared
@@ -58,41 +94,15 @@ export function keyChanges(text){
   return out;
 }
 
+// Files a step uses (-f file, --from-file=file, file=path)
+export function filesOfStep(st, files){
+  const out = new Set();
+  for (const m of st.cmd.matchAll(/(?:-f\s+|--from-file=(?:[\w.-]+=)?)([\w./-]+)/g)) if (files[m[1]]) out.add(m[1]);
+  return [...out];
+}
+
 // Steps that create credentials or keys: secrets, certificates, registry logins, keys
 export const isSecretStep = st => !st.opt && /kubectl (apply -f \S*secret|create secret)|kind: Secret|htpasswd|openssl|registry login|ssha|master.?key/i.test(st.cmd);
-
-// ZIP (stored, no compression) that also takes binary files (the Word guide)
-const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
-function crc32(b){ let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
-export function zipBytes(files){
-  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
-  const d = new Date(), dt = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF,
-        dd = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
-  for (const f of files) {
-    const name = enc.encode(f.name), data = f.data instanceof Uint8Array ? f.data : enc.encode(f.text ?? ""), crc = crc32(data);
-    const lh = new DataView(new ArrayBuffer(30));
-    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
-    lh.setUint16(10, dt, true); lh.setUint16(12, dd, true); lh.setUint32(14, crc, true);
-    lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
-    parts.push(new Uint8Array(lh.buffer), name, data);
-    const ch = new DataView(new ArrayBuffer(46));
-    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 0x0314, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
-    ch.setUint16(10, 0, true); ch.setUint16(12, dt, true); ch.setUint16(14, dd, true); ch.setUint32(16, crc, true);
-    ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true);
-    ch.setUint16(30, 0, true); ch.setUint16(32, 0, true); ch.setUint16(34, 0, true); ch.setUint16(36, 0, true);
-    ch.setUint32(38, (f.mode || 0o100644) << 16 >>> 0, true); ch.setUint32(42, off, true);
-    central.push(new Uint8Array(ch.buffer), name);
-    off += 30 + name.length + data.length;
-  }
-  const csize = central.reduce((a, b) => a + b.length, 0);
-  const end = new DataView(new ArrayBuffer(22));
-  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
-  end.setUint32(12, csize, true); end.setUint32(16, off, true);
-  const all = [...parts, ...central, new Uint8Array(end.buffer)];
-  const out = new Uint8Array(all.reduce((a, b) => a + b.length, 0)); let p = 0;
-  for (const a of all) { out.set(a, p); p += a.length; }
-  return out;
-}
 
 export function download(name, data, type){
   const blob = data instanceof Blob ? data : new Blob([data], {type});

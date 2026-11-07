@@ -1,15 +1,15 @@
 {
   "name": "hcl-dx-compose-installer",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Web installer for HCL DX Compose: generates a ready-to-run installation (scripts, RUNBOOK.md and a Word guide) in the browser",
-  "license": "Apache-2.0",
+  "description": "Web installer for HCL DX Compose: guides you from the environment (your cluster, a local PC or AWS) to a ready-to-run installation (scripts, RUNBOOK.md and, for the webinar, a Word script)",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --port 8080",
-    "sync-engine": "node scripts/sync-engine.mjs",
+    "start": "node server/index.mjs",
+    "preview": "vite build && node server/index.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "engines": {
@@ -23,6 +23,8 @@
   "devDependencies": {
     "@vitejs/plugin-react": "6.2.1",
     "playwright": "1.56.1",
-    "vite": "8.3.6"
+    "vite": "8.3.6",
+    "tailwindcss": "4.3.3",
+    "@tailwindcss/vite": "4.3.3"
   }
 }

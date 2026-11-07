@@ -39,22 +39,21 @@ spec:
           livenessProbe:
             httpGet: {path: /healthz, port: http}
             periodSeconds: 30
+          env:
+            - {name: AWS_ENABLED, value: {{ .Values.aws.enabled | quote }}}
+            - {name: APP_VERSION, value: {{ .Chart.AppVersion | quote }}}
+            {{- if .Values.auth.enabled }}
+            - name: AUTH_USER
+              valueFrom: {secretKeyRef: {name: {{ include "installer.authSecret" . }}, key: username}}
+            - name: AUTH_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ include "installer.authSecret" . }}, key: password}}
+            {{- end }}
           resources: {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - {name: tmp, mountPath: /tmp}
-            {{- if .Values.auth.enabled }}
-            - {name: auth-conf, mountPath: /etc/nginx/auth, readOnly: true}
-            - {name: auth-htpasswd, mountPath: /etc/nginx/htpasswd, readOnly: true}
-            {{- end }}
       volumes:
         - name: tmp
-          emptyDir: {sizeLimit: 64Mi}
-        {{- if .Values.auth.enabled }}
-        - name: auth-conf
-          configMap: {name: {{ include "installer.fullname" . }}-auth}
-        - name: auth-htpasswd
-          secret: {secretName: {{ include "installer.authSecret" . }}}
-        {{- end }}
+          emptyDir: {sizeLimit: {{ .Values.workDir.sizeLimit }}}
       {{- with .Values.nodeSelector }}
       nodeSelector: {{- toYaml . | nindent 8 }}
       {{- end }}

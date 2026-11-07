@@ -13,5 +13,12 @@ spec:
       {{- with .Values.networkPolicy.from }}
       from: {{- toYaml . | nindent 8 }}
       {{- end }}
-  egress: []                   # the page is static: the pod never needs to connect anywhere
+  {{- if .Values.aws.enabled }}
+  egress:
+    - ports: [{port: 53, protocol: UDP}, {port: 53, protocol: TCP}]
+    - to: [{ipBlock: {cidr: 0.0.0.0/0}}]
+      ports: [{port: 443, protocol: TCP}, {port: 22, protocol: TCP}, {port: 6443, protocol: TCP}, {port: 80, protocol: TCP}]
+  {{- else }}
+  egress: []                   # without AWS the pod never needs to connect anywhere
+  {{- end }}
 {{- end }}

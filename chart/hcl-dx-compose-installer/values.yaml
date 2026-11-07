@@ -1,5 +1,6 @@
-# HCL DX Compose Installer. The page is static: everything is generated in the user's browser and
-# nothing typed in it (credentials included) reaches this pod or any other server.
+# HCL DX Compose Installer: the web page and its server. The installation (scripts, RUNBOOK, Word
+# script) is generated in the browser; the server only runs the AWS scripts when someone creates or
+# deletes an AWS environment from the page.
 
 image:
   repository: ghcr.io/europesip/hcl-dx-compose-installer
@@ -37,20 +38,30 @@ route:
     termination: edge          # edge | reencrypt | passthrough is not supported (the pod serves HTTP)
     insecureEdgeTerminationPolicy: Redirect
 
-# Optional HTTP basic authentication in front of the page
+# Optional HTTP basic authentication in front of the page and its API
 auth:
   enabled: false
-  existingSecret: ""           # Secret with a key "htpasswd" (htpasswd -nbB user password)
-  htpasswd: ""                 # or the htpasswd line here (the chart creates the Secret)
-  realm: "HCL DX Compose Installer"
+  existingSecret: ""           # Secret with the keys "username" and "password"
+  username: ""                 # or the user and password here (the chart creates the Secret)
+  password: ""
+
+# Create and delete AWS environments from the page (EC2 + k3s, EKS, ROSA). The pod then needs
+# outbound access to the AWS APIs (see networkPolicy.egress). false hides the option and the API.
+aws:
+  enabled: true
+
+# Space for the AWS jobs (SSH key, kubeconfig and logs of the environments created from the page).
+# An emptyDir: it is lost when the pod restarts (the AWS resources are found again by their tag).
+workDir:
+  sizeLimit: 1Gi
 
 resources:
   requests:
-    cpu: 10m
-    memory: 32Mi
+    cpu: 20m
+    memory: 96Mi
   limits:
-    cpu: 200m
-    memory: 128Mi
+    cpu: "1"
+    memory: 768Mi
 
 # Runs as non-root with a read-only root file system; no fixed UID, so it also runs under the
 # OpenShift restricted-v2 SCC (random UID).
@@ -71,7 +82,9 @@ tolerations: []
 affinity: {}
 priorityClassName: ""
 
-# Only lets in traffic to the pod port (from anywhere, or from the namespaces/pods you list)
+# Only lets in traffic to the pod port (from anywhere, or from the namespaces/pods you list).
+# Outbound: DNS and HTTPS/SSH to the Internet when aws.enabled (AWS APIs, the EC2 instance, the
+# Kubernetes API of the new cluster on 6443); nothing when AWS is disabled.
 networkPolicy:
   enabled: false
   from: []                     # e.g. [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: traefik}}}]

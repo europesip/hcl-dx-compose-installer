@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* EUROPESIP brand: the gradient of the logo (#FF0A6C -> #0040FF) and a deep navy */
+@theme {
+  --color-brand-pink: #ff0a6c;
+  --color-brand-blue: #0040ff;
+  --color-brand-violet: #7b25d9;
+  --color-navy-950: #050d22;
+  --color-navy-900: #0b1b3a;
+  --color-navy-800: #13264d;
+  --color-navy-700: #1d3566;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Menlo, Consolas, monospace;
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-slate-50 text-slate-800 antialiased dark:bg-navy-950 dark:text-slate-200; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-brand-blue; }
+}
+
+@utility brand-gradient { background-image: linear-gradient(120deg, var(--color-brand-pink), var(--color-brand-violet) 45%, var(--color-brand-blue)); }
+@utility brand-text {
+  background-image: linear-gradient(100deg, var(--color-brand-pink), var(--color-brand-blue));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+.logo-dark { display: none; }
+@media (prefers-color-scheme: dark) { .logo-light { display: none; } .logo-dark { display: block; } }
+
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .35s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
