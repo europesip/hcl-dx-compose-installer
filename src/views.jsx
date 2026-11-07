@@ -305,6 +305,7 @@ function PgText({t}){
 // ---------------------------------------------------------------------------------------------
 export function Details({t, lang, form, set, go, back}){
   const [adv, setAdv] = useState(false), [pgAsk, setPgAsk] = useState(false), [aiAsk, setAiAsk] = useState(false);
+  const [harborAsk, setHarborAsk] = useState(false), [airAsk, setAirAsk] = useState(false);
   const needsHost = form.platform !== "poc";
   const pgMissing = form.db === "postgres" && !PG_OK.test((form.HCL_HARBOR_USER || "").trim());
   const F = (k, label, o = {}) => (
@@ -318,10 +319,16 @@ export function Details({t, lang, form, set, go, back}){
       <Title sub={t.detailsSub}>{t.detailsTitle}</Title>
       <div className="grid gap-5 lg:grid-cols-2">
         <Card className="space-y-4">
-          <H2>{t.harbor}</H2>
-          {F("HCL_HARBOR_USER", t.harborUser, {placeholder: "name@company.com"})}
-          {F("HCL_HARBOR_TOKEN", t.harborToken, {secret: true})}
-          <SecurityNote t={t} lang={lang} kind="harbor" />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <H2 className="mb-0">{t.harbor}</H2>
+            <button type="button" onClick={() => setHarborAsk(true)} className="text-xs font-semibold text-brand-blue hover:underline dark:text-blue-300"><span className="mr-1 inline-grid h-4 w-4 place-items-center rounded-full border border-current text-[10px] font-bold align-middle">i</span>{t.harborWhat}</button>
+          </div>
+          {!form.airGapped && <>
+            {F("HCL_HARBOR_USER", t.harborUser, {placeholder: "name@company.com"})}
+            {F("HCL_HARBOR_TOKEN", t.harborToken, {secret: true})}
+          </>}
+          <Check checked={!!form.airGapped} onChange={v => set({airGapped: v})}>{t.airGapped}</Check>
+          {!form.airGapped && <SecurityNote t={t} lang={lang} kind="harbor" />}
         </Card>
         <Card className="space-y-4">
           <H2>{t.access}</H2>
@@ -383,7 +390,21 @@ export function Details({t, lang, form, set, go, back}){
           </Card>
         )}
       </div>
-      <Nav t={t} back={back} next={() => pgMissing ? setPgAsk(true) : go("download")} />
+      <Nav t={t} back={back} next={() => form.airGapped ? setAirAsk(true) : pgMissing ? setPgAsk(true) : go("download")} />
+      <Modal open={harborAsk} title={t.harborTitle} onClose={() => setHarborAsk(false)} actions={<Button onClick={() => setHarborAsk(false)}>{t.pgOk}</Button>}>
+        {t.harborBody.map(x => <p key={x}>{x}</p>)}
+        <p>{t.harborHow}</p>
+        <p className="flex flex-wrap gap-4">
+          <a href="https://hclcr.io" target="_blank" rel="noreferrer" className="font-semibold text-brand-blue underline dark:text-blue-300">{t.harborLink1} ↗</a>
+          <a href="https://my.hcltechsw.com" target="_blank" rel="noreferrer" className="font-semibold text-brand-blue underline dark:text-blue-300">{t.harborLink2} ↗</a>
+        </p>
+        <Callout tone="info">{t.harborAir}</Callout>
+      </Modal>
+      <Modal open={airAsk} title={t.airTitle} onClose={() => setAirAsk(false)}
+        actions={<><Button variant="secondary" onClick={() => setAirAsk(false)}>{t.airClose}</Button><Button onClick={() => { set({airGapped: false}); setAirAsk(false); }}>{t.airUntick}</Button></>}>
+        <p className="font-semibold text-amber-700 dark:text-amber-300">{t.airBody[0]}</p>
+        <p>{t.airBody[1]}</p>
+      </Modal>
       <Modal open={aiAsk} title={t.aiTitle} onClose={() => setAiAsk(false)} actions={<Button onClick={() => setAiAsk(false)}>{t.pgOk}</Button>}>
         <p className="font-semibold text-slate-900 dark:text-white">{t.aiPre}</p>
         <p className="pt-2 font-semibold text-slate-900 dark:text-white">{t.aiOrT}</p>
