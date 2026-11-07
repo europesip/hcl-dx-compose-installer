@@ -388,16 +388,26 @@ export function Download({t, lang, form, back, restart}){
   const wordName = lang === "es" ? WORD_NAME_ES : WORD_NAME_EN;
   const summary = summaryRows(t, form, gen, lang);
 
-  const word = async (as, m) => { const {buildWord} = await import("./word.js"); return buildWord(gen, lang, summary, {mask: m, as}); };
+  const pdfName = wordName.replace(/\.docx$/, ".pdf");
+  const logos = async () => {   // the EUROPESIP and HCL logos of the script (served by the installer itself)
+    const get = async u => { try { const r = await fetch(u); return r.ok ? new Uint8Array(await r.arrayBuffer()) : undefined; } catch { return undefined; } };
+    return {europesip: await get("/brand/europesip.png"), hcl: await get("/brand/hcl-software.png")};
+  };
+  const word = async (as, m) => { const {buildWord} = await import("./word.js"); return buildWord(gen, lang, summary, {mask: m, as, logos: await logos()}); };
+  const pdf = async m => { const {buildPdf} = await import("./pdf.js"); return buildPdf(gen, lang, summary, {mask: m, logos: await logos()}); };
   const dlZip = async () => {
     setBusy("zip");
     try {
       const entries = [...gen.entries];
-      if (webinar) entries.push({name: "dx-install/" + wordName, data: new Uint8Array(await (await word("blob", false)).arrayBuffer())});
+      if (webinar) {
+        entries.push({name: "dx-install/" + wordName, data: new Uint8Array(await (await word("blob", false)).arrayBuffer())});
+        entries.push({name: "dx-install/" + pdfName, data: new Uint8Array(await (await pdf(false)).arrayBuffer())});
+      }
       download(webinar ? ZIP_NAME_WEBINAR : ZIP_NAME, zipBytes(entries), "application/zip");
     } finally { setBusy(""); }
   };
   const dlWord = async () => { setBusy("word"); try { download(wordName, await word("blob", mask)); } finally { setBusy(""); } };
+  const dlPdf = async () => { setBusy("pdf"); try { download(pdfName, await pdf(mask)); } finally { setBusy(""); } };
   const groups = webinar ? [[t.webP1t, gen.prep], [t.webP2t, gen.demo]] : [[null, gen.steps]];
 
   return (
@@ -420,7 +430,10 @@ export function Download({t, lang, form, back, restart}){
             <DownloadCard icon={<IconDoc />} title={t.dlRunbook} text={t.dlRunbookT} onClick={() => download("RUNBOOK.md", gen.runbook, "text/markdown")} disabled={err.length > 0} t={t} />
             {webinar && (
               <div className="sm:col-span-2">
-                <DownloadCard icon={<IconPresent />} title={t.dlWord} text={t.dlWordT} onClick={dlWord} busy={busy === "word"} disabled={err.length > 0} t={t} />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <DownloadCard icon={<IconPresent />} title={t.dlWord} text={t.dlWordT} onClick={dlWord} busy={busy === "word"} disabled={err.length > 0} t={t} />
+                  <DownloadCard icon={<IconDoc />} title={t.dlPdf} text={t.dlPdfT} onClick={dlPdf} busy={busy === "pdf"} disabled={err.length > 0} t={t} />
+                </div>
                 <div className="mb-1 mt-4 pl-2"><Check checked={mask} onChange={setMask}>{t.maskCreds}</Check></div>
               </div>
             )}

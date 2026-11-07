@@ -69,7 +69,7 @@ jobs:
           curl -sf localhost:8080/api/aws/scripts.zip -o s.zip && unzip -l s.zip | grep -q ec2-create.sh
           npm ci && npx playwright install --with-deps chromium
           node test/ui.e2e.mjs http://localhost:8080/ /tmp/e2e
-          ls -la /tmp/e2e; test -s /tmp/e2e/dx-compose-webinar.zip; test -s /tmp/e2e/Guion-webinar-DX-Compose.docx; test -s /tmp/e2e/dx-compose-install.zip
+          ls -la /tmp/e2e; test -s /tmp/e2e/dx-compose-webinar.zip; test -s /tmp/e2e/Guion-webinar-DX-Compose.docx; test -s /tmp/e2e/Guion-webinar-DX-Compose.pdf; test -s /tmp/e2e/dx-compose-install.zip
           unzip -l /tmp/e2e/dx-compose-webinar.zip | grep -E "prepare.sh|demo.sh|RUNBOOK.md|Guion-webinar"
           unzip -l /tmp/e2e/dx-compose-install.zip | grep -E "install.sh|RUNBOOK.md"
           docker rm -f inst

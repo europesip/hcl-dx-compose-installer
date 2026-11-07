@@ -90,16 +90,21 @@ test("masking hides every credential", () => {
   for (const v of ["harbor-token-123", "sk-or-v1-secret", "Lab-Passw0rd", g.litellmKey]) assert.ok(!masked.includes(v), v);
 });
 
-test("webinar Word script: valid docx, stages and values, masked by default", async () => {
+test("webinar Word script: purpose, EUROPESIP, date, stages, files, logos, masked by default", async () => {
   const {unzipSync, strFromU8} = await import("./unzip.mjs");
+  const {readFileSync} = await import("node:fs");
+  const logos = {europesip: new Uint8Array(readFileSync("public/brand/europesip.png")), hcl: new Uint8Array(readFileSync("public/brand/hcl-software.png"))};
   for (const lang of ["en", "es"]) {
     const g = make("webinar", {}, lang);
     const rows = [["Host", g.s.DX_HOST]];
-    const xm = strFromU8(unzipSync(new Uint8Array(await buildWord(g, lang, rows, {as: "buffer"})))["word/document.xml"]);
-    assert.ok(xm.includes(lang === "es" ? "Guion del webinar" : "Webinar script"));
-    assert.ok(xm.includes(lang === "es" ? "Asistente de IA" : "AI Assistant"));
-    assert.ok(xm.includes(lang === "es" ? "Valores en los que fijarse" : "Values to look at"));
+    const z = unzipSync(new Uint8Array(await buildWord(g, lang, rows, {as: "buffer", logos})));
+    const xm = strFromU8(z["word/document.xml"]);
+    for (const x of lang === "es"
+      ? ["Guion del webinar", "El propósito del webinar", "Sobre EUROPESIP", "12 de noviembre de 2026", "preparar tarde, rotar justo después", "Asistente de IA", "Valores que enseñar", "Diapositiva 12"]
+      : ["Webinar script", "The purpose of the webinar", "About EUROPESIP", "12 November 2026", "prepare late, rotate right after", "AI Assistant", "Values to show", "Slide 12"])
+      assert.ok(xm.includes(x), x);
     assert.ok(xm.includes("prepare.sh") && xm.includes("demo.sh"));
+    assert.equal(Object.keys(z).filter(k => k.startsWith("word/media/")).length >= 2, true, "logos embedded");
     for (const v of ["harbor-token-123", "sk-or-v1-secret", "Lab-Passw0rd"]) assert.ok(!xm.includes(v), v);
     const plain = await buildWord(g, lang, rows, {mask: false, as: "buffer"});
     assert.ok(strFromU8(unzipSync(new Uint8Array(plain))["word/document.xml"]).includes("harbor-token-123"));

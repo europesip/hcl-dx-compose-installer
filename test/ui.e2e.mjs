@@ -29,7 +29,7 @@ await shot("4-details"); await next();
 await p.waitForSelector("text=PostgreSQL necesita un script de HCL"); await shot("4b-pg-dialog"); await p.click("button:has-text('Entendido')");
 await shot("5-download-webinar");
 if (!(await p.textContent("main")).includes("table script from HCL")) throw new Error("the download page should remind the PostgreSQL script");
-const files = [await save("button:has-text('Instalación (.zip)')"), await save("button:has-text('Guion del webinar')"), await save("button:has-text('Cada paso con su comando')")];
+const files = [await save("button:has-text('Instalación (.zip)')"), await save("button:has-text('Guion del webinar (Word)')"), await save("button:has-text('Guion del webinar (PDF)')"), await save("button:has-text('Cada paso con su comando')")];
 
 // 2. WSL PoC, everything
 await p.evaluate(() => localStorage.clear()); await p.reload();
