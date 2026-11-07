@@ -435,7 +435,8 @@ export function Download({t, lang, form, back, restart}){
   const pdfName = wordName.replace(/\.docx$/, ".pdf");
   const logos = async () => {   // the EUROPESIP and HCL logos of the script (served by the installer itself)
     const get = async u => { try { const r = await fetch(u); return r.ok ? new Uint8Array(await r.arrayBuffer()) : undefined; } catch { return undefined; } };
-    return {europesip: await get("/brand/europesip.png"), hcl: await get("/brand/hcl-software.png")};
+    return {europesip: await get("/brand/europesip.png"), hcl: await get("/brand/hcl-software.png"),
+      shots: {welcome: await get(`/brand/shots/welcome.${lang}.jpg`), deployment: await get(`/brand/shots/deployment.${lang}.jpg`)}};
   };
   const word = async (as, m) => { const {buildWord} = await import("./word.js"); return buildWord(gen, lang, summary, {mask: m, as, logos: await logos()}); };
   const pdf = async m => { const {buildPdf} = await import("./pdf.js"); return buildPdf(gen, lang, summary, {mask: m, logos: await logos()}); };

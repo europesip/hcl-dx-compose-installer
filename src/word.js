@@ -1,5 +1,5 @@
 // The webinar script in Word: renders the document model of script.js with docx.
-import {Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, ImageRun,
+import {Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink,
         ShadingType, BorderStyle, AlignmentType, PageBreak, Footer, Header, PageNumber, TableOfContents} from "docx";
 import {buildScript} from "./script.js";
 
@@ -66,6 +66,19 @@ export async function buildWord(gen, lang, summaryRows, {mask = true, as = "blob
       body.push(new Paragraph({shading: {type: ShadingType.CLEAR, fill: TONE[b.tone] || TONE.info, color: "auto"}, indent: {left: 120, right: 120}, spacing: {before: 120, after: 200}, children: [run(b.text, {bold: true})]}));
     } else if (b.t === "slide") {
       body.push(new Paragraph({shading: {type: ShadingType.CLEAR, fill: "EEF2FF", color: "auto"}, indent: {left: 120, right: 120}, spacing: {after: 160}, children: [run("▶ " + b.text, {bold: true, color: BLUE})]}));
+    } else if (b.t === "links") {
+      body.push(new Paragraph({spacing: {after: 160}, keepLines: true, children: [
+        ...(b.title ? [run(`📖 ${b.title}: `, {bold: true, color: INK})] : []),
+        ...b.items.flatMap(([n, u], i) => [...(i ? [run("  ·  ", {color: GREY})] : []),
+          new ExternalHyperlink({link: u, children: [run(n, {color: BLUE, underline: {}})]})])]}));
+      if (!b.title) body.push(para(b.items.map(([, u]) => u).join("  ·  "), {run: {color: GREY, size: 18}}));
+    } else if (b.t === "image") {
+      const img = (logos.shots || {})[b.key];
+      if (img) {
+        body.push(new Paragraph({alignment: AlignmentType.CENTER, keepNext: true, spacing: {before: 120, after: 60},
+          children: [new ImageRun({type: "jpg", data: img, transformation: {width: 560, height: Math.round(560 * 820 / 1280)}})]}));
+        body.push(new Paragraph({alignment: AlignmentType.CENTER, spacing: {after: 200}, children: [run(b.caption, {italics: true, color: GREY, size: 18})]}));
+      }
     } else if (b.t === "break") {
       body.push(new Paragraph({children: [new PageBreak()]}));
     }

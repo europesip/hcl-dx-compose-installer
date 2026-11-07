@@ -26,13 +26,27 @@ const finishPrep = lang => lang === "es"
   : ["echo \"${G}${B}✔ Environment ready for the session in $(( (SECONDS-T0)/60 )) min.${N}\"",
      "echo \"  Stop here. On the day of the demo: ./demo.sh (stages 0 to 5, starting with step 0 and LiteLLM).\""];
 
+// The folders of the zip are named after what they hold (lab-base, lab-ldap, lab-bbdd...), not after
+// the numbered labs of the repository (1-dx, 2a-ldap, 2b-postgres...). The engine keeps the lab names
+// (the golden test compares it with the frozen wizard): the installer renames them in its output.
+export const FOLDERS = [["0-poc", "lab-poc"], ["1-dx", "lab-base"], ["1b-scriptapp", "lab-scriptapp"], ["2a-ldap", "lab-ldap"], ["2a-ad", "lab-ldap-ad"],
+  ["2b-postgres", "lab-bbdd"], ["2b-oracle", "lab-bbdd-oracle"], ["3-iq", "lab-iq"], ["3b-mcp", "lab-mcp"], ["4-search", "lab-search"], ["5-orbita", "lab-orbita"]];
+const FOLDER_RE = FOLDERS.map(([a, b]) => [new RegExp(`(?<![\\w.-])${a}/`, "g"), b + "/"]);
+// "Lab 2B", "Lab 3" and so on in the comments and messages: the name of the folder instead
+const LABEL_RE = [[/\(Lab 2 guide, 2B step 3\)/g, "(RUNBOOK.md)"], [/\bLab 0\b/g, "lab-poc"], [/\bLab 1B\b/g, "lab-scriptapp"], [/\bLab 1\b/g, "lab-base"],
+  [/\bLab 2A\b/g, "lab-ldap"], [/\bLab 2B?\b/g, "lab-bbdd"], [/\bLab 3B\b/g, "lab-mcp"], [/\bLab 3A?\b/g, "lab-iq"], [/\bLab 4\b/g, "lab-search"], [/\bLab 5\b/g, "lab-orbita"]];
+export const renameText = text => typeof text !== "string" ? text : [...FOLDER_RE, ...LABEL_RE].reduce((x, [re, b]) => x.replace(re, b), text);
+const renamePath = p => FOLDER_RE.reduce((x, [re, b]) => x.replace(re, b), p);
+const renameStep = st => ({...st, title: renameText(st.title), note: renameText(st.note), cmd: renameText(st.cmd), manual: renameText(st.manual)});
+
 export function generate(form, lang){
   engine.setLang(lang);
   const s = toEngineState(form);
   const check = engine.validate(s);
   engine.ensureLitellmKey();                 // the same key in every file of this page load
-  const files = engine.bundleFiles(s);
-  const raw = engine.directSteps(s);
+  const files = Object.fromEntries(Object.entries(engine.bundleFiles(s)).map(([p, f]) =>
+    [renamePath(p), /\.sql$/.test(p) ? f : {...f, text: renameText(f.text)}]));   // the HCL table script is left as it is
+  const raw = engine.directSteps(s).map(renameStep);
   const webinar = form.preset === "webinar";
   const pgSql = !!engine.pgSqlFor(s);
   const out = [], P = "dx-install/";
@@ -55,6 +69,8 @@ export function generate(form, lang){
   }
   runbook = buildRunbook(s, webinar ? {prep, demo} : {steps}, files, lang, {pgSql, dirs});
   out.unshift({name: P + "RUNBOOK.md", text: runbook});
+  for (const e of out) e.text = renameText(e.text);   // install.sh, demo.sh, uninstall.sh and RUNBOOK.md
+  runbook = out[0].text;
   for (const [p, f] of Object.entries(files)) out.push({name: P + p, text: f.text, mode: f.mode});
   return {s, check, files, steps, prep, demo, webinar, entries: out, runbook, litellmKey: engine.litellmKey, pgSql, pgMissing: s.db === "postgres" && !pgSql};
 }

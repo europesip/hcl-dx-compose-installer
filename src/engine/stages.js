@@ -10,6 +10,17 @@ export const STAGES = {
   en: ["Prerequisites", "Base DX installation", "LDAP configuration", "Transfer to an external database", "AI Assistant", "Search", "ÓRBITA (extra)"],
   es: ["Pre-requisitos", "Instalación base de DX", "Configuración del LDAP", "Transferencia a base de datos externa", "Asistente de IA", "Búsqueda", "ÓRBITA (extra)"],
 };
+// The official HCL documentation (CF239) of each stage, for reference
+const HD = "https://help.hcl-software.com/digital-experience";
+export const STAGE_DOCS = [
+  [["DX Compose · Preparation", `${HD}/dx-compose/CF239/deploy_dx/install/kubernetes_deployment/preparation/`], ["HCL DX IQ · Deploying LiteLLM", `${HD}/9.5/CF239/build_sites/iq/installation/deploy-litellm/`]],
+  [["DX Compose · Installation", `${HD}/dx-compose/CF239/deploy_dx/install/kubernetes_deployment/install/`]],
+  [["DX Compose · LDAP configuration", `${HD}/dx-compose/CF239/deploy_dx/manage/cfg_webengine/ldap_configuration/`]],
+  [["DX Compose · Database transfer", `${HD}/dx-compose/CF239/deploy_dx/manage/cfg_webengine/external_db_database_transfer/`]],
+  [["HCL DX IQ · Installation", `${HD}/9.5/CF239/build_sites/iq/installation/`]],
+  [["DX Compose · Enabling search", `${HD}/dx-compose/CF239/deploy_dx/manage/cfg_dx_compose/enable_search/`]],
+  [],
+];
 export const stageLabel = (n, lang) => `${n} · ${(STAGES[lang] || STAGES.en)[n]}`;
 
 // Original id -> [stage, extra]
@@ -72,7 +83,7 @@ export function webinarPhases(rawSteps, s, lang){
   add(prep, {id: `P-${i++}`, lab: P, title: t("HCL pull secret and charts (downloaded in advance)", "Pull secret de HCL y charts (descargados por adelantado)"),
     note: t("Done in advance so that the demo does not depend on the download speed. In the demo, stage 1 shows these same commands again (they do nothing the second time).",
             "Se hace por adelantado para que la demo no dependa de la velocidad de descarga. En la demo, la etapa 1 vuelve a mostrar estos mismos comandos (la segunda vez no hacen nada)."),
-    opt: false, manual: "", cmd: `kubectl apply -f 1-dx/secrets.yaml\n${by("1-2").cmd}`});
+    opt: false, manual: "", cmd: `kubectl apply -f lab-base/secrets.yaml\n${by("1-2").cmd}`});
 
   // ---- Demo: stage 0 checks the preparation and installs LiteLLM, then stages 1 to 5
   const demoRaw = rawSteps.filter(x => !PREP_IDS.has(x.id) && x.id !== "D-0");
@@ -98,9 +109,9 @@ const RB = {
     intro: "A tailor-made installation built from your answers. **This folder is self-contained**: every file is already filled in (values, properties, LDIF, secrets) and the commands run from this folder.",
     warn: "> ⚠️ **PoC, not production. Credentials in plain text:** passwords and keys are written in the files of this folder so that everything is easy to follow. Keep it private and rotate the secrets afterwards.",
     need: "You need `kubectl` (with access to the cluster), `helm`, `openssl`, `curl` and `python3`.",
-    sql: "**PostgreSQL for the Web Engine:** stage 3 needs `setup-postgres-dx.sql`, the table script from HCL (early release, as PostgreSQL is not yet officially supported for the Web Engine): contact HCL to get it and copy it into `2b-postgres/` before you start.",
+    sql: "**PostgreSQL for the Web Engine:** stage 3 needs `setup-postgres-dx.sql`, the table script from HCL (early release, as PostgreSQL is not yet officially supported for the Web Engine): contact HCL to get it and copy it into `lab-bbdd/` before you start.",
     ph: "Some values were left empty: replace every `PUT-YOUR-...-HERE` in this folder (`grep -rn PUT-YOUR- .`).",
-    prep: "Before you start", run: "Run it", stages: "Stages", opt: "Optional check", manual: "Manual step", end: "Done",
+    docs: "HCL documentation", prep: "Before you start", run: "Run it", stages: "Stages", opt: "Optional check", manual: "Manual step", end: "Done",
     runAll: ["./install.sh            # every step (without the optional checks)", "./install.sh --verify   # also the optional checks",
              "./install.sh --list     # list of steps", "./install.sh --from 4-1 # resume from a step", "./install.sh --pause    # show each command and wait for Enter", "./uninstall.sh          # delete everything it created"],
     phase1: "Phase 1 · Preparation (before the session)",
@@ -118,9 +129,9 @@ const RB = {
     intro: "Una instalación a medida, construida con tus respuestas. **Esta carpeta es autónoma**: todos los ficheros ya están rellenos (values, properties, LDIF, secrets) y los comandos se ejecutan desde esta carpeta.",
     warn: "> ⚠️ **PoC, no producción. Credenciales en claro:** las contraseñas y claves están escritas en los ficheros de esta carpeta para que todo sea fácil de seguir. Guárdala en privado y rota los secretos después.",
     need: "Necesitas `kubectl` (con acceso al clúster), `helm`, `openssl`, `curl` y `python3`.",
-    sql: "**PostgreSQL para el Web Engine:** la etapa 3 necesita `setup-postgres-dx.sql`, el table script from HCL (early release, porque PostgreSQL aún no está soportado oficialmente para el Web Engine): pídeselo a HCL y cópialo en `2b-postgres/` antes de empezar.",
+    sql: "**PostgreSQL para el Web Engine:** la etapa 3 necesita `setup-postgres-dx.sql`, el table script from HCL (early release, porque PostgreSQL aún no está soportado oficialmente para el Web Engine): pídeselo a HCL y cópialo en `lab-bbdd/` antes de empezar.",
     ph: "Algunos valores se dejaron vacíos: sustituye cada `PUT-YOUR-...-HERE` de esta carpeta (`grep -rn PUT-YOUR- .`).",
-    prep: "Antes de empezar", run: "Ejecutarlo", stages: "Etapas", opt: "Comprobación opcional", manual: "Paso manual", end: "Fin",
+    docs: "Documentación de HCL", prep: "Antes de empezar", run: "Ejecutarlo", stages: "Etapas", opt: "Comprobación opcional", manual: "Paso manual", end: "Fin",
     runAll: ["./install.sh            # todos los pasos (sin las comprobaciones opcionales)", "./install.sh --verify   # también las comprobaciones opcionales",
              "./install.sh --list     # lista de pasos", "./install.sh --from 4-1 # continuar desde un paso", "./install.sh --pause    # muestra cada comando y espera a Enter", "./uninstall.sh          # borra todo lo que creó"],
     phase1: "Fase 1 · Preparación (antes de la sesión)",
@@ -137,7 +148,11 @@ const RB = {
 function stepsMd(o, steps, d){
   let lab = "";
   for (const st of steps) {
-    if (st.lab !== lab) { lab = st.lab; o.push(`### ${lab}`, ""); }
+    if (st.lab !== lab) {
+      lab = st.lab; o.push(`### ${lab}`, "");
+      const docs = /^P-/.test(st.id) ? [] : STAGE_DOCS[st.stage] || [];
+      if (docs.length) o.push(`📖 ${d.docs}: ` + docs.map(([n, u]) => `[${n}](${u})`).join(" · "), "");
+    }
     o.push(`#### ${st.id} · ${st.title}`, "");
     if (st.opt) o.push(`*${d.opt}.*`, "");
     if (st.note) o.push(st.note, "");

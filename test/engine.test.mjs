@@ -35,7 +35,7 @@ test("everything: stages 0 to 6, extras named, new ids", () => {
   assert.ok(g.steps.some(s => s.extra && s.title.startsWith("Extra · ")));
   assert.equal(g.steps.find(s => s.origId === "4-2").stage, 5);
   const names = g.entries.map(e => e.name);
-  for (const f of ["install.sh", "uninstall.sh", "RUNBOOK.md", "1-dx/custom-values.yaml", "3-iq/custom-iq-values.rag.yaml", "5-orbita/secrets.yaml"]) assert.ok(names.includes("dx-install/" + f), f);
+  for (const f of ["install.sh", "uninstall.sh", "RUNBOOK.md", "lab-base/custom-values.yaml", "lab-iq/custom-iq-values.rag.yaml", "lab-orbita/secrets.yaml"]) assert.ok(names.includes("dx-install/" + f), f);
   const install = g.entries.find(e => e.name === "dx-install/install.sh");
   assert.equal(install.mode, 0o100755);
   assert.match(install.text, /IDS=\('0-1' /);
@@ -64,11 +64,11 @@ test("webinar: two phases, no LiteLLM in the preparation, stages 0 to 5, no extr
 
 test("key changes and the files of a step", () => {
   const g = make("webinar", {DX_HOST: "portal.acme.com", SC_RWO: "fast-rwo"});
-  const ch = keyChanges(g.files["1-dx/custom-values.yaml"].text);
+  const ch = keyChanges(g.files["lab-base/custom-values.yaml"].text);
   assert.ok(ch.some(c => c.line.includes("portal.acme.com")));
   assert.ok(ch.some(c => c.line.includes("fast-rwo")));
   const inst = g.demo.find(s => s.origId === "1-4");
-  assert.ok(filesOfStep(inst, g.files).includes("1-dx/custom-values.yaml"));
+  assert.ok(filesOfStep(inst, g.files).includes("lab-base/custom-values.yaml"));
   assert.ok(g.steps.some(isSecretStep));
 });
 
@@ -120,14 +120,14 @@ test("AWS estimates are positive and ordered", () => {
 test("demo users can have their own password (LDIF and the chat as macarena), wpsadmin keeps its own", async () => {
   const {DEFAULTS: D, applyPreset: ap} = await import("../src/state.js");
   const g = generate(ap({...D, ...CREDS, demoSame: false, DEMO_PASSWORD: "Demo-Users-1"}, "all"), "en");
-  const ldif = g.files["2a-ldap/demo-users.ldif"].text;
+  const ldif = g.files["lab-ldap/demo-users.ldif"].text;
   assert.match(ldif, /hash of "Demo-Users-1"/);
-  assert.match(g.files["1-dx/secrets.yaml"].text, /Lab-Passw0rd/);
+  assert.match(g.files["lab-base/secrets.yaml"].text, /Lab-Passw0rd/);
   const ask = g.steps.find(s => s.origId === "5-3").cmd;
   assert.match(ask, /"username":"macarena","password":"Demo-Users-1"/);
   assert.ok(!maskText(g.entries.map(e => e.text).join("\n"), secretValues(g.s)).includes("Demo-Users-1"));
   const same = generate(ap({...D, ...CREDS}, "all"), "en");
-  assert.match(same.files["2a-ldap/demo-users.ldif"].text, /hash of "Lab-Passw0rd"/);
+  assert.match(same.files["lab-ldap/demo-users.ldif"].text, /hash of "Lab-Passw0rd"/);
 });
 
 test("PostgreSQL script: in the zip for EUROPESIP/HCL users, flagged as missing for the others", () => {
@@ -141,16 +141,43 @@ test("PostgreSQL script: in the zip for EUROPESIP/HCL users, flagged as missing 
 test("AWS Bedrock: litellm-values with the existing model IDs and the region, the key in litellm-env, no Qwen or RAG", () => {
   for (const [region, pre] of [["us-east-1", "us"], ["eu-west-1", "eu"]]) {
     const g = make("all", {LLM_PROVIDER: "bedrock", BEDROCK_API_KEY: "bedrock-key-123", BEDROCK_REGION: region, IQ_LLM: "qwen"});
-    const v = g.files["3-iq/litellm-values.yaml"].text;
+    const v = g.files["lab-iq/litellm-values.yaml"].text;
     assert.match(v, new RegExp(`model: bedrock/${pre}\\.anthropic\\.claude-sonnet-4-6\\n`));
     assert.match(v, new RegExp(`model: bedrock/${pre}\\.anthropic\\.claude-haiku-4-5-20251001-v1:0`));
     assert.match(v, new RegExp(`aws_region_name: ${region}`));
     assert.ok(!v.includes("20250514"), "not the wrong documented Sonnet ID");
     assert.ok(!/openrouter\.ai/.test(v.split("proxy_config:")[1]));
-    assert.match(g.files["3-iq/secrets.yaml"].text, /AWS_BEARER_TOKEN_BEDROCK: 'bedrock-key-123'/);
+    assert.match(g.files["lab-iq/secrets.yaml"].text, /AWS_BEARER_TOKEN_BEDROCK: 'bedrock-key-123'/);
     assert.equal(g.s.IQ_LLM, "claude"); assert.equal(g.s.iqrag, false);
     assert.ok(!Object.keys(g.files).some(f => f.includes("qwen") || f.includes("rag")));
     assert.ok(!maskText(g.entries.map(e => e.text).join("\n"), secretValues(g.s)).includes("bedrock-key-123"));
   }
-  assert.match(make("webinar").files["3-iq/secrets.yaml"].text, /OPENROUTER_API_KEY/);   // OpenRouter stays the default
+  assert.match(make("webinar").files["lab-iq/secrets.yaml"].text, /OPENROUTER_API_KEY/);   // OpenRouter stays the default
+});
+
+test("zip folders named after their content (lab-base, lab-ldap, lab-bbdd...), no numbered lab names", () => {
+  for (const [p, extra] of [["all", {}], ["webinar", {}], ["custom", {dir: "ad", db: "oracle", platform: "poc"}]]) {
+    const g = make(p, extra);
+    const dirs = new Set(g.entries.map(e => e.name.split("/")[1]).filter(x => !/\./.test(x)));
+    for (const d of dirs) assert.ok(/^(lab-[a-z-]+|support)$/.test(d), d);
+    const text = g.entries.filter(e => !e.name.endsWith(".sql")).map(e => e.text).join("\n") + g.steps.map(s => s.cmd).join("\n");
+    assert.ok(!/(^|[^\w.-])(0-poc|1-dx|1b-scriptapp|2a-ldap|2a-ad|2b-postgres|2b-oracle|3-iq|3b-mcp|4-search|5-orbita)\//m.test(text));
+    assert.ok(!/\bLab [0-5][AB]?\b/.test(text));
+  }
+  assert.ok(make("custom", {dir: "ad", db: "oracle"}).files["lab-bbdd-oracle/custom-values.oracle.yaml"]);
+  assert.match(make("all").runbook, /Documentation|HCL documentation/);
+  assert.match(make("all").runbook, /help\.hcl-software\.com\/digital-experience\/dx-compose\/CF239\/deploy_dx\/manage\/cfg_webengine\/ldap_configuration/);
+});
+
+test("webinar Word: the installer that made it, the PostgreSQL script, the credentials and the HCL docs", async () => {
+  const {unzipSync, strFromU8} = await import("./unzip.mjs");
+  const xml = async (g, lang, o = {}) => strFromU8(unzipSync(new Uint8Array(await buildWord(g, lang, [["Host", g.s.DX_HOST]], {as: "buffer", ...o})))["word/document.xml"]);
+  const inside = make("webinar", {HCL_HARBOR_USER: "a@europesip.com"}, "es"), outside = make("webinar", {}, "es");
+  const a = await xml(inside, "es"), b = await xml(outside, "es"), plain = await xml(inside, "es", {mask: false});
+  for (const x of ["Cómo se ha hecho este documento", "github.com/europesip/hcl-dx-compose-installer", "Contraseñas y credenciales", "dado que has escogido en el instalador que se oculten",
+                   "se entiende que eres un usuario autorizado", "Incluido en el ZIP", "Documentación oficial de HCL", "DX Compose · LDAP configuration"]) assert.ok(a.includes(x), x);
+  assert.ok(b.includes("No incluido: recuerda que debes solicitarlo") && b.includes("En tu caso no viene incluido"));
+  assert.ok(!a.includes("Lab-Passw0rd") && plain.includes("Lab-Passw0rd") && plain.includes("Has escogido en el instalador que se muestren"));
+  const en = await xml(make("webinar"), "en");
+  for (const x of ["How this document was made", "Passwords and credentials", "HCL documentation"]) assert.ok(en.includes(x), x);
 });

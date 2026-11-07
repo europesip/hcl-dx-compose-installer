@@ -6,7 +6,7 @@ import {buildScript} from "./script.js";
 pdfMake.addVirtualFileSystem(vfs);
 const INK = "#0B1B3A", BLUE = "#0040FF", PINK = "#FF0A6C", SOFT = "#F2F5FF", LINE = "#D6DDF5", GREY = "#5B6785";
 const TONE = {ok: "#EAF7EE", warn: "#FFF4E5", error: "#FDECEC", info: "#EEF2FF"};
-const toDataUrl = bytes => { let s = ""; for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]); return "data:image/png;base64," + btoa(s); };
+const toDataUrl = (bytes, type = "png") => { let s = ""; for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]); return `data:image/${type};base64,` + btoa(s); };
 const box = (content, fill) => ({table: {widths: ["*"], body: [[{...content, margin: [8, 6, 8, 6]}]]}, layout: {fillColor: () => fill, hLineWidth: () => 0, vLineWidth: () => 0}, margin: [0, 4, 0, 10]});
 
 export async function buildPdf(gen, lang, summaryRows, {mask = true, logos = {}} = {}){
@@ -48,6 +48,13 @@ export async function buildPdf(gen, lang, summaryRows, {mask = true, logos = {}}
         layout: {hLineColor: () => LINE, vLineColor: () => LINE, paddingTop: () => 3, paddingBottom: () => 3}, margin: [0, 0, 0, 10]});
     } else if (b.t === "callout") content.push(box({text: b.text, bold: true}, TONE[b.tone] || TONE.info));
     else if (b.t === "slide") content.push(box({text: b.text, bold: true, color: BLUE}, TONE.info));
+    else if (b.t === "links") content.push({text: [...(b.title ? [{text: `${b.title}: `, bold: true}] : []),
+      ...b.items.flatMap(([n, u], i) => [...(i ? [{text: "  ·  ", color: GREY}] : []), {text: n, link: u, color: BLUE, decoration: "underline"}]),
+      ...(b.title ? [] : [{text: "\n" + b.items.map(([, u]) => u).join("  ·  "), color: GREY, fontSize: 9}])], margin: [0, 0, 0, 10]});
+    else if (b.t === "image") {
+      const img = (logos.shots || {})[b.key];
+      if (img) content.push({stack: [{image: toDataUrl(img, "jpeg"), width: 440, alignment: "center"}, {text: b.caption, italics: true, color: GREY, fontSize: 9, alignment: "center", margin: [0, 4, 0, 0]}], margin: [0, 6, 0, 12], unbreakable: true});
+    }
     else if (b.t === "break") content.push({text: "", pageBreak: "after"});
   }
   const dd = {
