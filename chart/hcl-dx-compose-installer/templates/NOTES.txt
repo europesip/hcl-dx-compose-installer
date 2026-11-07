@@ -12,5 +12,5 @@ Open it with a port-forward:
 The AWS functions are enabled: the pod needs outbound access to the AWS APIs.
 {{- end }}
 {{- if not .Values.auth.enabled }}
-Anyone who can reach the page can use it; set auth.enabled=true to ask for a user and password.
+Anyone who can reach the page can use it (including the AWS functions): if it is reachable from outside, set auth.enabled=true.
 {{- end }}

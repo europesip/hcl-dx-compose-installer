@@ -57,6 +57,11 @@ The stages are the same in every mode:
   CLI for that operation only. They are never written to disk or to the logs.
 - **Auditing:** the source code is here for you to audit.
 
+> ⚠️ **Reachable from outside? Turn on authentication.** If you deploy the installer on a machine or cluster that can be
+> reached from the Internet or from other networks, enable its user and password (`auth.enabled=true` in the Helm chart,
+> or `AUTH_USER` / `AUTH_PASSWORD` in Docker). Otherwise anyone who reaches the page can use it, including its AWS
+> functions with their own keys (or disable those with `aws.enabled=false`).
+
 ## Run it with Docker
 
 ```bash
@@ -75,7 +80,8 @@ functions: `-e AWS_ENABLED=false`.
 ```bash
 helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer \
   --version 2.0.0 -n dx-installer --create-namespace \
-  --set ingress.enabled=true --set ingress.className=nginx --set ingress.host=installer.example.com
+  --set ingress.enabled=true --set ingress.className=nginx --set ingress.host=installer.example.com \
+  --set auth.enabled=true --set auth.username=admin --set auth.password='S3cret!'   # if it is reachable from outside
 ```
 
 | Value | Default | What it does |

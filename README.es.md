@@ -58,6 +58,11 @@ Las etapas son las mismas en todos los modos:
   para esa operación. Nunca se escriben en disco ni en los logs.
 - **Auditoría:** el código fuente está aquí para que lo audites.
 
+> ⚠️ **¿Accesible desde fuera? Activa la autenticación.** Si despliegas el instalador en una máquina o clúster accesible
+> desde Internet o desde otras redes, activa su usuario y contraseña (`auth.enabled=true` en el chart de Helm, o
+> `AUTH_USER` / `AUTH_PASSWORD` en Docker). Si no, cualquiera que llegue a la página puede usarla, incluidas sus funciones
+> de AWS con sus propias claves (o desactívalas con `aws.enabled=false`).
+
 ## Ejecutarlo con Docker
 
 ```bash
@@ -76,7 +81,8 @@ Autenticación básica (opcional): `-e AUTH_USER=admin -e AUTH_PASSWORD='S3cret!
 ```bash
 helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer \
   --version 2.0.0 -n dx-installer --create-namespace \
-  --set ingress.enabled=true --set ingress.className=nginx --set ingress.host=installer.example.com
+  --set ingress.enabled=true --set ingress.className=nginx --set ingress.host=installer.example.com \
+  --set auth.enabled=true --set auth.username=admin --set auth.password='S3cret!'   # si es accesible desde fuera
 ```
 
 | Valor | Por defecto | Qué hace |
