@@ -59,7 +59,8 @@ jobs:
         run: |
           docker run -d --name inst -p 8080:8080 --read-only --tmpfs /tmp --user 12345:0 --cap-drop ALL test:installer
           for i in $(seq 1 30); do curl -sf localhost:8080/healthz && break; sleep 1; done
-          docker exec inst sh -c 'aws --version && eksctl version && rosa version && oc version --client && kubectl version --client && helm version --short && ssh -V'
+          docker exec inst sh -c 'aws --version && eksctl version && rosa version && oc version --client && kubectl version --client && helm version --short'
+          docker exec -e LD_PRELOAD=/usr/local/lib/libnss_wrapper.so -e NSS_WRAPPER_PASSWD=/tmp/dx-installer/passwd -e NSS_WRAPPER_GROUP=/etc/group inst ssh -V   # as the AWS jobs run it
           curl -sI localhost:8080/ | tee h.txt
           grep -qi "content-security-policy:.*connect-src 'self'" h.txt
           grep -qi "x-content-type-options: nosniff" h.txt

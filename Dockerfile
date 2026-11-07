@@ -24,7 +24,8 @@ LABEL org.opencontainers.image.title="HCL DX Compose Installer" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${VERSION}"
 RUN set -eux; \
-    apt-get update; apt-get install -y --no-install-recommends ca-certificates curl unzip openssh-client python3-minimal; \
+    apt-get update; apt-get install -y --no-install-recommends ca-certificates curl unzip openssh-client python3-minimal libnss-wrapper; \
+    ln -s "$(find /usr/lib -name libnss_wrapper.so | head -1)" /usr/local/lib/libnss_wrapper.so; \
     a=$([ "$TARGETARCH" = arm64 ] && echo aarch64 || echo x86_64); g=$([ "$TARGETARCH" = arm64 ] && echo arm64 || echo amd64); \
     cd /tmp; \
     curl -fsSLo aws.zip "https://awscli.amazonaws.com/awscli-exe-linux-$a-$AWS_CLI_VERSION.zip"; unzip -q aws.zip; ./aws/install -b /usr/local/bin; rm -rf aws aws.zip; \

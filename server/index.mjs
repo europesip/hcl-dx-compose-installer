@@ -7,7 +7,7 @@
 import http from "node:http";
 import {spawn, execFile} from "node:child_process";
 import {randomUUID, timingSafeEqual} from "node:crypto";
-import {readFile, stat, readdir, mkdir} from "node:fs/promises";
+import {readFile, writeFile, stat, readdir, mkdir} from "node:fs/promises";
 import {createReadStream, existsSync} from "node:fs";
 import {join, extname, resolve, dirname} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -22,6 +22,17 @@ const VERSION = process.env.APP_VERSION || JSON.parse(await readFile(join(HERE, 
 const AWS_ENABLED = process.env.AWS_ENABLED !== "false";
 const AUTH_USER = process.env.AUTH_USER || "", AUTH_PASSWORD = process.env.AUTH_PASSWORD || "";
 await mkdir(WORK, {recursive: true});
+
+// ssh needs the current uid in /etc/passwd. With an arbitrary uid (OpenShift, docker --user) it is not
+// there and the root file system is read-only: nss_wrapper gives the AWS scripts a passwd file of their own.
+const NSS = {};
+try {
+  const uid = process.getuid(), gid = process.getgid(), passwd = await readFile("/etc/passwd", "utf8");
+  if (!passwd.split("\n").some(l => l.split(":")[2] === String(uid)) && existsSync("/usr/local/lib/libnss_wrapper.so")) {
+    await writeFile(join(WORK, "passwd"), passwd.trimEnd() + `\ninstaller:x:${uid}:${gid}:installer:/tmp:/bin/sh\n`);
+    Object.assign(NSS, {LD_PRELOAD: "/usr/local/lib/libnss_wrapper.so", NSS_WRAPPER_PASSWD: join(WORK, "passwd"), NSS_WRAPPER_GROUP: "/etc/group"});
+  }
+} catch { /* not Linux or no /etc/passwd */ }
 
 const MIME = {".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml",
   ".png": "image/png", ".ico": "image/x-icon", ".json": "application/json", ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8"};
@@ -59,7 +70,7 @@ function startJob({kind, action, params = {}, creds = {}}){
   const env = {
     PATH: process.env.PATH, HOME: join(WORK, "home"), USER: "installer", LANG: "C.UTF-8",
     AWS_ACCESS_KEY_ID: creds.accessKeyId, AWS_SECRET_ACCESS_KEY: creds.secretAccessKey,
-    NAME: name, REGION: region, OUT: join(WORK, "out", name),
+    NAME: name, REGION: region, OUT: join(WORK, "out", name), ...NSS,
   };
   if (creds.sessionToken) env.AWS_SESSION_TOKEN = String(creds.sessionToken);
   if (params.instanceType) { if (!RE.type.test(params.instanceType)) throw new Error("invalid instance type"); env.INSTANCE_TYPE = env.NODE_TYPE = params.instanceType; }
