@@ -41,7 +41,7 @@ COPY package.json ./
 COPY src/zip.js ./src/zip.js
 COPY server ./server
 COPY --from=build /app/dist ./dist
-ENV NODE_ENV=production PORT=8080 HOME=/tmp WORK_DIR=/tmp/dx-installer APP_VERSION=${VERSION}
+ENV NODE_ENV=production PORT=8080 HOME=/tmp USER=installer WORK_DIR=/tmp/dx-installer APP_VERSION=${VERSION}
 USER 1000
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s CMD node -e "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"

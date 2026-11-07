@@ -57,7 +57,7 @@ function startJob({kind, action, params = {}, creds = {}}){
   for (const j of jobs.values()) if (j.name === name && j.status === "running") throw new Error(`a job for ${name} is already running`);
   if (!RE.key.test(creds.accessKeyId || "") || !RE.secret.test(creds.secretAccessKey || "")) throw new Error("invalid AWS credentials");
   const env = {
-    PATH: process.env.PATH, HOME: join(WORK, "home"), LANG: "C.UTF-8",
+    PATH: process.env.PATH, HOME: join(WORK, "home"), USER: "installer", LANG: "C.UTF-8",
     AWS_ACCESS_KEY_ID: creds.accessKeyId, AWS_SECRET_ACCESS_KEY: creds.secretAccessKey,
     NAME: name, REGION: region, OUT: join(WORK, "out", name),
   };
