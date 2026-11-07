@@ -5,8 +5,8 @@
 #
 #   NAME=dx-compose-poc REGION=eu-west-1 ./ec2-create.sh
 #
-# Variables: NAME, REGION, INSTANCE_TYPE (m6i.4xlarge), DISK_GB (200), ALLOWED_CIDR (who can use
-# SSH and the Kubernetes API; by default the public IP of the machine that runs this script),
+# Variables: NAME, REGION, INSTANCE_TYPE (m6i.4xlarge), DISK_GB (200), ALLOWED_CIDR (comma-separated CIDRs that
+# can use SSH and the Kubernetes API; the public IP of the machine that runs this script is always added),
 # OUT (folder for the SSH key and the kubeconfig).
 # It costs money while it exists: delete it with ec2-destroy.sh when you finish.
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -20,11 +20,14 @@ need aws ssh curl python3
 check_name
 whoami_aws
 
-if [ -z "${ALLOWED_CIDR:-}" ]; then
-  ip=$(curl -s --max-time 10 https://checkip.amazonaws.com | tr -d '[:space:]')
-  [[ "$ip" =~ ^[0-9.]+$ ]] || die "cannot find your public IP: set ALLOWED_CIDR"
-  ALLOWED_CIDR="$ip/32"
-fi
+# SSH and the Kubernetes API: the CIDRs in ALLOWED_CIDR (comma-separated, e.g. your PC) plus the public IP of the
+# machine that runs this script, which needs SSH to finish the setup and read the kubeconfig.
+ip=$(curl -s --max-time 10 https://checkip.amazonaws.com | tr -d '[:space:]')
+[[ "$ip" =~ ^[0-9.]+$ ]] || die "cannot find the public IP of this machine"
+CIDRS=$(echo "${ALLOWED_CIDR:-},$ip/32" | tr ',' '\n' | sed '/^$/d' | sort -u)
+for c in $CIDRS; do [[ "$c" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$ ]] || die "invalid CIDR: $c"; done
+RANGES=$(for c in $CIDRS; do printf '{CidrIp=%s},' "$c"; done | sed 's/,$//')
+ALLOWED_CIDR=$(echo $CIDRS | tr ' ' ',')
 
 step "Checking that $NAME does not exist yet"
 existing=$(aws_ ec2 describe-instances --filters "Name=tag:$TAG_KEY,Values=$NAME" "Name=instance-state-name,Values=pending,running,stopping,stopped" --query 'Reservations[].Instances[].InstanceId')
@@ -39,8 +42,8 @@ if [ -z "$SG" ] || [ "$SG" = None ]; then
   SG=$(aws_ ec2 create-security-group --group-name "$NAME" --description "HCL DX Compose PoC ($NAME)" --vpc-id "$VPC" \
         --tag-specifications "$(tags security-group)" --query GroupId)
   aws_ ec2 authorize-security-group-ingress --group-id "$SG" --ip-permissions \
-    "IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges=[{CidrIp=$ALLOWED_CIDR,Description=SSH}]" \
-    "IpProtocol=tcp,FromPort=6443,ToPort=6443,IpRanges=[{CidrIp=$ALLOWED_CIDR,Description=Kubernetes API}]" \
+    "IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges=[$RANGES]" \
+    "IpProtocol=tcp,FromPort=6443,ToPort=6443,IpRanges=[$RANGES]" \
     "IpProtocol=tcp,FromPort=80,ToPort=80,IpRanges=[{CidrIp=0.0.0.0/0,Description=HTTP}]" \
     "IpProtocol=tcp,FromPort=443,ToPort=443,IpRanges=[{CidrIp=0.0.0.0/0,Description=HTTPS DX}]" >/dev/null
 fi

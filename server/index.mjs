@@ -49,7 +49,7 @@ const jobs = new Map();
 const KINDS = {ec2: ["ec2-create.sh", "ec2-destroy.sh"], eks: ["eks-create.sh", "eks-destroy.sh"], rosa: ["rosa-create.sh", "rosa-destroy.sh"]};
 const RE = {
   name: /^[a-z][a-z0-9-]{1,30}[a-z0-9]$/, region: /^[a-z]{2}(-[a-z]+)+-\d$/, type: /^[a-z][a-z0-9-]*\.[0-9]*[a-z0-9]+$/,
-  cidr: /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/, int: /^\d{1,4}$/, key: /^[A-Z0-9]{16,128}$/, secret: /^[A-Za-z0-9/+=]{16,128}$/,
+  cidr: /^((\d{1,3}\.){3}\d{1,3}\/\d{1,2})(,(\d{1,3}\.){3}\d{1,3}\/\d{1,2}){0,4}$/, int: /^\d{1,4}$/, key: /^[A-Z0-9]{16,128}$/, secret: /^[A-Za-z0-9/+=]{16,128}$/,
 };
 const FILES = ["kubeconfig", "README.txt", "cluster-admin.txt"];   // + <name>.pem
 
@@ -140,8 +140,14 @@ async function api(req, res, url){
   const path = url.pathname;
   if (path === "/api/info") return send(res, 200, {version: VERSION, aws: AWS_ENABLED});
   if (path === "/api/myip") {
+    // The public IP of the browser (through the Ingress: X-Forwarded-For / X-Real-IP). When the page is
+    // used on the same network or machine (a private address), the public IP of this server is the same one.
+    const isPublic = ip => /^\d{1,3}(\.\d{1,3}){3}$/.test(ip) && !/^(10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/.test(ip);
+    const seen = [...String(req.headers["x-forwarded-for"] || "").split(","), req.headers["x-real-ip"], req.socket.remoteAddress]
+      .map(x => String(x || "").trim().replace(/^::ffff:/, ""));
+    const client = seen.find(isPublic);
     if (!myIp) { const r = await run("curl", ["-s", "--max-time", "8", "https://checkip.amazonaws.com"], process.env); myIp = (r.stdout || "").trim(); }
-    return send(res, 200, {ip: /^[\d.]+$/.test(myIp) ? myIp : ""});
+    return send(res, 200, {ip: client || (/^[\d.]+$/.test(myIp) ? myIp : ""), server: /^[\d.]+$/.test(myIp) ? myIp : ""});
   }
   if (path === "/api/aws/check" && req.method === "POST") {
     if (!AWS_ENABLED) return send(res, 403, {error: "disabled"});
