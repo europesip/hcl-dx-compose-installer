@@ -181,3 +181,22 @@ test("webinar Word: the installer that made it, the PostgreSQL script, the crede
   const en = await xml(make("webinar"), "en");
   for (const x of ["How this document was made", "Passwords and credentials", "HCL documentation"]) assert.ok(en.includes(x), x);
 });
+
+test("Claude directly (Anthropic API): LiteLLM values, secret, no Qwen/RAG, and the stage 0 text of the script", async () => {
+  const g = make("all", {LLM_PROVIDER: "anthropic", ANTHROPIC_API_KEY: "sk-ant-key-123", IQ_LLM: "qwen", iqrag: true});
+  const v = g.files["lab-iq/litellm-values.yaml"].text;
+  assert.match(v, /model: anthropic\/claude-sonnet-4-6/); assert.match(v, /model: anthropic\/claude-haiku-4-5-20251001/);
+  assert.match(v, /api_key: os.environ\/ANTHROPIC_API_KEY/); assert.ok(!/openrouter/i.test(v.replace(/^#.*$/gm, "")));
+  assert.match(g.files["lab-iq/secrets.yaml"].text, /ANTHROPIC_API_KEY: 'sk-ant-key-123'/);
+  assert.ok(!g.files["lab-iq/litellm-values.qwen.yaml"] && !g.files["lab-iq/custom-iq-values.rag.yaml"]);
+  assert.ok(!maskText(g.entries.map(e => e.text).join("\n"), secretValues(g.s)).includes("sk-ant-key-123"));
+  const {unzipSync, strFromU8} = await import("./unzip.mjs");
+  const xml = async (gen, lang) => strFromU8(unzipSync(new Uint8Array(await buildWord(gen, lang, [], {as: "buffer"})))["word/document.xml"]);
+  const es = await xml(make("webinar", {LLM_PROVIDER: "anthropic", ANTHROPIC_API_KEY: "sk-ant-key-123"}, "es"), "es");
+  assert.ok(es.includes("los enruta al LLM escogido (Claude Sonnet 4.6 / Claude Haiku 4.5) a través de la API de Anthropic (Claude directo)"));
+  assert.ok(es.includes("OpenRouter, AWS Bedrock o directamente Claude") && es.includes("mínimo de crédito"));
+  const or = await xml(make("webinar", {}, "es"), "es");
+  assert.ok(or.includes("a través de OpenRouter"));
+  const br = await xml(make("webinar", {LLM_PROVIDER: "bedrock", BEDROCK_API_KEY: "bk-123456"}, "en"), "en");
+  assert.ok(br.includes("routes them to the chosen LLM (Claude Sonnet 4.6 / Claude Haiku 4.5) through AWS Bedrock"));
+});

@@ -567,7 +567,7 @@ const pgSqlFor = s => s.db === "postgres" && /@(europesip\.com|hcl-software\.com
 const pgSql = () => new TextDecoder().decode(Uint8Array.from(atob(PG_SQL_B64), c => c.charCodeAt(0)));
 const PH = {   // placeholders for the values the user left empty
   user: "PUT-YOUR-HCL-ACCOUNT-EMAIL-HERE", token: "PUT-YOUR-HCL-HARBOR-CLI-SECRET-HERE",
-  openrouter: "PUT-YOUR-OPENROUTER-API-KEY-HERE", bedrock: "PUT-YOUR-BEDROCK-API-KEY-HERE", adpw: "PUT-YOUR-AD-BIND-PASSWORD-HERE", orapw: "PUT-YOUR-ORACLE-PASSWORD-HERE",
+  openrouter: "PUT-YOUR-OPENROUTER-API-KEY-HERE", bedrock: "PUT-YOUR-BEDROCK-API-KEY-HERE", anthropic: "PUT-YOUR-ANTHROPIC-API-KEY-HERE", adpw: "PUT-YOUR-AD-BIND-PASSWORD-HERE", orapw: "PUT-YOUR-ORACLE-PASSWORD-HERE",
 };
 const ADMIN_DN = "CN=admin,OU=DX Compose Labs,O=EUROPESIP,C=ES";
 
@@ -575,6 +575,31 @@ const ADMIN_DN = "CN=admin,OU=DX Compose Labs,O=EUROPESIP,C=ES";
 // IDs that exist (the documented Sonnet 4.6 ID does not) and the region. Only Claude: the Qwen models and the
 // BGE-M3 embeddings of the OpenRouter configuration are not in Bedrock.
 const bedrock = s => s.LLM_PROVIDER === "bedrock";
+const anthropic = s => s.LLM_PROVIDER === "anthropic";
+// Claude directly with an Anthropic API key (installer): the same two models, without OpenRouter in between.
+function anthropicLitellm(text, s){
+  const model = (name, id, note) => `    - model_name: ${name}            # ${note}
+      litellm_params:
+        model: anthropic/${id}
+        api_key: os.environ/ANTHROPIC_API_KEY
+        cache_control_injection_points:
+          - location: message
+            role: system`;
+  const list = `proxy_config:
+  # Claude directly through the Anthropic API (ANTHROPIC_API_KEY in the litellm-env secret).
+  model_list:
+${model("iq-general-purpose", "claude-sonnet-4-6", "Claude Sonnet 4.6")}
+${model("iq-summary", "claude-haiku-4-5-20251001", "Claude Haiku 4.5")}
+  litellm_settings:`;
+  const a = text.indexOf("proxy_config:"), b = text.indexOf("  litellm_settings:");
+  if (a < 0 || b < 0) return text;
+  const lines = text.slice(0, a).split("\n"), body = lines.filter(l => !l.startsWith("#") || l.startsWith("# Based on ")).join("\n");
+  const head = ["# LiteLLM (public BerriAI chart litellm-helm 1.106.5) in the shared namespace, for HCL DX IQ.",
+    "# LiteLLM is NOT HCL software: HCL treats it as a prerequisite of IQ.",
+    "# It publishes the two logical models IQ asks for and routes them to Claude directly, with an Anthropic API key:",
+    "#   iq-general-purpose -> Claude Sonnet 4.6     iq-summary -> Claude Haiku 4.5"].join("\n");
+  return head + "\n" + body.replace(/^\n+/, "") + list + text.slice(b + "  litellm_settings:".length);
+}
 function bedrockLitellm(text, s){
   const region = s.BEDROCK_REGION || "us-east-1", pre = region.startsWith("eu-") ? "eu" : "us";
   const model = (name, id, note) => `    - model_name: ${name}            # ${note}
@@ -817,12 +842,13 @@ controller:
   if (s.deps.llm) {
     const docs = [
       secretDoc("litellm-env", sh, bedrock(s) ? {AWS_BEARER_TOKEN_BEDROCK: s.BEDROCK_API_KEY || PH.bedrock, PROXY_MASTER_KEY: litellmKey}
+                                 : anthropic(s) ? {ANTHROPIC_API_KEY: s.ANTHROPIC_API_KEY || PH.anthropic, PROXY_MASTER_KEY: litellmKey}
                                              : {OPENROUTER_API_KEY: s.OPENROUTER_API_KEY || PH.openrouter, PROXY_MASTER_KEY: litellmKey}),
       secretDoc("iq-litellm-api-secret", ns, {virtualKey: litellmKey})];
     if (s.iqdb) docs.push(secretDoc("custom-external-db-credentials", ns, {username: "dx_iq_db_user", password: pw}));
-    add("3-iq/secrets.yaml", secretsFile(s, bedrock(s) ? "Lab 3 secrets: Bedrock API key and LiteLLM master key (the key IQ uses to call LiteLLM)" : "Lab 3 secrets: OpenRouter key and LiteLLM master key (the key IQ uses to call LiteLLM)", docs), 0o100600);
-    add("3-iq/litellm-values.yaml", bedrock(s) ? bedrockLitellm(doc(s, "lab3-iq-openrouter/litellm-values.yaml"), s) : doc(s, "lab3-iq-openrouter/litellm-values.yaml"));
-    if (s.IQ_LLM === "qwen" && !bedrock(s)) add("3-iq/litellm-values.qwen.yaml", doc(s, "lab3-iq-openrouter/litellm-values.qwen.yaml"));
+    add("3-iq/secrets.yaml", secretsFile(s, anthropic(s) ? "Lab 3 secrets: Anthropic API key and LiteLLM master key (the key IQ uses to call LiteLLM)" : bedrock(s) ? "Lab 3 secrets: Bedrock API key and LiteLLM master key (the key IQ uses to call LiteLLM)" : "Lab 3 secrets: OpenRouter key and LiteLLM master key (the key IQ uses to call LiteLLM)", docs), 0o100600);
+    add("3-iq/litellm-values.yaml", bedrock(s) ? bedrockLitellm(doc(s, "lab3-iq-openrouter/litellm-values.yaml"), s) : anthropic(s) ? anthropicLitellm(doc(s, "lab3-iq-openrouter/litellm-values.yaml"), s) : doc(s, "lab3-iq-openrouter/litellm-values.yaml"));
+    if (s.IQ_LLM === "qwen" && !bedrock(s) && !anthropic(s)) add("3-iq/litellm-values.qwen.yaml", doc(s, "lab3-iq-openrouter/litellm-values.qwen.yaml"));
   }
   if (s.deps.mcp) add("3b-mcp/europesip-mcp.yaml", doc(s, "lab3-iq-openrouter/custom-mcp/europesip-mcp.yaml", {SHARED_NS: sh, DX_NS: ns, DX_RELEASE: s.DX_RELEASE}));
   if (s.lab3) {
@@ -936,13 +962,15 @@ kubectl apply -f 2b-postgres/cluster-dx-pg.yaml
 kubectl -n ${sh} wait clusters.postgresql.cnpg.io/${s.PG_CLUSTER} --for=condition=Ready --timeout=10m`);
   }
   if (s.deps.llm) {
-    add(LD, "D-5", "LiteLLM", bedrock(s)
+    add(LD, "D-5", "LiteLLM", anthropic(s)
+      ? t("Not supplied by HCL: official BerriAI chart, routing IQ's two models to Claude directly (Anthropic API).", "No lo suministra HCL: chart oficial de BerriAI, que enruta los dos modelos de IQ directamente a Claude (API de Anthropic).")
+      : bedrock(s)
       ? t(`Not supplied by HCL: official BerriAI chart, routing IQ's two models to Claude on AWS Bedrock (${s.BEDROCK_REGION || "us-east-1"}), the configuration documented by HCL.`, `No lo suministra HCL: chart oficial de BerriAI, que enruta los dos modelos de IQ a Claude en AWS Bedrock (${s.BEDROCK_REGION || "us-east-1"}), la configuración documentada por HCL.`)
       : (s.IQ_LLM === "qwen"
       ? t("Not supplied by HCL: official BerriAI chart, routing IQ's two models to Qwen on OpenRouter (PoC/lab option: cheaper, less DX knowledge; Claude is recommended for production).", "No lo suministra HCL: chart oficial de BerriAI, que enruta los dos modelos de IQ a Qwen en OpenRouter (opción para PoC/laboratorio: más barato, menos conocimiento de DX; para producción se recomienda Claude).")
       : t("Not supplied by HCL: official BerriAI chart, routing IQ's two models to Claude on OpenRouter.", "No lo suministra HCL: chart oficial de BerriAI, que enruta los dos modelos de IQ a Claude en OpenRouter.")),
 `kubectl apply -f 3-iq/secrets.yaml
-helm upgrade --install ${s.LITELLM_RELEASE} oci://ghcr.io/berriai/litellm-helm --version 1.106.5 -n ${sh} -f 3-iq/litellm-values.yaml${s.IQ_LLM === "qwen" && !bedrock(s) ? " -f 3-iq/litellm-values.qwen.yaml" : ""}
+helm upgrade --install ${s.LITELLM_RELEASE} oci://ghcr.io/berriai/litellm-helm --version 1.106.5 -n ${sh} -f 3-iq/litellm-values.yaml${s.IQ_LLM === "qwen" && !bedrock(s) && !anthropic(s) ? " -f 3-iq/litellm-values.qwen.yaml" : ""}
 kubectl -n ${sh} rollout status deployment/${s.LITELLM_RELEASE} --timeout=300s`);
     add(LD, "D-6", t(`Ask ${s.IQ_LLM === "qwen" ? "Qwen" : "Claude"} through LiteLLM (optional)`, `Preguntar a ${s.IQ_LLM === "qwen" ? "Qwen" : "Claude"} a través de LiteLLM (opcional)`), "",
 `kubectl -n ${sh} port-forward svc/${s.LITELLM_RELEASE} 8000:4000 >/dev/null 2>&1 & PF=$!; sleep 5
@@ -1244,7 +1272,7 @@ PAUSE ? "#         ./" + NAME + " --no-pause   do not stop before each step (by 
 "# installation and its secrets go in the environment: the collector uses the secrets only to mask them.",
 "if [ $COLLECT = 1 ]; then",
 "  export PLATFORM=" + sq(s.openshift ? "openshift" : "kubernetes") + " DX_NS=" + sq(s.DX_NS) + " SHARED_NS=" + sq(s.SHARED_NS) + " DX_RELEASE=" + sq(s.DX_RELEASE) + " IQ_RELEASE=" + sq(s.IQ_RELEASE) + " SEARCH_RELEASE=" + sq(s.SEARCH_RELEASE),
-"  export HCL_HARBOR_TOKEN=" + sq(s.HCL_HARBOR_TOKEN || "") + " OPENROUTER_API_KEY=" + sq(s.OPENROUTER_API_KEY || "") + " AWS_BEARER_TOKEN_BEDROCK=" + sq(s.BEDROCK_API_KEY || "") + " LITELLM_MASTER_KEY=" + sq(litellmKey) + " WPSADMIN_PASSWORD=" + sq(s.LAB_PASSWORD || "EuropeS1P") + " AD_BIND_PASSWORD=" + sq(s.AD_BIND_PASSWORD || "") + " ORACLE_DX_PASSWORD=" + sq(s.ORACLE_DX_PASSWORD || ""),
+"  export HCL_HARBOR_TOKEN=" + sq(s.HCL_HARBOR_TOKEN || "") + " OPENROUTER_API_KEY=" + sq(s.OPENROUTER_API_KEY || "") + " AWS_BEARER_TOKEN_BEDROCK=" + sq(s.BEDROCK_API_KEY || "") + " ANTHROPIC_API_KEY=" + sq(s.ANTHROPIC_API_KEY || "") + " LITELLM_MASTER_KEY=" + sq(litellmKey) + " WPSADMIN_PASSWORD=" + sq(s.LAB_PASSWORD || "EuropeS1P") + " AD_BIND_PASSWORD=" + sq(s.AD_BIND_PASSWORD || "") + " ORACLE_DX_PASSWORD=" + sq(s.ORACLE_DX_PASSWORD || ""),
 "  exec support/collect-support-data.sh ${CASE:+--case \"$CASE\"} --out .",
 "fi",
 "",
