@@ -1,6 +1,6 @@
 // The views of the installer, one per screen
 import {useMemo, useState} from "react";
-import {Nav, Card, Title, H2, Choice, Button, Field, Input, Secret, Select, Check, Toggle, Segmented, Callout, Code, Badge, cx,
+import {Modal, Nav, Card, Title, H2, Choice, Button, Field, Input, Secret, Select, Check, Toggle, Segmented, Callout, Code, Badge, cx,
         IconServer, IconPlus, IconLaptop, IconLinux, IconCloud, IconLayers, IconSliders, IconPresent, IconDownload, IconDoc, IconZip, IconSpark, IconCheck, Spinner} from "./ui.jsx";
 import {applyPreset, gates, NAME_KEYS, depsOf} from "./state.js";
 import {ownChecks, wslCmds, linuxCmds, LAB0_GUIDE} from "./guides.js";
@@ -15,6 +15,28 @@ function KV({rows}){
     <dl className="divide-y divide-slate-100 text-sm dark:divide-navy-800">
       {rows.map(([k, v]) => <div key={k} className="grid gap-1 py-2.5 sm:grid-cols-[9rem_1fr]"><dt className="font-medium text-slate-900 dark:text-white">{k}</dt><dd className="text-slate-600 dark:text-slate-400">{v}</dd></div>)}
     </dl>
+  );
+}
+
+// The hosts file, for a DX host name that is not published in DNS
+function HostsHelp({t, host}){
+  const [open, setOpen] = useState(false);
+  const h = (host || "").trim() || "dx-demo.example.com";
+  return (
+    <div className="mt-2 text-xs">
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="font-semibold text-brand-blue hover:underline dark:text-blue-300">{open ? "▾" : "▸"} {t.hostsQ}</button>
+      {open && (
+        <div className="mt-2 space-y-1.5 rounded-xl bg-slate-50 p-3 text-slate-600 dark:bg-navy-950 dark:text-slate-400 rise">
+          <p>{t.hostsA}</p>
+          <p>· {t.hostsWin}<br />· {t.hostsUnix}</p>
+          <p>{t.hostsIp}</p>
+          <Code copyLabel={t.copy} copiedLabel={t.copied}>{"kubectl get svc -A | grep -i -E \"ingress|traefik\""}</Code>
+          <p>{t.hostsLine}</p>
+          <Code lang="hosts" copyLabel={t.copy} copiedLabel={t.copied}>{`192.168.1.50   ${h}     # ${t.hostsIp.replace(/:$/, "")}`}</Code>
+          <p>{t.hostsNip}</p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -95,6 +117,7 @@ export function EnvOwn({t, form, set, go, back}){
               </div>
             )}
             <Field label={t.dxHost} hint={t.dxHostHint}><Input mono placeholder="dx-demo.example.com" value={form.DX_HOST} onChange={e => set({DX_HOST: e.target.value})} /></Field>
+            <HostsHelp t={t} host={form.DX_HOST} />
           </Card>
         </div>
         <Card>
@@ -201,7 +224,7 @@ export function Deploy({t, form, set, go, back}){
   );
 }
 
-function StageCard({n, t, on, onToggle, always, children}){
+function StageCard({n, t, on, onToggle, always, showOptions, children}){
   return (
     <Card className={cx("transition", on === false && "opacity-70")}>
       <div className="flex items-start gap-4">
@@ -212,15 +235,18 @@ function StageCard({n, t, on, onToggle, always, children}){
             {always ? <Badge>{t.always}</Badge> : onToggle && <Toggle checked={on} onChange={onToggle} label={t.stage[n]} />}
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-400">{t.stageT[n]}</p>
-          {children && on !== false && <div className="mt-4 space-y-3">{children}</div>}
+          {children && (on !== false || showOptions) && <div className="mt-4 space-y-3">{children}</div>}
         </div>
       </div>
     </Card>
   );
 }
 
+function McpText({t}){ return <>{t.mcpBody.map(x => <p key={x}>{x}</p>)}</>; }
+
 export function DeployCustom({t, form, set, go, back}){
   const g = gates(form);
+  const [mcpAsk, setMcpAsk] = useState(false), [mcpRead, setMcpRead] = useState(false);
   return (
     <div>
       <Title sub={t.dCustomT}>{t.customTitle}</Title>
@@ -229,18 +255,20 @@ export function DeployCustom({t, form, set, go, back}){
         <StageCard n={1} t={t} always>
           <Check checked={form.lab1b} onChange={v => set({lab1b: v})}><Badge tone="amber">{t.extras}</Badge> {t.xScriptApp}</Check>
         </StageCard>
-        <StageCard n={2} t={t} on={form.dir !== "none"}>
+        <StageCard n={2} t={t} on={form.dir !== "none"} showOptions>
           <Segmented value={form.dir} onChange={v => set({dir: v})} options={[["openldap", t.dirOpenldap], ["ad", t.dirAd], ["none", t.dirNone]]} />
         </StageCard>
-        <StageCard n={3} t={t} on={form.db !== "none"}>
+        <StageCard n={3} t={t} on={form.db !== "none"} showOptions>
           <Segmented value={form.db} onChange={v => set({db: v})} options={[["postgres", t.dbPg], ["oracle", t.dbOra], ["none", t.dbNone]]} />
           {form.db === "postgres" && <p className="text-xs text-amber-700 dark:text-amber-300">{t.pgWarn}</p>}
+          {form.db === "oracle" && <p className="text-xs text-amber-700 dark:text-amber-300">{t.oraNote}</p>}
         </StageCard>
         <StageCard n={4} t={t} on={form.lab3} onToggle={v => set({lab3: v})}>
           <Field label={t.llm}><Segmented value={form.IQ_LLM} onChange={v => set({IQ_LLM: v})} options={[["claude", t.llmClaude], ["qwen", t.llmQwen]]} /></Field>
           <div className="space-y-2 pt-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t.extras}</div>
-            <Check checked={form.lab3b} disabled={!!g.lab3b} onChange={v => set({lab3b: v})}>{t.xMcp}</Check>
+            <Check checked={form.lab3b} disabled={!!g.lab3b} onChange={v => v ? setMcpAsk(true) : set({lab3b: false})}>{t.xMcp}</Check>
+            <button type="button" onClick={() => setMcpRead(true)} className="ml-8 text-xs font-semibold text-brand-blue hover:underline dark:text-blue-300">ⓘ {t.mcpInfo}</button>
             <Check checked={form.iqdb} disabled={!!g.iqdb} onChange={v => set({iqdb: v})}>{t.xIqdb}</Check>
             <Check checked={form.iqrag} disabled={!!g.iqrag} onChange={v => set({iqrag: v})} hint={g.iqrag ? t.needIqdb : t.ragWarn}>{t.xRag}</Check>
           </div>
@@ -249,14 +277,31 @@ export function DeployCustom({t, form, set, go, back}){
         <StageCard n={6} t={t} on={form.lab5} onToggle={v => set({lab5: v})} />
       </div>
       <Nav t={t} back={back} next={() => go("details")} />
+      <Modal open={mcpAsk} title={t.mcpTitle} onClose={() => setMcpAsk(false)}
+        actions={<><Button variant="secondary" onClick={() => setMcpAsk(false)}>{t.cancel2}</Button><Button onClick={() => { set({lab3b: true}); setMcpAsk(false); }}>{t.mcpOk}</Button></>}>
+        <McpText t={t} />
+      </Modal>
+      <Modal open={mcpRead} title={t.mcpTitle} onClose={() => setMcpRead(false)} actions={<Button onClick={() => setMcpRead(false)}>{t.pgOk}</Button>}>
+        <McpText t={t} />
+      </Modal>
     </div>
   );
 }
 
+const PG_OK = /@(europesip\.com|hcl-software\.com|hcl\.com)$/i;   // the same rule as the engine (pgSqlFor)
+function PgText({t}){
+  return <>
+    {t.pgBody.map(x => <p key={x}>{x}</p>)}
+    <p className="pt-2 font-semibold text-slate-900 dark:text-white">{t.pgAltTitle}</p>
+    <ul className="list-disc space-y-1 pl-5"><li>{t.pgAltDerby}</li><li>{t.pgAltOra}</li></ul>
+  </>;
+}
+
 // ---------------------------------------------------------------------------------------------
 export function Details({t, lang, form, set, go, back}){
-  const [adv, setAdv] = useState(false);
+  const [adv, setAdv] = useState(false), [pgAsk, setPgAsk] = useState(false);
   const needsHost = form.platform !== "poc";
+  const pgMissing = form.db === "postgres" && !PG_OK.test((form.HCL_HARBOR_USER || "").trim());
   const F = (k, label, o = {}) => (
     <Field label={label} hint={o.hint} className={o.className}>
       {o.secret ? <Secret value={form[k]} onChange={e => set({[k]: e.target.value})} placeholder={o.placeholder} />
@@ -275,8 +320,12 @@ export function Details({t, lang, form, set, go, back}){
         </Card>
         <Card className="space-y-4">
           <H2>{t.access}</H2>
-          {needsHost && F("DX_HOST", t.dxHost, {mono: true, hint: t.dxHostHint, placeholder: "dx-demo.example.com"})}
+          {needsHost && <>{F("DX_HOST", t.dxHost, {mono: true, hint: t.dxHostHint, placeholder: "dx-demo.example.com"})}<HostsHelp t={t} host={form.DX_HOST} /></>}
           {F("LAB_PASSWORD", t.labPassword, {secret: true})}
+          {form.dir === "openldap" && <>
+            <Check checked={form.demoSame !== false} onChange={v => set({demoSame: v})}>{t.demoSame}</Check>
+            {form.demoSame === false && F("DEMO_PASSWORD", t.demoPassword, {secret: true})}
+          </>}
         </Card>
         {form.lab3 && (
           <Card className="space-y-4">
@@ -318,7 +367,12 @@ export function Details({t, lang, form, set, go, back}){
           </Card>
         )}
       </div>
-      <Nav t={t} back={back} next={() => go("download")} />
+      <Nav t={t} back={back} next={() => pgMissing ? setPgAsk(true) : go("download")} />
+      <Modal open={pgAsk} title={t.pgTitle} onClose={() => setPgAsk(false)}
+        actions={<><Button variant="secondary" onClick={() => { setPgAsk(false); set({preset: "custom"}); go("deploy-custom"); }}>{t.pgChange}</Button>
+                   <Button onClick={() => { setPgAsk(false); go("download"); }}>{t.pgOk}</Button></>}>
+        <PgText t={t} />
+      </Modal>
     </div>
   );
 }
@@ -350,7 +404,10 @@ export function Download({t, lang, form, back, restart}){
     <div>
       <Title sub={t.dlSub}>{t.dlTitle}</Title>
       {err.length > 0 && <Callout tone="error" title={t.errors} className="mb-5"><ul className="list-disc space-y-1 pl-5">{err.map(e => <li key={e}>{e}</li>)}</ul></Callout>}
-      {warn.length > 0 && <Callout tone="warn" title={t.warnings} className="mb-5"><ul className="list-disc space-y-1 pl-5">{warn.map(e => <li key={e}>{e}</li>)}</ul></Callout>}
+      {(warn.length > 0 || gen.pgMissing || form.lab3b) && <Callout tone="warn" title={t.warnings} className="mb-5"><ul className="list-disc space-y-1 pl-5">
+        {gen.pgMissing && <li>{t.pgNote}</li>}
+        {form.lab3b && <li>{t.mcpNote}</li>}
+        {warn.map(e => <li key={e}>{e}</li>)}</ul></Callout>}
       <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
         <div className="space-y-5">
           <Card>

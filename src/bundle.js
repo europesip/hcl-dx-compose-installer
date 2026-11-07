@@ -56,7 +56,7 @@ export function generate(form, lang){
   runbook = buildRunbook(s, webinar ? {prep, demo} : {steps}, files, lang, {pgSql, dirs});
   out.unshift({name: P + "RUNBOOK.md", text: runbook});
   for (const [p, f] of Object.entries(files)) out.push({name: P + p, text: f.text, mode: f.mode});
-  return {s, check, files, steps, prep, demo, webinar, entries: out, runbook, litellmKey: engine.litellmKey};
+  return {s, check, files, steps, prep, demo, webinar, entries: out, runbook, litellmKey: engine.litellmKey, pgSql, pgMissing: s.db === "postgres" && !pgSql};
 }
 
 // Values that must not appear in a document meant to be shared

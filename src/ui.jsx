@@ -176,3 +176,18 @@ export function Nav({t, back, next, nextLabel, nextDisabled, hideBack, extra}){
     </div>
   );
 }
+
+// A modal dialog (Escape or the backdrop close it as "cancel")
+export function Modal({open, title, children, actions, onClose}){
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-navy-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}
+      onClick={e => e.target === e.currentTarget && onClose && onClose()} onKeyDown={e => e.key === "Escape" && onClose && onClose()}>
+      <div className="max-h-[90vh] w-full max-w-xl overflow-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-navy-900 rise">
+        <h2 className="mb-3 text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+        <div className="space-y-3 text-sm text-slate-700 dark:text-slate-300">{children}</div>
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">{actions}</div>
+      </div>
+    </div>
+  );
+}

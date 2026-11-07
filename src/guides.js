@@ -5,6 +5,12 @@ export const ownChecks = f => {
   const oc = f.platform === "openshift", k = oc ? "oc" : "kubectl";
   return [
     `${k} version\n${k} get nodes -o wide`,
+    `# Allocatable capacity of each node
+${k} get nodes -o custom-columns=NODE:.metadata.name,CPU:.status.allocatable.cpu,MEMORY:.status.allocatable.memory
+# Already requested on each node (the free part is the difference)
+${k} describe nodes | grep -A 6 "Allocated resources"
+# Real usage now (needs metrics-server; k3s brings it)
+${oc ? "oc adm top nodes" : "kubectl top nodes"}`,
     `${k} get storageclass ${f.SC_RWO || "dx-deploy-rwo"} ${f.SC_RWX || "dx-deploy-rwx"}`,
     oc ? "oc get ingresscontroller -n openshift-ingress-operator default -o jsonpath='{.status.domain}'; echo"
        : "kubectl get ingressclass",

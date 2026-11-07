@@ -24,7 +24,11 @@ await p.click("text=Webinar · Showroom"); await shot("3-deploy"); await next();
 await p.fill("input[placeholder='name@company.com']", "someone@example.com");
 await (await p.$$("input[type=password]"))[0].fill("harbor-token-123");
 await p.fill("input[placeholder='sk-or-v1-…']", "sk-or-v1-test");
-await shot("4-details"); await next(); await shot("5-download-webinar");
+await shot("4-details"); await next();
+// a user outside EUROPESIP/HCL with PostgreSQL in stage 3: the dialog about the table script
+await p.waitForSelector("text=PostgreSQL necesita un script de HCL"); await shot("4b-pg-dialog"); await p.click("button:has-text('Entendido')");
+await shot("5-download-webinar");
+if (!(await p.textContent("main")).includes("table script from HCL")) throw new Error("the download page should remind the PostgreSQL script");
 const files = [await save("button:has-text('Instalación (.zip)')"), await save("button:has-text('Guion del webinar')"), await save("button:has-text('Cada paso con su comando')")];
 
 // 2. WSL PoC, everything
@@ -34,9 +38,19 @@ await p.click("text=Mi PC con Windows (WSL2)"); await next(); await shot("6-wsl"
 await p.click("text=k3s funciona"); await next();
 await p.click("text=Todo"); await next();
 await p.click("text=He leído y acepto la licencia");
-await next(); await shot("7-download-all");
+await next(); await p.click("button:has-text('Entendido')"); await shot("7-download-all");
 if (await p.$("button:has-text('Guion del webinar')")) throw new Error("only the webinar has a Word script");
 files.push(await save("button:has-text('Instalación (.zip)')"));
+
+// 2b. Custom: switch LDAP off and on again, and the MCP dialog
+await p.evaluate(() => localStorage.setItem("dxi-view", JSON.stringify("deploy"))); await p.reload();
+await p.click("text=Personalizado"); await next();
+await p.click("button:has-text('Sin directorio')"); await p.click("button:has-text('OpenLDAP con usuarios de demo')");
+const mcpBox = "label:has-text('Servidor MCP de EUROPESIP') input";
+if (await p.isChecked(mcpBox)) await p.click("text=Servidor MCP de EUROPESIP");   // "Everything" had it on: off first
+await p.click("text=Servidor MCP de EUROPESIP"); await p.waitForSelector("text=un ejemplo, no una recomendación"); await shot("7b-mcp-dialog");
+await p.click("button:has-text('Incluirlo')");
+if (!(await p.isChecked(mcpBox))) throw new Error("the MCP extra should be included after the dialog");
 
 // 3. AWS view and the API
 await p.evaluate(() => { localStorage.setItem("dxi-view", JSON.stringify("env-aws")); }); await p.reload(); await shot("8-aws");

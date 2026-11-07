@@ -21,6 +21,7 @@ export const DEFAULTS = {
   lab4: true, lab5: false, dxcLicense: false,
   // Credentials
   HCL_HARBOR_USER: "", HCL_HARBOR_TOKEN: "", OPENROUTER_API_KEY: "", LAB_PASSWORD: "EuropeS1P",
+  demoSame: true, DEMO_PASSWORD: "",   // password of the demo users of the LDAP (by default, the same as wpsadmin)
   AD_HOST: "", AD_PORT: "389", AD_BASE_DN: "", AD_BIND_USER: "", AD_BIND_PASSWORD: "", AD_CA_FILE: "",
   ORACLE_JDBC_URL: "", ORACLE_DX_USER: "wpsuser", ORACLE_DX_PASSWORD: "", ORACLE_CA_FILE: "",
   // Names
@@ -29,7 +30,7 @@ export const DEFAULTS = {
 };
 
 export const NAME_KEYS = ["DX_NS", "SHARED_NS", "DX_RELEASE", "IQ_RELEASE", "SEARCH_RELEASE", "LDAP_RELEASE", "LITELLM_RELEASE", "PG_CLUSTER"];
-export const SECRET_KEYS = ["HCL_HARBOR_TOKEN", "OPENROUTER_API_KEY", "LAB_PASSWORD", "AD_BIND_PASSWORD", "ORACLE_DX_PASSWORD"];
+export const SECRET_KEYS = ["HCL_HARBOR_TOKEN", "OPENROUTER_API_KEY", "LAB_PASSWORD", "DEMO_PASSWORD", "AD_BIND_PASSWORD", "ORACLE_DX_PASSWORD"];
 // Values that are never stored in the browser
 export const NO_STORE = [...SECRET_KEYS, "envConfirmed"];
 export const POC_HOST = "dx-demo.127.0.0.1.nip.io";
@@ -80,6 +81,7 @@ export function toEngineState(f){
     fast: false,
     HCL_HARBOR_USER: trim(f.HCL_HARBOR_USER), HCL_HARBOR_TOKEN: trim(f.HCL_HARBOR_TOKEN),
     OPENROUTER_API_KEY: trim(f.OPENROUTER_API_KEY), LAB_PASSWORD: f.LAB_PASSWORD ?? "",
+    DEMO_PASSWORD: f.demoSame === false && f.DEMO_PASSWORD ? f.DEMO_PASSWORD : (f.LAB_PASSWORD ?? ""),
     AD_HOST: trim(f.AD_HOST), AD_PORT: f.AD_PORT, AD_BASE_DN: trim(f.AD_BASE_DN),
     AD_BIND_USER: trim(f.AD_BIND_USER), AD_BIND_PASSWORD: f.AD_BIND_PASSWORD ?? "", AD_CA_FILE: trim(f.AD_CA_FILE),
     ORACLE_JDBC_URL: trim(f.ORACLE_JDBC_URL), ORACLE_DX_USER: trim(f.ORACLE_DX_USER) || "wpsuser",

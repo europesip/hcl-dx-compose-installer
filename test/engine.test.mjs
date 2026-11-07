@@ -111,3 +111,24 @@ test("AWS estimates are positive and ordered", () => {
   assert.ok(e.hour > 0.5 && e.hour < k.hour && k.hour < r.hour);
   assert.equal(Math.round(e.month), Math.round(e.hour * 730));
 });
+
+test("demo users can have their own password (LDIF and the chat as macarena), wpsadmin keeps its own", async () => {
+  const {DEFAULTS: D, applyPreset: ap} = await import("../src/state.js");
+  const g = generate(ap({...D, ...CREDS, demoSame: false, DEMO_PASSWORD: "Demo-Users-1"}, "all"), "en");
+  const ldif = g.files["2a-ldap/demo-users.ldif"].text;
+  assert.match(ldif, /hash of "Demo-Users-1"/);
+  assert.match(g.files["1-dx/secrets.yaml"].text, /Lab-Passw0rd/);
+  const ask = g.steps.find(s => s.origId === "5-3").cmd;
+  assert.match(ask, /"username":"macarena","password":"Demo-Users-1"/);
+  assert.ok(!maskText(g.entries.map(e => e.text).join("\n"), secretValues(g.s)).includes("Demo-Users-1"));
+  const same = generate(ap({...D, ...CREDS}, "all"), "en");
+  assert.match(same.files["2a-ldap/demo-users.ldif"].text, /hash of "Lab-Passw0rd"/);
+});
+
+test("PostgreSQL script: in the zip for EUROPESIP/HCL users, flagged as missing for the others", () => {
+  assert.equal(make("webinar", {HCL_HARBOR_USER: "a@europesip.com"}).pgMissing, false);
+  assert.ok(make("webinar", {HCL_HARBOR_USER: "a@europesip.com"}).entries.some(e => e.name.endsWith("setup-postgres-dx.sql")));
+  const other = make("webinar", {HCL_HARBOR_USER: "someone@example.com"});
+  assert.equal(other.pgMissing, true);
+  assert.match(other.runbook, /table script from HCL/);
+});
