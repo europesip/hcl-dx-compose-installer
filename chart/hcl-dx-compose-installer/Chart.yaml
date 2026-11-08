@@ -2,8 +2,8 @@ apiVersion: v2
 name: hcl-dx-compose-installer
 description: Web installer for HCL DX Compose by EUROPESIP. Guides you from the environment (your cluster, a PC or AWS) to a ready-to-run installation.
 type: application
-version: 2.1.1
-appVersion: "2.1.1"
+version: 2.1.2
+appVersion: "2.1.2"
 home: https://github.com/europesip/hcl-dx-compose-installer
 sources:
   - https://github.com/europesip/hcl-dx-compose-installer
