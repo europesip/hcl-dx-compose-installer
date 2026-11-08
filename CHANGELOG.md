@@ -7,6 +7,14 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## 2.3.1 · 2026-11-08 · Script Application operator 0.2.1
+
+- The operator is installed at **0.2.1**: it manages DX **themes** too (DXTheme), and it no longer stays in `DXError` (HTTP
+  401) after DX restarts — which happens in every installation, since DX is upgraded after the operator is installed.
+- Its CRDs are applied from the operator's tag before its chart: Helm only installs CRDs on the first install, so
+  re-running the installation over an older operator now gets the new DXTheme CRD too.
+- Argo CD health check and `--cleanup` cover DXTheme.
+
 ## 2.3.0 · 2026-11-08 · Keycloak theme, logout, retries and resources
 
 - **Keycloak login theme**: the default Keycloak theme (with the Keycloak logo) or, ticking *EUROPESIP login theme*, an

@@ -131,6 +131,13 @@ test("cleanup: operator resources and ExternalSecrets go before their operators 
   const sh = all({...CICD, useVault: true}).entries.find(e => e.name.endsWith("install.sh")).text;
   const block = sh.slice(sh.indexOf("if [ $CLEANUP = 1 ]"), sh.indexOf("exit 0", sh.indexOf("if [ $CLEANUP = 1 ]")));
   const i = s => block.indexOf(s);
-  assert.ok(i("delete dxpages,scriptapplications") > 0 && i("delete dxpages,scriptapplications") < i("delete externalsecret --all --wait"));
+  assert.ok(i("delete dxpages,dxthemes,scriptapplications") > 0 && i("delete dxpages,dxthemes,scriptapplications") < i("delete externalsecret --all --wait"));
   assert.ok(i("delete externalsecret --all --wait") < i("helm uninstall"), "before any helm uninstall");
+});
+
+test("the operator CRDs of its version are applied before helm (Helm skips CRDs on upgrades)", () => {
+  const sh = all(CICD).entries.find(e => e.name.endsWith("install.sh")).text;
+  const crd = sh.indexOf("dx.europesip.com_dxthemes.yaml"), helmAt = sh.indexOf("upgrade --install dxop");
+  assert.ok(crd > 0 && crd < helmAt, "CRDs before the operator chart");
+  assert.match(sh, /retry kubectl apply --server-side --force-conflicts -f https:\/\/raw\.githubusercontent\.com\/europesip\/hcl-dx-scriptapp-operator\/v0\.2\.1\//);
 });
