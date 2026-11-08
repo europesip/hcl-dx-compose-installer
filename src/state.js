@@ -19,6 +19,9 @@ export const DEFAULTS = {
   lab1b: false, dir: "openldap", db: "postgres",
   lab3: true, lab3b: false, iqdb: false, iqrag: false, IQ_LLM: "claude",
   lab4: true, lab5: false, dxcLicense: false,
+  // Advanced CI/CD (not on OpenShift, not in the webinar): OpenBao + External Secrets, Argo CD, the Script Application operator
+  cicdOpenbao: false, openbaoMode: "install", cicdArgo: false, cicdOperator: false, cicdSameNs: true, CICD_NS: "dx-cicd",
+  useVault: false,                   // credentials from OpenBao: only the Harbor user is asked
   // Credentials
   HCL_HARBOR_USER: "", HCL_HARBOR_TOKEN: "", OPENROUTER_API_KEY: "", LAB_PASSWORD: "EuropeS1P",
   demoSame: true, DEMO_PASSWORD: "",
@@ -48,7 +51,8 @@ export function applyPreset(f, preset){
 
 // Dependencies between the options: an option without what it needs is switched off
 export function gates(f){
-  return {lab3b: f.lab3 ? null : "needAi", iqdb: f.lab3 ? null : "needAi", iqrag: (f.LLM_PROVIDER || "openrouter") !== "openrouter" ? "noBedrock" : f.lab3 && f.iqdb ? null : "needIqdb"};
+  const cicd = f.platform === "openshift" ? "noOpenshift" : null;
+  return {cicd, lab3b: f.lab3 ? null : "needAi", iqdb: f.lab3 ? null : "needAi", iqrag: (f.LLM_PROVIDER || "openrouter") !== "openrouter" ? "noBedrock" : f.lab3 && f.iqdb ? null : "needIqdb"};
 }
 export function normalise(f){
   const n = {...f};
@@ -57,6 +61,8 @@ export function normalise(f){
   if ((n.LLM_PROVIDER || "openrouter") !== "openrouter") { n.IQ_LLM = "claude"; n.iqrag = false; }   // Bedrock / Anthropic: only Claude, and no BGE-M3 for the RAG
   if (!n.iqdb) n.iqrag = false;
   if (n.platform === "poc" && n.INGRESS_KIND === "nginx") n.INGRESS_KIND = "traefik";
+  if (n.platform === "openshift" || n.preset === "webinar") Object.assign(n, {cicdOpenbao: false, cicdArgo: false, cicdOperator: false});   // not tested enough on OpenShift
+  if (!n.cicdOpenbao) n.useVault = false;
   return n;
 }
 

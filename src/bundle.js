@@ -5,6 +5,7 @@
 import {createEngine} from "./engine/core.js";
 import {renumber, webinarPhases, buildRunbook} from "./engine/stages.js";
 import {toEngineState, SECRET_KEYS} from "./state.js";
+import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, CICD_DIR} from "./cicd.js";
 export {zipBytes} from "./zip.js";
 
 export const engine = createEngine();
@@ -53,12 +54,18 @@ const renameStep = st => ({...st, title: renameText(st.title), note: renameText(
 
 export function generate(form, lang){
   engine.setLang(lang);
-  const s = toEngineState(form);
+  const vault = vaultOn(form), cicd = cicdOn(form);
+  const s = toEngineState(vault ? vaultForm(form) : form);   // with the secrets manager the engine gets sentinels, not secrets (src/cicd.js)
   const check = engine.validate(s);
+  if (vault) check.warn = check.warn.filter(w => !/password|contraseña/i.test(w));
+  if (form.cicdOperator && cicd && !form.dxcLicense) check.err.push(lang === "es" ? "El operador de Script Applications incluye HCL DXClient: acepta su licencia." : "The Script Application operator includes HCL DXClient: accept its license.");
+  if (cicd && form.cicdSameNs === false && !/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test((form.CICD_NS || "").trim())) check.err.push(lang === "es" ? "Namespace de CI/CD no válido." : "Invalid CI/CD namespace.");
   engine.ensureLitellmKey();                 // the same key in every file of this page load
-  const files = Object.fromEntries(Object.entries(engine.bundleFiles(s)).map(([p, f]) =>
-    [renamePath(p), /\.sql$/.test(p) ? f : {...f, text: alignFile(renamePath(p), renameText(f.text))}]));   // the HCL table script is left as it is
-  const raw = engine.directSteps(s).map(renameStep);
+  const lk = t => vault && typeof t === "string" ? t.split(engine.litellmKey).join("@@OB:litellm:masterKey@@") : t;
+  let files = Object.fromEntries(Object.entries(engine.bundleFiles(s)).map(([p, f]) =>
+    [renamePath(p), /\.sql$/.test(p) ? f : {...f, text: lk(alignFile(renamePath(p), renameText(f.text)))}]));   // the HCL table script is left as it is
+  let raw = engine.directSteps(s).map(renameStep).map(st => ({...st, cmd: lk(st.cmd)}));
+  ({files, steps: raw} = applyCicd(form, s, files, raw, lang));
   const webinar = form.preset === "webinar";
   const pgSql = !!engine.pgSqlFor(s);
   const out = [], P = "dx-install/";
@@ -75,16 +82,21 @@ export function generate(form, lang){
     for (const k of ["prepare.sh", "demo.sh", "uninstall.sh"]) dirs[k] = DIRS[lang][k];
   } else {
     steps = renumber(raw, lang);
-    out.push({name: P + "install.sh", mode: 0o100755, text: engine.buildInstallSh(s, steps, {headline: lang === "es" ? "instalación" : "installation"})});
+    out.push({name: P + "install.sh", mode: 0o100755, text: cicdInstallSh(form, s, engine.buildInstallSh(s, steps, {headline: lang === "es" ? "instalación" : "installation"}))});
     out.push({name: P + "uninstall.sh", mode: 0o100755, text: engine.buildUninstallSh(s, "install.sh")});
     for (const k of ["install.sh", "uninstall.sh"]) dirs[k] = DIRS[lang][k];
+    if (cicd) dirs["lab-cicd/"] = CICD_DIR[lang] || CICD_DIR.en;
   }
-  runbook = buildRunbook(s, webinar ? {prep, demo} : {steps}, files, lang, {pgSql, dirs});
+  runbook = cicdRunbook(form, s, buildRunbook(s, webinar ? {prep, demo} : {steps}, files, lang, {pgSql, dirs}), lang);
   out.unshift({name: P + "RUNBOOK.md", text: runbook});
   for (const e of out) e.text = renameText(e.text);   // install.sh, demo.sh, uninstall.sh and RUNBOOK.md
   runbook = out[0].text;
   for (const [p, f] of Object.entries(files)) out.push({name: P + p, text: f.text, mode: f.mode});
-  return {s, check, files, steps, prep, demo, webinar, entries: out, runbook, litellmKey: engine.litellmKey, pgSql, pgMissing: s.db === "postgres" && !pgSql};
+  if (vault) {   // nothing secret may be left in the zip
+    const left = out.filter(e => typeof e.text === "string" && /@@OB:/.test(e.text)).map(e => e.name);
+    if (left.length) check.err.push("internal: secret sentinels left in " + left.join(", "));
+  }
+  return {s, check, files, steps, prep, demo, webinar, entries: out, runbook, litellmKey: vault ? "" : engine.litellmKey, pgSql, pgMissing: s.db === "postgres" && !pgSql, vault};
 }
 
 // Values that must not appear in a document meant to be shared

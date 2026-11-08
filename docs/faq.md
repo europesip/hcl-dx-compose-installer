@@ -57,6 +57,11 @@ Yes: choose OpenShift for your own cluster, or create a ROSA cluster on AWS (exp
 This installer replaces it. The wizard of the [HCL DX Compose labs](https://github.com/europesip/hcl-dx-compose-labs)
 is frozen; the labs guides are still the reference to learn every step by hand.
 
+**Can I keep the passwords out of the zip?**
+Yes: in the Custom deployment, choose OpenBao in *Advanced CI/CD*, then *Use the secrets manager* on the credentials
+page. Only your Harbor user is asked; the operator enters the secrets in OpenBao. See [Advanced CI/CD: OpenBao](openbao.md)
+(also how to unseal it after a restart, and why a DX password change needs a `helm upgrade`).
+
 **Can I add options, environments or languages?**
 Yes, contributions are welcome: open an issue or a pull request. [How it works](how-it-works.md) explains the code.
 

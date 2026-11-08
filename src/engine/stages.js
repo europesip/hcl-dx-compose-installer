@@ -25,6 +25,8 @@ export const stageLabel = (n, lang) => `${n} · ${(STAGES[lang] || STAGES.en)[n]
 
 // Original id -> [stage, extra]
 function stageOf(id){
+  if (/^C-/.test(id)) return [0, true];       // advanced CI/CD (src/cicd.js)
+  if (/^OP-/.test(id)) return [1, true];
   if (/^0-|^D-/.test(id)) return [0, id === "D-7"];
   if (id === "1B-1") return [1, true];
   if (/^1-/.test(id)) return [1, false];

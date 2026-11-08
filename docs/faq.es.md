@@ -58,6 +58,12 @@ Sí: elige OpenShift para tu propio clúster, o crea un clúster ROSA en AWS (ex
 Este instalador lo sustituye. El asistente de los [laboratorios de HCL DX Compose](https://github.com/europesip/hcl-dx-compose-labs)
 está congelado; las guías de los labs siguen siendo la referencia para aprender cada paso a mano.
 
+**¿Puedo dejar las contraseñas fuera del zip?**
+Sí: en el despliegue Personalizado, elige OpenBao en *CI/CD avanzado* y después *Usar el gestor de secretos* en la página
+de credenciales. Solo se pide tu usuario de Harbor; el operador da de alta los secretos en OpenBao. Ver
+[CI/CD avanzado: OpenBao](openbao.es.md) (también cómo desbloquearlo tras un reinicio y por qué cambiar una contraseña
+de DX necesita un `helm upgrade`).
+
 **¿Puedo añadir opciones, entornos o idiomas?**
 Sí, las contribuciones son bienvenidas: abre un issue o un pull request. [Cómo funciona](how-it-works.es.md) explica el
 código.

@@ -281,6 +281,7 @@ export function DeployCustom({t, form, set, go, back}){
         <StageCard n={5} t={t} on={form.lab4} onToggle={v => set({lab4: v})} />
         <StageCard n={6} t={t} on={form.lab5} onToggle={v => set({lab5: v})} />
       </div>
+      <CicdCard t={t} form={form} set={set} />
       <Nav t={t} back={back} next={() => go("details")} />
       <Modal open={mcpAsk} title={t.mcpTitle} onClose={() => setMcpAsk(false)}
         actions={<><Button variant="secondary" onClick={() => setMcpAsk(false)}>{t.cancel2}</Button><Button onClick={() => { set({lab3b: true}); setMcpAsk(false); }}>{t.mcpOk}</Button></>}>
@@ -290,6 +291,48 @@ export function DeployCustom({t, form, set, go, back}){
         <McpText t={t} />
       </Modal>
     </div>
+  );
+}
+
+// Advanced CI/CD (src/cicd.js): optional, off by default, not on OpenShift yet
+function Info({children}){
+  return <p className="ml-8 mt-1 flex gap-1.5 text-xs text-slate-500 dark:text-slate-400"><span className="mt-0.5 inline-grid h-4 w-4 shrink-0 place-items-center rounded-full border border-current text-[10px] font-bold">i</span><span>{children}</span></p>;
+}
+function CicdCard({t, form, set}){
+  const os = form.platform === "openshift";
+  const any = form.cicdOpenbao || form.cicdArgo || form.cicdOperator;
+  return (
+    <Card className="mt-5 border-dashed">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-900 text-xs font-bold text-white dark:bg-white dark:text-navy-950">CI/CD</span>
+          <div><div className="font-semibold text-slate-900 dark:text-white">{t.cicdTitle}</div><p className="text-sm text-slate-600 dark:text-slate-400">{t.cicdSub}</p></div>
+        </div>
+        <Badge tone="amber">{t.optional}</Badge>
+      </div>
+      {os && <Callout tone="warn" className="mt-4">{t.cicdNoOs}</Callout>}
+      <div className="mt-4 grid gap-4 md:grid-cols-3">
+        <div>
+          <Check checked={!!form.cicdOpenbao} disabled={os} onChange={v => set({cicdOpenbao: v})}><b>OpenBao</b> · {t.cicdBao}</Check>
+          <Info>{t.cicdBaoI}</Info>
+          {form.cicdOpenbao && <div className="ml-8 mt-2"><Segmented value={form.openbaoMode || "install"} onChange={v => set({openbaoMode: v})} options={[["install", t.cicdBaoNew], ["existing", t.cicdBaoOld]]} /></div>}
+        </div>
+        <div>
+          <Check checked={!!form.cicdArgo} disabled={os} onChange={v => set({cicdArgo: v})}><b>Argo CD</b> · {t.cicdArgo}</Check>
+          <Info>{t.cicdArgoI}</Info>
+        </div>
+        <div>
+          <Check checked={!!form.cicdOperator} disabled={os} onChange={v => set({cicdOperator: v})}><b>{t.cicdOp}</b> <Badge tone="amber">{t.optional}</Badge></Check>
+          <Info>{t.cicdOpI}</Info>
+        </div>
+      </div>
+      {any && !os && (
+        <div className="mt-5 space-y-2 border-t border-slate-200 pt-4 dark:border-navy-800">
+          <Check checked={form.cicdSameNs !== false} onChange={v => set({cicdSameNs: v})}>{t.cicdSameNs(form.SHARED_NS)}</Check>
+          {form.cicdSameNs === false && <Field label={t.cicdNs} className="ml-8 max-w-xs"><Input mono value={form.CICD_NS} onChange={e => set({CICD_NS: e.target.value})} placeholder="dx-cicd" /></Field>}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -307,6 +350,7 @@ export function Details({t, lang, form, set, go, back}){
   const [adv, setAdv] = useState(false), [pgAsk, setPgAsk] = useState(false), [aiAsk, setAiAsk] = useState(false);
   const [harborAsk, setHarborAsk] = useState(false), [airAsk, setAirAsk] = useState(false);
   const needsHost = form.platform !== "poc";
+  const canVault = !!form.cicdOpenbao && form.platform !== "openshift" && form.preset !== "webinar", vault = canVault && !!form.useVault;
   const pgMissing = form.db === "postgres" && !PG_OK.test((form.HCL_HARBOR_USER || "").trim());
   const F = (k, label, o = {}) => (
     <Field label={label} hint={o.hint} className={o.className}>
@@ -323,9 +367,13 @@ export function Details({t, lang, form, set, go, back}){
             <H2 className="mb-0">{t.harbor}</H2>
             <button type="button" onClick={() => setHarborAsk(true)} className="text-xs font-semibold text-brand-blue hover:underline dark:text-blue-300"><span className="mr-1 inline-grid h-4 w-4 place-items-center rounded-full border border-current text-[10px] font-bold align-middle">i</span>{t.harborWhat}</button>
           </div>
+          {canVault && <div className="rounded-xl bg-blue-50 p-3 dark:bg-navy-800/60">
+            <Check checked={vault} onChange={v => set({useVault: v})}><b>{t.vaultUse}</b></Check>
+            <Info>{vault ? t.vaultOn : t.vaultI}</Info>
+          </div>}
           {!form.airGapped && <>
-            {F("HCL_HARBOR_USER", t.harborUser, {placeholder: "name@company.com"})}
-            {F("HCL_HARBOR_TOKEN", t.harborToken, {secret: true})}
+            {F("HCL_HARBOR_USER", t.harborUser, {placeholder: "name@company.com", hint: vault ? t.vaultHarbor : undefined})}
+            {!vault && F("HCL_HARBOR_TOKEN", t.harborToken, {secret: true})}
           </>}
           <Check checked={!!form.airGapped} onChange={v => set({airGapped: v})}>{t.airGapped}</Check>
           {!form.airGapped && <SecurityNote t={t} lang={lang} kind="harbor" />}
@@ -333,8 +381,8 @@ export function Details({t, lang, form, set, go, back}){
         <Card className="space-y-4">
           <H2>{t.access}</H2>
           {needsHost && <>{F("DX_HOST", t.dxHost, {mono: true, hint: t.dxHostHint, placeholder: "dx-demo.example.com"})}<HostsHelp t={t} host={form.DX_HOST} /></>}
-          {F("LAB_PASSWORD", t.labPassword, {secret: true})}
-          {form.dir === "openldap" && <>
+          {!vault && F("LAB_PASSWORD", t.labPassword, {secret: true})}
+          {!vault && form.dir === "openldap" && <>
             <Check checked={form.demoSame !== false} onChange={v => set({demoSame: v})}>{t.demoSame}</Check>
             {form.demoSame === false && F("DEMO_PASSWORD", t.demoPassword, {secret: true})}
           </>}
@@ -347,7 +395,7 @@ export function Details({t, lang, form, set, go, back}){
             </div>
             <Segmented value={form.LLM_PROVIDER || "openrouter"} onChange={v => set({LLM_PROVIDER: v})} options={[["openrouter", t.aiOpenRouter], ["bedrock", t.aiBedrock], ["anthropic", t.aiAnthropic]]} />
             <p className="text-xs text-slate-500">{t.aiNeed}</p>
-            {form.LLM_PROVIDER === "bedrock" ? <>
+            {vault ? <Info>{t.vaultAi}</Info> : form.LLM_PROVIDER === "bedrock" ? <>
               {F("BEDROCK_API_KEY", t.bedrockKey, {secret: true, hint: t.bedrockKeyHint})}
               <Field label={t.bedrockRegion}><Segmented value={form.BEDROCK_REGION || "us-east-1"} onChange={v => set({BEDROCK_REGION: v})} options={[["us-east-1", t.bedrockUs], ["eu-west-1", t.bedrockEu]]} /></Field>
               <SecurityNote t={t} lang={lang} kind="aws" />
@@ -366,7 +414,7 @@ export function Details({t, lang, form, set, go, back}){
             <div className="grid gap-4 sm:grid-cols-[1fr_7rem]">{F("AD_HOST", t.adHost, {mono: true})}{F("AD_PORT", t.adPort, {mono: true})}</div>
             {F("AD_BASE_DN", t.adBase, {mono: true, placeholder: "DC=company,DC=com"})}
             {F("AD_BIND_USER", t.adBind, {mono: true})}
-            {F("AD_BIND_PASSWORD", t.adBindPw, {secret: true})}
+            {!vault && F("AD_BIND_PASSWORD", t.adBindPw, {secret: true})}
             {F("AD_CA_FILE", t.adCa, {mono: true})}
           </Card>
         )}
@@ -374,12 +422,12 @@ export function Details({t, lang, form, set, go, back}){
           <Card className="space-y-4">
             <H2>{t.oracle}</H2>
             {F("ORACLE_JDBC_URL", t.oraUrl, {mono: true, placeholder: "jdbc:oracle:thin:@//host:1521/SERVICE"})}
-            <div className="grid gap-4 sm:grid-cols-2">{F("ORACLE_DX_USER", t.oraUser, {mono: true})}{F("ORACLE_DX_PASSWORD", t.oraPw, {secret: true})}</div>
+            <div className="grid gap-4 sm:grid-cols-2">{F("ORACLE_DX_USER", t.oraUser, {mono: true})}{!vault && F("ORACLE_DX_PASSWORD", t.oraPw, {secret: true})}</div>
             {F("ORACLE_CA_FILE", t.oraCa, {mono: true})}
           </Card>
         )}
       </div>
-      {(form.lab1b || form.lab5) && <Card className="mt-5"><Check checked={form.dxcLicense} onChange={v => set({dxcLicense: v})}>{t.dxcLicense}</Check></Card>}
+      {(form.lab1b || form.lab5 || (form.cicdOperator && form.platform !== "openshift" && form.preset !== "webinar")) && <Card className="mt-5"><Check checked={form.dxcLicense} onChange={v => set({dxcLicense: v})}>{t.dxcLicense}</Check></Card>}
       <div className="mt-5">
         <button type="button" onClick={() => setAdv(!adv)} className="text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">{adv ? "▾" : "▸"} {t.advanced}</button>
         {adv && (

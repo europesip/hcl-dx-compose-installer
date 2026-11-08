@@ -12,6 +12,7 @@ value, and that nothing is sent or stored anywhere it should not be.
 | What you type | Where it goes | Stored? |
 |---|---|---|
 | HCL registry user and CLI secret, OpenRouter key, passwords, Active Directory, Oracle | **Nowhere.** The installation is generated in your browser and the values are written into the scripts of the zip you download | No. The page remembers your choices in your browser, never the credentials |
+| The same credentials with **Use the secrets manager (OpenBao)** | **Not typed in the installer** (only the Harbor user). The operator enters them in OpenBao or when `install.sh` asks; External Secrets Operator creates the Kubernetes Secrets. See [Advanced CI/CD: OpenBao](openbao.md) | In OpenBao, inside your cluster |
 | AWS keys, Red Hat token or service account | Only to the **server of this installer** (the container or pod you run), and only when you ask it to create or delete an AWS environment. It passes them to the AWS / ROSA CLI for that operation | No. Never on disk or in the logs; they are masked in the output and forgotten when the operation ends |
 
 You can check it yourself:
@@ -35,7 +36,7 @@ The installer only needs to connect to the Internet for the AWS functions. Witho
 ## Use the original image
 
 Use only the official image, **`ghcr.io/europesip/hcl-dx-compose-installer`**, published by the GitHub Actions of this
-repository. Pin a version (`:2.0.3`) or its digest. If you prefer, build it yourself from the source code:
+repository. Pin a version (`:2.1.0`) or its digest. If you prefer, build it yourself from the source code:
 
 ```bash
 git clone https://github.com/europesip/hcl-dx-compose-installer.git && cd hcl-dx-compose-installer
