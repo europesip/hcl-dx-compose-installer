@@ -1,6 +1,6 @@
 {
   "name": "hcl-dx-compose-installer",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "private": true,
   "description": "Web installer for HCL DX Compose: guides you from the environment (your cluster, a local PC or AWS) to a ready-to-run installation (scripts, RUNBOOK.md and, for the webinar, a Word script)",
   "license": "MIT",

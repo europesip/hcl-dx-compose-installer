@@ -7,6 +7,14 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## 2.4.0 · 2026-11-08 · Script Application operator 0.3.0
+
+- The operator is installed at **0.3.0**, whose resources all have the DX prefix: the hello sample is now a
+  `DXScriptApplication` (and `DXPage`), and the Argo CD health checks and `--cleanup` use `DXScriptApplication`,
+  `DXDamCollection` and `DXDatabase` (DXDatabase now supports PostgreSQL, Oracle and SQL Server).
+- Re-running an older installation: the new hello sample adopts the application already in DX; the old
+  `ScriptApplication` stays in Kubernetes (see the migration notes of the operator 0.3.0 to remove it).
+
 ## 2.3.1 · 2026-11-08 · Script Application operator 0.2.1
 
 - The operator is installed at **0.2.1**: it manages DX **themes** too (DXTheme), and it no longer stays in `DXError` (HTTP

@@ -7,6 +7,14 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## 2.4.0 · 2026-11-08 · Operador de Script Applications 0.3.0
+
+- El operador se instala en la **0.3.0**, cuyos recursos llevan todos el prefijo DX: el ejemplo hello es ahora un
+  `DXScriptApplication` (y un `DXPage`), y los health checks de Argo CD y `--cleanup` usan `DXScriptApplication`,
+  `DXDamCollection` y `DXDatabase` (DXDatabase admite ahora PostgreSQL, Oracle y SQL Server).
+- Repetir una instalación anterior: el ejemplo hello nuevo adopta la aplicación que ya está en DX; el
+  `ScriptApplication` antiguo se queda en Kubernetes (mira las notas de migración del operador 0.3.0 para quitarlo).
+
 ## 2.3.1 · 2026-11-08 · Operador de Script Applications 0.2.1
 
 - El operador se instala en la **0.2.1**: gestiona también **temas** de DX (DXTheme) y ya no se queda en `DXError` (HTTP 401)

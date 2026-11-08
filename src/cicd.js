@@ -16,8 +16,8 @@
 import {SECRET_KEYS} from "./state.js";
 import {EUROPESIP_WHITE_PNG} from "./brand/europesip-white.js";
 
-export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.2.1", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
-const OP_CRDS = ["dxconnections", "scriptapplications", "dxpages", "damcollections", "postgresdatabases", "dxthemes"].map(k => `dx.europesip.com_${k}`);
+export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.3.0", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
+const OP_CRDS = ["dxconnections", "dxscriptapplications", "dxpages", "dxdamcollections", "dxdatabases", "dxthemes"].map(k => `dx.europesip.com_${k}`);
 const OP_CRD_URL = `https://raw.githubusercontent.com/europesip/hcl-dx-scriptapp-operator/v${VERSIONS.operator}/charts/hcl-dx-scriptapp-operator/crds/`;
 const DIR = "lab-cicd";
 const OB = "lab-cicd/openbao";                    // created by install.sh: init keys, operator password (mode 700)
@@ -138,7 +138,7 @@ if obj.status ~= nil and obj.status.conditions ~= nil then
   end
 end
 return hs`;
-  const kinds = ["ScriptApplication", "DXPage", "DAMCollection", "PostgresDatabase", "DXConnection", "DXTheme"];
+  const kinds = ["DXScriptApplication", "DXPage", "DXDamCollection", "DXDatabase", "DXConnection", "DXTheme"];
   return `# Argo CD ${VERSIONS.argocdApp} (chart oci://ghcr.io/argoproj/argo-helm/argo-cd ${VERSIONS.argocd}): GitOps, it keeps the cluster equal to a Git repository.
 # The UI is reached with kubectl port-forward (see RUNBOOK.md); no Application is created: point it at your repository.
 dex:
@@ -192,7 +192,7 @@ data:
     </html>
 ---
 apiVersion: dx.europesip.com/v1alpha1
-kind: ScriptApplication
+kind: DXScriptApplication
 metadata:
   name: dxop-hello
   namespace: ${cns}
@@ -724,7 +724,7 @@ helm upgrade --install dxop oci://ghcr.io/europesip/charts/hcl-dx-scriptapp-oper
 kubectl -n ${ns} get secret dx-tls-cert -o jsonpath='{.data.tls\\.crt}' | base64 -d > ${DIR}/dx-ca.crt
 kubectl -n ${cns} create secret generic dxop-dx-ca --from-file=ca.crt=${DIR}/dx-ca.crt --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f ${DIR}/dxop-hello.yaml
-kubectl -n ${cns} wait scriptapplication/dxop-hello dxpage/dxop-hello --for=condition=Ready --timeout=600s`,
+kubectl -n ${cns} wait dxscriptapplication/dxop-hello dxpage/dxop-hello --for=condition=Ready --timeout=600s`,
       {manual: T(lang, `Open https://${s.DX_HOST}/wps/myportal and the "DXOP Hello" page.`, `Abre https://${s.DX_HOST}/wps/myportal y la página «DXOP Hola».`)}));
   }
 
@@ -844,7 +844,7 @@ export function cicdInstallSh(form, s, text){
   if (form.cicdOpenbao) t = t.replace("  set +e\n", `  set +e\n  for n in ${[...new Set([s.DX_NS, s.SHARED_NS, cns])].join(" ")}; do kubectl -n $n delete externalsecret --all --wait=true --timeout=2m 2>/dev/null; done\n`);
   // The resources of the Script Application operator too, while it runs (it removes their finalizers; deletionPolicy
   // Retain by default, so nothing is deleted in DX)
-  if (form.cicdOperator) t = t.replace("  set +e\n", `  set +e\n  kubectl -n ${cns} delete dxpages,dxthemes,scriptapplications,damcollections,postgresdatabases,dxconnections --all --wait=true --timeout=3m 2>/dev/null\n`);
+  if (form.cicdOperator) t = t.replace("  set +e\n", `  set +e\n  kubectl -n ${cns} delete dxpages,dxthemes,dxscriptapplications,dxdamcollections,dxdatabases,dxconnections --all --wait=true --timeout=3m 2>/dev/null\n`);
   if (vault) {
     t = t.replace('cd "$(dirname "$0")"\n', `cd "$(dirname "$0")"\nsource lab-cicd/openbao-lib.sh; OB_PATH=${s.DX_NS}   # obv <path> <key>: a value from OpenBao\n`);
     t = t.split(LAB).join(S("wpsadmin", "password")).replace(/'@@OB:([\w-]+):([\w.-]+)@@'/g, (_, p, k) => `"$(obv ${p} ${k} 2>/dev/null)"`);
@@ -894,7 +894,7 @@ export function cicdRunbook(form, s, text, lang){
   if (keycloakOn(form)) rows.push(["Keycloak", es
     ? `https://${kcHost(form)}/admin · usuario \`admin\`, contraseña: \`kubectl -n ${s.SHARED_NS} get secret keycloak-admin -o jsonpath='{.data.password}' | base64 -d\`. Los usuarios del OpenLDAP entran en DX por Keycloak desde la etapa 2; wpsadmin, en \`/wps/portal/poc?uri=nm:oid:wps.Login\`. Certificado autofirmado: sustituye el Secret \`keycloak-tls\` por el tuyo.`
     : `https://${kcHost(form)}/admin · user \`admin\`, password: \`kubectl -n ${s.SHARED_NS} get secret keycloak-admin -o jsonpath='{.data.password}' | base64 -d\`. The OpenLDAP users sign in to DX through Keycloak from stage 2; wpsadmin at \`/wps/portal/poc?uri=nm:oid:wps.Login\`. Self-signed certificate: replace the \`keycloak-tls\` Secret with yours.`]);
-  if (form.cicdOperator) rows.push([es ? "Operador de Script Applications" : "Script Application operator", `\`kubectl -n ${cns} get scriptapplications,dxpages\` · github.com/europesip/hcl-dx-scriptapp-operator`]);
+  if (form.cicdOperator) rows.push([es ? "Operador de Script Applications" : "Script Application operator", `\`kubectl -n ${cns} get dxscriptapplications,dxpages\` · github.com/europesip/hcl-dx-scriptapp-operator`]);
   const block = [`## ${es ? "CI/CD avanzado" : "Advanced CI/CD"} (${es ? "namespace" : "namespace"} \`${cns}\`)`, "", "| | |", "|---|---|", ...rows.map(([a, b]) => `| **${a}** | ${b} |`), ""].join("\n");
   const i = t.indexOf(es ? "\n## Ejecutarlo" : "\n## Run it");
   return i < 0 ? t + "\n" + block : t.slice(0, i + 1) + block + "\n" + t.slice(i + 1);

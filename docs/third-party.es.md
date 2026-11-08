@@ -82,7 +82,7 @@ El detalle está en [CI/CD avanzado: OpenBao](openbao.es.md). Las peculiaridades
   devolvieron 503 y 504 durante un rato el 8 de noviembre de 2026 (un incidente de GitHub); la copia OCI de ghcr.io siguió
   funcionando.
 - **Los health checks de los recursos del operador** se escriben en `argocd-cm` mediante los valores del chart, así que una
-  ScriptApplication aparece como Healthy, Progressing o Degraded según lo que el operador ve en DX.
+  DXScriptApplication aparece como Healthy, Progressing o Degraded según lo que el operador ve en DX.
 - **No se crea ninguna Application**: apúntalo a tu propio repositorio.
 
 ## Keycloak 26.8.2 (operador oficial) · etapa 0, extra; capa de DX desde la etapa 2

@@ -128,7 +128,7 @@ to `lab-cicd/openbao/`, or set `OPENBAO_DIR`).
 ## Argo CD
 
 Argo CD 3.6.1 (chart `oci://ghcr.io/argoproj/argo-helm/argo-cd` 10.15.0) is installed with the health checks of
-the operator resources. It shows each ScriptApplication, DXPage, DAMCollection or PostgresDatabase as Healthy,
+the operator resources. It shows each DXScriptApplication, DXPage, DXTheme, DXDamCollection or DXDatabase as Healthy,
 Progressing or Degraded, depending on what the operator sees inside DX. No Application is created: point it at
 your own repository.
 

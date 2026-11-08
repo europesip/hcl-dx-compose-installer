@@ -76,7 +76,7 @@ The details are in [Advanced CI/CD: OpenBao](openbao.md). The peculiarities:
 - **Installed from the OCI chart** `oci://ghcr.io/argoproj/argo-helm/argo-cd`. The downloads of the GitHub releases
   returned 503 and 504 for a while on 2026-11-08 (a GitHub incident); the OCI copy on ghcr.io kept working.
 - **Health checks of the operator resources** are written into `argocd-cm` through the chart values, so a
-  ScriptApplication shows as Healthy, Progressing or Degraded from what the operator sees in DX.
+  DXScriptApplication shows as Healthy, Progressing or Degraded from what the operator sees in DX.
 - **No Application is created**: point it at your own repository.
 
 ## Keycloak 26.8.2 (official operator) · stage 0, extra; DX layer from stage 2
