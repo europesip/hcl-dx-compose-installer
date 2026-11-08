@@ -139,5 +139,5 @@ test("the operator CRDs of its version are applied before helm (Helm skips CRDs 
   const sh = all(CICD).entries.find(e => e.name.endsWith("install.sh")).text;
   const crd = sh.indexOf("dx.europesip.com_dxthemes.yaml"), helmAt = sh.indexOf("upgrade --install dxop");
   assert.ok(crd > 0 && crd < helmAt, "CRDs before the operator chart");
-  assert.match(sh, /retry kubectl apply --server-side --force-conflicts -f https:\/\/raw\.githubusercontent\.com\/europesip\/hcl-dx-scriptapp-operator\/v0\.3\.0\//);
+  assert.match(sh, /retry kubectl apply --server-side --force-conflicts -f https:\/\/raw\.githubusercontent\.com\/europesip\/hcl-dx-scriptapp-operator\/v0\.3\.1\//);
 });

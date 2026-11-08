@@ -16,7 +16,7 @@
 import {SECRET_KEYS} from "./state.js";
 import {EUROPESIP_WHITE_PNG} from "./brand/europesip-white.js";
 
-export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.3.0", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
+export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.3.1", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
 const OP_CRDS = ["dxconnections", "dxscriptapplications", "dxpages", "dxdamcollections", "dxdatabases", "dxthemes"].map(k => `dx.europesip.com_${k}`);
 const OP_CRD_URL = `https://raw.githubusercontent.com/europesip/hcl-dx-scriptapp-operator/v${VERSIONS.operator}/charts/hcl-dx-scriptapp-operator/crds/`;
 const DIR = "lab-cicd";

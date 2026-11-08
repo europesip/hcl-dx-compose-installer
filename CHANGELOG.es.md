@@ -7,6 +7,11 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## 2.4.1 · 2026-11-08 · Operador de Script Applications 0.3.1
+
+- El operador se instala en la **0.3.1**: una sola petición XMLAccess a la vez a DX (las simultáneas a veces volvían
+  vacías y una página o un tema mostraban `DXError` durante un rato).
+
 ## 2.4.0 · 2026-11-08 · Operador de Script Applications 0.3.0
 
 - El operador se instala en la **0.3.0**, cuyos recursos llevan todos el prefijo DX: el ejemplo hello es ahora un

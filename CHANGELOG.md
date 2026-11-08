@@ -7,6 +7,11 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## 2.4.1 · 2026-11-08 · Script Application operator 0.3.1
+
+- The operator is installed at **0.3.1**: one XMLAccess request at a time to DX (concurrent ones were sometimes answered
+  empty and a page or a theme showed `DXError` for a while).
+
 ## 2.4.0 · 2026-11-08 · Script Application operator 0.3.0
 
 - The operator is installed at **0.3.0**, whose resources all have the DX prefix: the hello sample is now a
