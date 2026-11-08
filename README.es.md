@@ -35,7 +35,7 @@ Un instalador web guiado para pruebas de concepto y entornos de pruebas, de <a h
 **Opción 1 · En tu máquina Windows o Mac, con Docker**
 
 ```bash
-docker run --rm -p 8080:8080 ghcr.io/europesip/hcl-dx-compose-installer:2.1.0
+docker run --rm -p 8080:8080 ghcr.io/europesip/hcl-dx-compose-installer:2.1.1
 ```
 
 Después abre http://localhost:8080.
@@ -43,7 +43,7 @@ Después abre http://localhost:8080.
 **Opción 2 · En un clúster Kubernetes u OpenShift, con Helm**
 
 ```bash
-helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer --version 2.1.0 \
+helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer --version 2.1.1 \
   -n dx-installer --create-namespace --set ingress.enabled=true --set ingress.host=installer.example.com \
   --set auth.enabled=true --set auth.username=admin --set auth.password='S3cret!'
 ```

@@ -28,12 +28,12 @@ RUN set -eux; \
     ln -s "$(find /usr/lib -name libnss_wrapper.so | head -1)" /usr/local/lib/libnss_wrapper.so; \
     a=$([ "$TARGETARCH" = arm64 ] && echo aarch64 || echo x86_64); g=$([ "$TARGETARCH" = arm64 ] && echo arm64 || echo amd64); \
     cd /tmp; \
-    curl -fsSLo aws.zip "https://awscli.amazonaws.com/awscli-exe-linux-$a-$AWS_CLI_VERSION.zip"; unzip -q aws.zip; ./aws/install -b /usr/local/bin; rm -rf aws aws.zip; \
-    curl -fsSL "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/eksctl_Linux_$g.tar.gz" | tar xz -C /usr/local/bin eksctl; \
-    curl -fsSLo rosa.zip "https://github.com/openshift/rosa/releases/download/v$ROSA_VERSION/rosa_linux_$g.zip"; unzip -q rosa.zip rosa -d /usr/local/bin; rm rosa.zip; \
-    curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/$a/clients/ocp/$OC_VERSION/openshift-client-linux.tar.gz" | tar xz -C /usr/local/bin oc; \
-    curl -fsSLo /usr/local/bin/kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$g/kubectl"; \
-    curl -fsSL "https://get.helm.sh/helm-$HELM_VERSION-linux-$g.tar.gz" | tar xz --strip-components=1 -C /usr/local/bin "linux-$g/helm"; \
+    curl -fsSL --retry 8 --retry-all-errors --retry-delay 15o aws.zip "https://awscli.amazonaws.com/awscli-exe-linux-$a-$AWS_CLI_VERSION.zip"; unzip -q aws.zip; ./aws/install -b /usr/local/bin; rm -rf aws aws.zip; \
+    curl -fsSL --retry 8 --retry-all-errors --retry-delay 15 "https://github.com/eksctl-io/eksctl/releases/download/v$EKSCTL_VERSION/eksctl_Linux_$g.tar.gz" | tar xz -C /usr/local/bin eksctl; \
+    curl -fsSL --retry 8 --retry-all-errors --retry-delay 15o rosa.zip "https://github.com/openshift/rosa/releases/download/v$ROSA_VERSION/rosa_linux_$g.zip"; unzip -q rosa.zip rosa -d /usr/local/bin; rm rosa.zip; \
+    curl -fsSL --retry 8 --retry-all-errors --retry-delay 15 "https://mirror.openshift.com/pub/openshift-v4/$a/clients/ocp/$OC_VERSION/openshift-client-linux.tar.gz" | tar xz -C /usr/local/bin oc; \
+    curl -fsSL --retry 8 --retry-all-errors --retry-delay 15o /usr/local/bin/kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$g/kubectl"; \
+    curl -fsSL --retry 8 --retry-all-errors --retry-delay 15 "https://get.helm.sh/helm-$HELM_VERSION-linux-$g.tar.gz" | tar xz --strip-components=1 -C /usr/local/bin "linux-$g/helm"; \
     chmod 755 /usr/local/bin/*; \
     apt-get purge -y unzip; apt-get autoremove -y; rm -rf /var/lib/apt/lists/* /usr/local/aws-cli/v2/*/dist/awscli/examples; \
     aws --version; eksctl version; rosa version; oc version --client; kubectl version --client; helm version --short
