@@ -95,3 +95,42 @@ test("own image registry instead of hclcr.io", () => {
   assert.ok(g.pgSql, "the HCL e-mail still decides the table script");
   assert.match(all({altRegistry: true, REGISTRY: ""}).check.err.join(" "), /registry|repositorio/i);
 });
+
+test("Keycloak theme: default Keycloak theme unless the EUROPESIP one is ticked; full logout", () => {
+  const plain = all({keycloak: true});
+  assert.ok(!plain.entries.some(e => e.name.endsWith("theme-europesip.yaml")));
+  assert.match(plain.entries.find(e => e.name.endsWith("realm-dx.yaml")).text, /<span>Keycloak<\/span>/);
+  const th = all({keycloak: true, kcTheme: true});
+  assert.match(th.entries.find(e => e.name.endsWith("theme-europesip.yaml")).text, /parent=keycloak\.v2[\s\S]*europesip-white\.png: [A-Za-z0-9+/]{1000}/);
+  assert.match(th.entries.find(e => e.name.endsWith("keycloak.yaml")).text, /mountPath: \/opt\/keycloak\/themes\/europesip\/login/);
+  assert.match(th.entries.find(e => e.name.endsWith("realm-dx.yaml")).text, /loginTheme: europesip/);
+  assert.match(th.entries.find(e => e.name.endsWith("custom-values.keycloak.yaml")).text, /redirect\.logout\.url: "https:\/\/keycloak\.example\.com\/realms\/dx\/protocol\/openid-connect\/logout\?client_id=dx-compose/);
+});
+
+test("downloads are retried; the collector does not warn falsely", () => {
+  const sh = all(CICD).entries.find(e => e.name.endsWith("install.sh")).text;
+  assert.match(sh, /^retry\(\) \{/m); assert.match(sh, /^rhelm\(\) \{/m);
+  assert.match(sh, /^retry helm repo add openbao /m);
+  assert.match(sh, /^rhelm upgrade --install dx-deployment /m);
+  assert.ok(!/^helm upgrade --install /m.test(sh), "every helm upgrade goes through rhelm");
+  const col = all().entries.find(e => e.name.endsWith("collect-support-data.sh")).text;
+  assert.match(col, /ls -A "\$OUT\/web-engine\/liberty-logs"/);
+});
+
+test("resources: HCL software apart from prerequisites and extras", async () => {
+  const {resources, FULL} = await import("../src/resources.js");
+  const base = resources({...DEFAULTS, ...CREDS, lab3: false, lab4: false, dir: "none", db: "none"});
+  assert.equal(base.items.pre.length, 0); assert.equal(base.items.ext.length, 0);
+  const kc = resources({...DEFAULTS, ...CREDS, keycloak: true});
+  assert.ok(kc.items.ext.some(([k]) => k === "keycloak") && kc.items.pre.some(([k]) => k === "pg"), "Keycloak needs PostgreSQL");
+  assert.ok(FULL.free[0] <= 16 && FULL.free[1] <= 64, "the default AWS sizes hold the biggest installation");
+  assert.match(all({keycloak: true}).runbook, /## Resources this installation asks for/);
+});
+
+test("cleanup: operator resources and ExternalSecrets go before their operators are uninstalled", () => {
+  const sh = all({...CICD, useVault: true}).entries.find(e => e.name.endsWith("install.sh")).text;
+  const block = sh.slice(sh.indexOf("if [ $CLEANUP = 1 ]"), sh.indexOf("exit 0", sh.indexOf("if [ $CLEANUP = 1 ]")));
+  const i = s => block.indexOf(s);
+  assert.ok(i("delete dxpages,scriptapplications") > 0 && i("delete dxpages,scriptapplications") < i("delete externalsecret --all --wait"));
+  assert.ok(i("delete externalsecret --all --wait") < i("helm uninstall"), "before any helm uninstall");
+});

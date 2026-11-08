@@ -126,8 +126,22 @@ OpenID Connect de Liberty. Estos son los trucos que hicieron falta para que func
    credenciales. Una importación solo crea el realm; los cambios posteriores se hacen en la consola de administración.
 10. **Certificado**: el Ingress de Keycloak usa un certificado autofirmado que crea el paso de instalación. Sustituye el
     Secret `keycloak-tls` por el tuyo; DX no necesita confiar en él.
-11. **Cierre de sesión**: salir de DX todavía no cierra la sesión de Keycloak (no está configurado `redirect.logout*` en
-    ConfigService, el paso 4 de la página de HCL).
+11. **Cierre de sesión completo**: `redirect.logout`, `redirect.logout.ssl` y `redirect.logout.url` en
+    `ConfigService.properties` (paso 4 de la página de HCL, mediante `propertiesFilesOverrides`). «Finalizar sesión» en DX
+    va al endpoint de cierre de sesión de Keycloak (`client_id` + `post_logout_redirect_uri`, registrado en el cliente),
+    que cierra la sesión de Keycloak y vuelve al portal. Cambiar estas propiedades reinicia el Web Engine.
+12. **Tema de login**: por defecto, el tema por defecto de Keycloak (`keycloak.v2`) con su logo, para que se vea
+    claramente que se usa Keycloak. Con *Tema de login de EUROPESIP*, se monta desde un ConfigMap (con
+    `spec.unsupported.podTemplate` del CR de Keycloak, sin imagen propia) un tema `europesip` que extiende `keycloak.v2`
+    (sus variables CSS: logo, colores, fondo). La cabecera usa el `displayNameHtml` del realm (logo + «HCL DX Compose»).
+    Keycloak lee los temas al arrancar su pod.
+
+## Descargas durante la instalación
+
+`install.sh` descarga charts y manifiestos de GitHub, de repositorios de Helm y de registros. Desde la 2.3.0 los
+reintenta: `retry` repite una descarga (`helm repo add`, `helm pull`, `helm registry login`, `kubectl apply -f
+https://...`) hasta 5 veces, y `rhelm` repite un `helm upgrade` solo si falló porque no se pudo descargar el chart (503,
+504, «failed to fetch»...), nunca si falló la instalación en sí.
 
 ## El propio HCL DX: cosas que conviene saber
 

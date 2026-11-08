@@ -4,6 +4,43 @@
 // the preparation and each stage of the demo with why, the commands, the files and the slide it goes with.
 import {keyChanges, sourceOf, isSecretStep, secretValues, maskText, filesOfStep} from "./bundle.js";
 import {STAGES, STAGE_DOCS} from "./engine/stages.js";
+import {resources, fmt, FULL} from "./resources.js";
+
+// Appendix: what the installer can do beyond the webinar (the webinar mode does not offer these options)
+const BEYOND = {
+  en: {
+    h: "Beyond the webinar: advanced options of the installer",
+    p: "The webinar keeps to the six stages so that the demo is short and clear. For a real PoC, the Custom deployment of the installer adds options that the webinar mode does not offer. They are optional, off by default and not available on OpenShift yet:",
+    items: [
+      "Secrets manager (OpenBao + External Secrets Operator): no credential in the zip; the operator enters the secrets once, the rest are generated at random. Changing a DX password needs a DX helm upgrade and a Web Engine restart (the DX chart copies the Secret).",
+      "Keycloak (single sign-on): pre-integrated with the OpenLDAP; DX users sign in on the Keycloak page with their LDAP account, with two-factor authentication if enabled, and log out of both. Default Keycloak theme, or the EUROPESIP theme.",
+      "Argo CD (GitOps): the cluster follows a Git repository; the DX applications of the operator show their real health.",
+      "Script Application operator (EUROPESIP): Script Applications, pages, DAM files and databases from Kubernetes resources, restored if changed in DX.",
+      "Your own image registry (Harbor, Quay...) instead of hclcr.io, usual in air-gapped environments: the registry must hold a copy of the HCL images with the same names, or proxy / mirror hclcr.io.",
+      "Downloads are retried: a temporary 503/504 of GitHub or a registry does not stop the installation.",
+    ],
+    resH: "Resources: HCL software, prerequisites and extras",
+    resP: (now, full) => `The HCL requirement (~8 CPU, ~14 GiB) covers only the HCL software. The prerequisites (OpenLDAP, PostgreSQL, LiteLLM) and the extras add to it. This webinar installation asks for about ${now}; the biggest installation (every stage and extra) about ${full}. The installer shows the estimate as the options are chosen, and the AWS sizes leave room for the biggest one.`,
+    head: ["Part", "What", "CPU · memory"], parts: ["HCL software", "Prerequisites (third party)", "Extras and advanced tools"],
+    docs: "Details: docs/openbao.md and docs/third-party.md of the installer repository.",
+  },
+  es: {
+    h: "Más allá del webinar: opciones avanzadas del instalador",
+    p: "El webinar se ciñe a las seis etapas para que la demo sea corta y clara. Para una PoC real, el despliegue Personalizado del instalador añade opciones que el modo webinar no ofrece. Son opcionales, vienen desactivadas y aún no están disponibles en OpenShift:",
+    items: [
+      "Gestor de secretos (OpenBao + External Secrets Operator): ninguna credencial en el zip; el operador introduce los secretos una vez y el resto se generan al azar. Cambiar una contraseña de DX requiere un helm upgrade de DX y reiniciar el Web Engine (el chart de DX copia el Secret).",
+      "Keycloak (inicio de sesión único): pre-integrado con el OpenLDAP; los usuarios de DX entran en la página de Keycloak con su cuenta del LDAP, con doble factor si se activa, y salen de los dos a la vez. Tema por defecto de Keycloak, o el tema de EUROPESIP.",
+      "Argo CD (GitOps): el clúster sigue a un repositorio Git; las aplicaciones de DX del operador muestran su salud real.",
+      "Operador de Script Applications (EUROPESIP): Script Applications, páginas, ficheros del DAM y bases de datos desde recursos de Kubernetes, restaurados si se cambian en DX.",
+      "Tu propio repositorio de imágenes (Harbor, Quay...) en lugar de hclcr.io, habitual en entornos air-gapped: el repositorio debe tener una copia de las imágenes de HCL con los mismos nombres, o hacer de proxy / mirror de hclcr.io.",
+      "Las descargas se reintentan: un 503/504 temporal de GitHub o de un registro no detiene la instalación.",
+    ],
+    resH: "Recursos: software de HCL, pre-requisitos y extras",
+    resP: (now, full) => `El requisito de HCL (~8 CPU, ~14 GiB) cubre solo el software de HCL. Los pre-requisitos (OpenLDAP, PostgreSQL, LiteLLM) y los extras se suman. Esta instalación del webinar pide unas ${now}; la mayor (todas las etapas y extras), unas ${full}. El instalador muestra la estimación al elegir las opciones, y los tamaños de AWS dejan margen para la mayor.`,
+    head: ["Parte", "Qué", "CPU · memoria"], parts: ["Software de HCL", "Pre-requisitos (terceros)", "Extras y herramientas avanzadas"],
+    docs: "Detalle: docs/openbao.es.md y docs/third-party.es.md del repositorio del instalador.",
+  },
+};
 
 export const WEBINAR = {date: "2026-11-12", title: "Deploy HCL DX Compose in Minutes", series: "HCL DX Webinar"};
 export const INSTALLER_URL = "https://github.com/europesip/hcl-dx-compose-installer";
@@ -414,6 +451,11 @@ export function buildScript(gen, lang, summaryRows, {mask = true} = {}){
   B.push({t: "break"}); B.push({t: "h1", text: t.appA}); B.push({t: "p", text: t.appAP});
   for (const step of [...prep, ...demo].filter(isSecretStep)) { B.push({t: "h3", text: `${step.id} · ${step.title}`}); B.push({t: "code", text: m(step.cmd)}); }
   B.push({t: "p", text: t.litellm}); B.push({t: "code", text: mask ? "********" : gen.litellmKey || ""});
+  { const bz = BEYOND[lang] || BEYOND.en, r = resources(gen.form || {}), fr = FULL;
+    B.push({t: "break"}); B.push({t: "h1", text: bz.h}); B.push({t: "p", text: bz.p}); B.push({t: "bullets", items: bz.items});
+    B.push({t: "h2", text: bz.resH}); B.push({t: "p", text: bz.resP(fmt(r.total, lang), fmt(fr.total, lang))});
+    B.push({t: "table", head: bz.head, rows: ["hcl", "pre", "ext"].map((k, i) => [bz.parts[i], fr.items[k].map(([, n]) => n).join(", "), fmt(fr.groups[k], lang)]), widths: [28, 52, 20]});
+    B.push({t: "p", text: bz.docs, tone: "muted"}); }
   B.push({t: "break"}); B.push({t: "h1", text: t.appB}); B.push({t: "p", text: t.appBP});
   for (const [path, f] of Object.entries(files)) {
     if (!/\.(ya?ml|properties|ldif|json)$/i.test(path)) continue;

@@ -15,11 +15,16 @@ NAME=dx-compose-poc REGION=eu-west-1 ./ec2-destroy.sh    # deletes everything ta
 
 | Script | What it creates | Approx. price (eu-west-1) |
 |---|---|---|
-| `ec2-create.sh` | one m6i.4xlarge (Ubuntu 24.04, 200 GB gp3) with k3s, Helm, Longhorn and the StorageClasses `dx-deploy-rwo` / `dx-deploy-rwx`, Traefik; DX at `dx-demo.<IP>.nip.io` | ~0.89 USD/hour |
-| `eks-create.sh` | EKS with 2 × m6i.2xlarge in its own VPC, EBS CSI (RWO), EFS CSI and an EFS file system (RWX), ingress-nginx behind an NLB, a kubeconfig with its own token | ~1.08 USD/hour |
-| `rosa-create.sh` | ROSA with hosted control planes, 2 workers, EBS and EFS (experimental) | ~2 USD/hour |
+| `ec2-create.sh` | one m6i.4xlarge (Ubuntu 24.04, 200 GB gp3) with k3s, Helm, Longhorn and the StorageClasses `dx-deploy-rwo` / `dx-deploy-rwx`, Traefik; DX at `dx-demo.<IP>.nip.io` | ~0.89 USD/hour · ~21 USD/day · ~646 USD/month |
+| `eks-create.sh` | EKS with 2 × m6i.2xlarge in its own VPC, EBS CSI (RWO), EFS CSI and an EFS file system (RWX), ingress-nginx behind an NLB, a kubeconfig with its own token | ~1.08 USD/hour · ~26 USD/day · ~789 USD/month |
+| `rosa-create.sh` | ROSA with hosted control planes, 2 workers, EBS and EFS (experimental) | ~2 USD/hour · ~48 USD/day · ~1,451 USD/month |
 
-They cost money while they exist: delete them when you finish.
+They cost money while they exist: delete them when you finish. A month means 24×7; the page shows the cost per hour,
+per day and per month of the chosen size.
+
+**Sizes.** The default sizes (16 vCPU and 64 GiB in total) leave room for the biggest installation the installer can
+generate, with every stage and extra (Keycloak, OpenBao, Argo CD, ÓRBITA...), which asks for about 9.3 CPU and 20.6 GiB
+(look for ~13 CPU and ~27 GiB free). The page warns if a smaller size is chosen.
 
 **Network of the EC2 instance (`VPC_MODE`).** By default (`name`) the instance goes in the VPC named `VPC_NAME` (the
 name of the environment if empty). If it does not exist, a dedicated VPC is created (one public subnet and an Internet

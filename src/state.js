@@ -22,7 +22,7 @@ export const DEFAULTS = {
   // Advanced CI/CD (not on OpenShift, not in the webinar): OpenBao + External Secrets, Argo CD, the Script Application operator
   cicdOpenbao: false, openbaoMode: "install", cicdArgo: false, cicdOperator: false, cicdSameNs: true, CICD_NS: "dx-cicd",
   useVault: false,                   // credentials from OpenBao: only the Harbor user is asked
-  keycloak: false, KC_HOST: "",      // Keycloak (SSO) with the OpenLDAP users; independent of OpenBao
+  keycloak: false, kcTheme: false, KC_HOST: "",      // Keycloak (SSO) with the OpenLDAP users; independent of OpenBao
   // Credentials
   HCL_HARBOR_USER: "", HCL_HARBOR_TOKEN: "",
   altRegistry: false, REGISTRY: "", REGISTRY_USER: "", REGISTRY_PASSWORD: "", HCL_EMAIL: "",   // own image registry instead of hclcr.io

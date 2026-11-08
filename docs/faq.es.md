@@ -64,6 +64,11 @@ de credenciales. Solo se pide tu usuario de Harbor; el operador da de alta los s
 [CI/CD avanzado: OpenBao](openbao.es.md) (también cómo desbloquearlo tras un reinicio y por qué cambiar una contraseña
 de DX necesita un `helm upgrade`).
 
+**¿Cuánta CPU y memoria necesito?**
+El requisito de HCL (~8 CPU, ~14 GiB) cubre solo el software de HCL. Los pre-requisitos (OpenLDAP, PostgreSQL, LiteLLM) y
+los extras (Keycloak, OpenBao, Argo CD, ÓRBITA...) se suman: el instalador muestra la estimación al elegir las opciones, y
+RUNBOOK.md la repite. Todo junto pide unas 9,3 CPU y 20,6 GiB (busca ~13 CPU y ~27 GiB libres).
+
 **¿Puedo usar mi propio repositorio de imágenes (Harbor, Quay...) en lugar de HCL Harbor?**
 Sí: en la página de credenciales, *Usar otro repositorio de imágenes*. Es habitual en entornos air-gapped, donde el equipo
 de seguridad controla y analiza cada imagen. El repositorio debe tener ya una copia de las imágenes y charts de HCL con los

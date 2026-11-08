@@ -7,6 +7,20 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## 2.3.0 · 2026-11-08 · Tema de Keycloak, cierre de sesión, reintentos y recursos
+
+- **Tema de login de Keycloak**: el tema por defecto de Keycloak (con su logo) o, marcando *Tema de login de EUROPESIP*,
+  un tema de EUROPESIP (logo, colores, fondo degradado) montado desde un ConfigMap. **Cierre de sesión completo**:
+  «Finalizar sesión» en DX también cierra la sesión de Keycloak.
+- **Las descargas se reintentan** en `install.sh` (charts, repositorios, manifiestos); un `helm upgrade` solo se reintenta
+  si no se pudo descargar el chart.
+- **Estimación de recursos**: las páginas de despliegue, la de descarga y RUNBOOK.md muestran la CPU y la memoria que pide
+  la instalación elegida, separadas en software de HCL, pre-requisitos y extras, con el aviso de que el requisito de HCL
+  solo cubre el software de HCL. Los tamaños de AWS se comprueban contra la instalación mayor.
+- **AWS**: coste por hora, por día y por mes (24×7) en el desglose del tamaño elegido.
+- **Guion del webinar (Word / PDF)**: un anexo sobre las opciones avanzadas y los recursos.
+- `install.sh --collect` ya no avisa «could not copy the Liberty logs» cuando sí se copiaron.
+
 ## 2.2.0 · 2026-11-08 · Repositorio de imágenes propio, Keycloak, versión en pantalla
 
 - **Versión y fecha de compilación en el pie de página**, para saber qué versión se está ejecutando.

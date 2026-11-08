@@ -8,6 +8,7 @@ import {generate, zipBytes, download, ZIP_NAME, ZIP_NAME_WEBINAR, WORD_NAME_EN, 
 import {stageLabel} from "./engine/stages.js";
 import {SecurityNote} from "./security.jsx";
 import {kcHost} from "./cicd.js";
+import {resources, fmt} from "./resources.js";
 
 const C = t => ({copyLabel: t.copy, copiedLabel: t.copied});
 const Bullet = ({children}) => <li className="flex gap-2.5"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-blue" /><span>{children}</span></li>;
@@ -194,7 +195,7 @@ export function EnvLocal({t, lang, form, set, go, back, view}){
 
 // ---------------------------------------------------------------------------------------------
 const STAGES_OF = {all: [0, 1, 2, 3, 4, 5, 6], webinar: [0, 1, 2, 3, 4, 5]};
-export function Deploy({t, form, set, go, back}){
+export function Deploy({t, lang, form, set, go, back}){
   const opts = [
     ["all", t.dAll, t.dAllT, <IconLayers key="a" />],
     ["custom", t.dCustom, t.dCustomT, <IconSliders key="b" />],
@@ -225,6 +226,7 @@ export function Deploy({t, form, set, go, back}){
           ))}
         </div>
       )}
+      {form.preset && form.preset !== "custom" && <ResourceCard t={t} lang={lang} form={form} className="mt-5" />}
       <Nav t={t} back={back} next={() => go(form.preset === "custom" ? "deploy-custom" : "details")} nextDisabled={!form.preset} />
     </div>
   );
@@ -250,7 +252,7 @@ function StageCard({n, t, on, onToggle, always, showOptions, children}){
 
 function McpText({t}){ return <>{t.mcpBody.map(x => <p key={x}>{x}</p>)}</>; }
 
-export function DeployCustom({t, form, set, go, back}){
+export function DeployCustom({t, lang, form, set, go, back}){
   const g = gates(form);
   const [mcpAsk, setMcpAsk] = useState(false), [mcpRead, setMcpRead] = useState(false);
   return (
@@ -283,6 +285,7 @@ export function DeployCustom({t, form, set, go, back}){
         <StageCard n={6} t={t} on={form.lab5} onToggle={v => set({lab5: v})} />
       </div>
       <CicdCard t={t} form={form} set={set} />
+      <ResourceCard t={t} lang={lang} form={form} className="mt-5" />
       <Nav t={t} back={back} next={() => go("details")} />
       <Modal open={mcpAsk} title={t.mcpTitle} onClose={() => setMcpAsk(false)}
         actions={<><Button variant="secondary" onClick={() => setMcpAsk(false)}>{t.cancel2}</Button><Button onClick={() => { set({lab3b: true}); setMcpAsk(false); }}>{t.mcpOk}</Button></>}>
@@ -292,6 +295,35 @@ export function DeployCustom({t, form, set, go, back}){
         <McpText t={t} />
       </Modal>
     </div>
+  );
+}
+
+
+// What the chosen installation asks the cluster for, live as the options change (src/resources.js)
+export function ResourceCard({t, lang, form, className}){
+  const r = resources(form);
+  const max = Math.max(r.total[1], 1);
+  const rows = [["hcl", t.resHcl, "bg-brand-blue"], ["pre", t.resPre, "bg-amber-500"], ["ext", t.resExt, "bg-pink-500"]];
+  return (
+    <Card className={cx("space-y-3", className)}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <H2 className="mb-0">{t.resTitle}</H2>
+        <span className="font-mono text-sm font-semibold text-slate-900 dark:text-white">{fmt(r.total, lang)}</span>
+      </div>
+      <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-navy-800">
+        {rows.map(([k, , c]) => r.groups[k][1] > 0 && <div key={k} className={c} style={{width: `${100 * r.groups[k][1] / max}%`}} />)}
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {rows.map(([k, label, c]) => (
+          <div key={k} className="text-xs text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200"><span className={cx("h-2.5 w-2.5 rounded-full", c)} />{label}</div>
+            <div className="font-mono">{r.groups[k][1] > 0 ? fmt(r.groups[k], lang) : "—"}</div>
+            <div>{r.items[k].map(([, n]) => n).join(" · ")}</div>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-slate-500">{t.resNote(fmt(r.free, lang))}</p>
+    </Card>
   );
 }
 
@@ -330,6 +362,7 @@ function CicdCard({t, form, set}){
         <div>
           <Check checked={!!form.keycloak && !noLdap} disabled={os || noLdap} onChange={v => set({keycloak: v})} hint={noLdap && !os ? t.kcNeedLdap : undefined}><b>Keycloak</b> · {t.kcWhat}</Check>
           <Info>{t.kcI}</Info>
+          {form.keycloak && !noLdap && !os && <div className="ml-8 mt-2"><Check checked={!!form.kcTheme} onChange={v => set({kcTheme: v})} hint={t.kcThemeHint}>{t.kcTheme}</Check></div>}
         </div>
       </div>
       {any && !os && (
@@ -565,6 +598,7 @@ export function Download({t, lang, form, back, restart}){
               {summary.slice(0, 4).map(([k, v]) => <div key={k}><dt className="text-xs uppercase tracking-wider text-slate-500">{k}</dt><dd className="mt-0.5 break-all font-medium text-slate-900 dark:text-white">{v}</dd></div>)}
             </dl>
           </Card>
+          <ResourceCard t={t} lang={lang} form={form} />
           <div className="grid gap-4 sm:grid-cols-2">
             <DownloadCard icon={<IconZip />} title={t.dlZip} text={webinar ? t.dlZipWebT : t.dlZipT} href={files.zip} name={webinar ? ZIP_NAME_WEBINAR : ZIP_NAME} disabled={err.length > 0} t={t} primary />
             <DownloadCard icon={<IconDoc />} title={t.dlRunbook} text={t.dlRunbookT} href={files.runbook} name="RUNBOOK.md" disabled={err.length > 0} t={t} />

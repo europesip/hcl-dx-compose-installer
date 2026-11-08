@@ -4,6 +4,7 @@ import {useEffect, useRef, useState} from "react";
 import {Nav, Card, Title, H2, Choice, Button, Field, Input, Secret, Select, Check, Callout, Code, Badge, Segmented, cx,
         IconServer, IconCloud, IconLayers, IconDownload, IconTrash, IconWarn, IconCheck, Spinner} from "./ui.jsx";
 import {AWS_KINDS, EC2_TYPES, REGIONS, estimate, money, api} from "./aws.js";
+import {FULL, fmt} from "./resources.js";
 import {SecurityNote} from "./security.jsx";
 
 const STEPS = {create: {ec2: 7, eks: 8, rosa: 9}, destroy: {ec2: 4, eks: 5, rosa: 4}};
@@ -155,8 +156,15 @@ export function EnvAws({t, lang, form, set, go, back, info}){
             {kind === "rosa" && <RedHatAuth t={t} lang={lang} creds={creds} setCreds={setCreds} />}
             <div className="rounded-xl bg-slate-50 p-3 text-xs dark:bg-navy-950">
               {est.lines.map(([l, v]) => <div key={l} className="flex justify-between gap-3 py-0.5 text-slate-600 dark:text-slate-400"><span>{l}</span><span className="font-mono">{money(v, lang)}{t.perHour}</span></div>)}
-              <div className="mt-1 flex justify-between border-t border-slate-200 pt-1.5 font-semibold text-slate-900 dark:border-navy-800 dark:text-white"><span>≈ {money(est.day, lang)}{t.perDay}</span><span>{money(est.hour, lang)}{t.perHour}</span></div>
+              <div className="mt-1 grid grid-cols-3 gap-2 border-t border-slate-200 pt-1.5 font-semibold text-slate-900 dark:border-navy-800 dark:text-white">
+                <span>{money(est.hour, lang)}{t.perHour}</span><span className="text-center">≈ {money(est.day, lang)}{t.perDay}</span><span className="text-right">≈ {money(est.month, lang)}{t.perMonth}</span>
+              </div>
             </div>
+            {(() => {   // capacity of the chosen machines against the biggest installation (every stage and extra)
+              const ty = EC2_TYPES[p.instanceType] || [0, 0], n = kind === "ec2" ? 1 : Number(p.nodes || 2);
+              const cap = [ty[0] * n, ty[1] * n], need = FULL.free, ok = cap[0] >= need[0] && cap[1] >= need[1];
+              return <Callout tone={ok ? "info" : "warn"}>{(ok ? t.awsCapOk : t.awsCapLow)(`${cap[0]} vCPU · ${cap[1]} GiB`, fmt(need, lang))}</Callout>;
+            })()}
             <Check checked={accept} onChange={setAccept}>{t.acceptCost}</Check>
             <Button onClick={() => start("create")} disabled={!canCreate} className="w-full">{running && job?.action === "create" ? <><Spinner />{t.creating}</> : t.create}</Button>
           </Card>

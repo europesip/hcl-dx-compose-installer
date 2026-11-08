@@ -14,6 +14,7 @@
 //     asks for them or in the OpenBao UI; the internal ones (PostgreSQL, LDAP admin, LiteLLM, certificates) are
 //     generated at random inside OpenBao.
 import {SECRET_KEYS} from "./state.js";
+import {EUROPESIP_WHITE_PNG} from "./brand/europesip-white.js";
 
 export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.1.3", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
 const DIR = "lab-cicd";
@@ -414,6 +415,67 @@ function kcSecrets(s, f, vault){
     doc("keycloak-realm", sh, {clientSecret: cs}), doc("dx-keycloak-oidc", ns, {OIDC_CLIENT_SECRET: cs})].join("\n") + "\n";
 }
 
+
+// The EUROPESIP login theme (optional, f.kcTheme): it extends keycloak.v2 with the EUROPESIP logo, colours and a gradient
+// background. Mounted from a ConfigMap (no custom Keycloak image). Without it, Keycloak keeps its own default theme.
+const KC_THEME_CSS = `/* EUROPESIP theme for the Keycloak login page (extends keycloak.v2) */
+:root {
+  --keycloak-logo-url: url('../img/europesip-white.png');
+  --keycloak-logo-height: 54px;
+  --keycloak-logo-width: 360px;
+  --keycloak-card-top-color: #FF0A6C;
+  --keycloak-bg-logo-url: none;
+  --pf-v5-global--primary-color--100: #0040FF;
+  --pf-v5-global--primary-color--200: #0030C0;
+  --pf-v5-global--link--Color: #0040FF;
+  --pf-v5-global--link--Color--hover: #FF0A6C;
+  --pf-v5-global--FontFamily--text: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  --pf-v5-global--FontFamily--heading: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+}
+.login-pf body, body#keycloak-bg {
+  background: radial-gradient(circle at 15% 20%, #2B4BC8 0%, #0B1B3A 52%, #060E22 100%) fixed !important;
+}
+body#keycloak-bg::before {
+  content: ""; position: fixed; inset: auto -10% -35% auto; width: 70vw; height: 70vw; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,10,108,0.28) 0%, rgba(255,10,108,0) 65%); pointer-events: none; z-index: -1;
+}
+.pf-v5-c-login__header { margin-bottom: 1.5rem; }
+.dx-subtitle { color: #C9D3F5; font-size: 1.05rem; letter-spacing: 0.35em; text-transform: uppercase; text-align: center; margin-top: 0.9rem; }
+.pf-v5-c-login__main { border-radius: 20px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.45); }
+.pf-v5-c-login__main-header { border-top: 6px solid transparent; border-image: linear-gradient(90deg, #FF0A6C, #0040FF) 1; }
+.pf-v5-c-login__main-header h1, #kc-page-title { font-weight: 700; color: #0B1B3A; }
+.pf-v5-c-button.pf-m-primary {
+  background: linear-gradient(135deg, #FF0A6C 0%, #0040FF 100%); border: 0; border-radius: 999px; font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0,64,255,0.25);
+}
+.pf-v5-c-button.pf-m-primary:hover { filter: brightness(1.08); }
+.pf-v5-c-form-control { border-radius: 10px; }
+.pf-v5-c-login__container::after {
+  content: "HCL DX Compose · EUROPESIP"; display: block; text-align: center; color: #8FA3D9; font-size: 0.85rem;
+  letter-spacing: 0.08em; margin-top: 1.5rem;
+}
+`;
+function kcTheme(s){
+  return `# EUROPESIP login theme for Keycloak (extends keycloak.v2): mounted at /opt/keycloak/themes/europesip by the Keycloak CR.
+# Change the colours in europesip.css or the logo (europesip-white.png) and re-apply; Keycloak reads it when its pod starts.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-theme-europesip
+  namespace: ${s.SHARED_NS}
+data:
+  theme.properties: |
+    parent=keycloak.v2
+    import=common/keycloak
+    styles=css/styles.css css/europesip.css
+    darkMode=false
+  europesip.css: |
+${KC_THEME_CSS.split("\n").map(x => "    " + x).join("\n")}
+binaryData:
+  europesip-white.png: ${EUROPESIP_WHITE_PNG}
+`;
+}
+
 function kcCr(s, f){
   const host = kcHost(f), cls = s.INGRESS_CLASS;
   return `# Keycloak ${VERSIONS.keycloak} (official operator): database in the PostgreSQL of the installation, administrator from a Secret.
@@ -448,10 +510,25 @@ spec:
   resources:
     requests: { cpu: 200m, memory: 768Mi }
     limits: { memory: 1536Mi }
-`;
+${f.kcTheme ? `  # The EUROPESIP login theme (ConfigMap keycloak-theme-europesip), mounted as /opt/keycloak/themes/europesip
+  unsupported:
+    podTemplate:
+      spec:
+        containers:
+          - volumeMounts:
+              - { name: theme-europesip, mountPath: /opt/keycloak/themes/europesip/login, readOnly: true }
+        volumes:
+          - name: theme-europesip
+            configMap:
+              name: keycloak-theme-europesip
+              items:
+                - { key: theme.properties, path: theme.properties }
+                - { key: europesip.css, path: resources/css/europesip.css }
+                - { key: europesip-white.png, path: resources/img/europesip-white.png }
+` : ""}`;
 }
 
-function kcRealm(s, lang){
+function kcRealm(s, lang, f = {}){
   const dx = `https://${s.DX_HOST}`;
   return `# Realm "dx": the users of the OpenLDAP (User Federation, read-only, imported on login) and DX Compose as an OIDC client.
 # The secrets come in as placeholders from Secrets (LDAP bind password from openldap-admin, client secret from
@@ -469,7 +546,9 @@ spec:
   realm:
     realm: dx
     displayName: "HCL DX Compose"
-    enabled: true
+    # Header of the login page: ${f.kcTheme ? "the EUROPESIP logo of its theme" : "the Keycloak logo (the default Keycloak theme)"} and the product name
+    displayNameHtml: '<div class="kc-logo-text"><span>${f.kcTheme ? "EUROPESIP" : "Keycloak"}</span></div><div class="dx-subtitle">HCL DX Compose</div>'
+${f.kcTheme ? "    loginTheme: europesip\n" : ""}    enabled: true
     internationalizationEnabled: true
     supportedLocales: [es, en]
     defaultLocale: ${lang === "es" ? "es" : "en"}
@@ -536,6 +615,12 @@ configuration:
   webEngine:
     customSecrets:
       keycloak-oidc: "dx-keycloak-oidc"      # environment variable OIDC_CLIENT_SECRET
+    # Full logout (HCL step 4): "Log out" in DX also ends the Keycloak session, then returns to the portal
+    propertiesFilesOverrides:
+      ConfigService.properties:
+        redirect.logout: "true"
+        redirect.logout.ssl: "true"
+        redirect.logout.url: "https://${host}/realms/dx/protocol/openid-connect/logout?client_id=dx-compose&post_logout_redirect_uri=https%3A%2F%2F${s.DX_HOST}%2Fwps%2Fportal"
     configOverrideFiles:
       oidc-keycloak.xml: |
         <server description="DX Web Engine - sign-in with Keycloak (OIDC)">
@@ -644,7 +729,8 @@ kubectl -n ${cns} wait scriptapplication/dxop-hello dxpage/dxop-hello --for=cond
     const host = kcHost(form), pg = `${s.PG_CLUSTER}-1`;
     add(`${KC_DIR}/keycloak-secrets.yaml`, kcSecrets(s, form, vault), vault ? 0o100644 : 0o100600);
     add(`${KC_DIR}/keycloak.yaml`, kcCr(s, form));
-    add(`${KC_DIR}/realm-dx.yaml`, kcRealm(s, lang));
+    add(`${KC_DIR}/realm-dx.yaml`, kcRealm(s, lang, form));
+    if (form.kcTheme) add(`${KC_DIR}/theme-europesip.yaml`, kcTheme(s));
     add(`${KC_DIR}/custom-values.keycloak.yaml`, kcDxLayer(s, form));
     KC.push(mk("K-1", T(lang, "Keycloak (SSO) with the OpenLDAP users", "Keycloak (SSO) con los usuarios del OpenLDAP"),
       T(lang, `Official Keycloak operator, its database in PostgreSQL and the realm "dx" with the LDAP federation and the DX client. DX starts signing in through Keycloak with the LDAP step (stage 2).`,
@@ -665,7 +751,8 @@ ${waitEs(ns, ["dx-keycloak-oidc"])}` : ""}
 [ -f ${KC_DIR}/keycloak-tls.crt ] || openssl req -x509 -newkey rsa:2048 -nodes -sha256 -days 365 -keyout ${KC_DIR}/keycloak-tls.key -out ${KC_DIR}/keycloak-tls.crt \
   -subj "/CN=${host}" -addext "subjectAltName=DNS:${host}" 2>/dev/null
 kubectl -n ${sh} create secret tls keycloak-tls --cert=${KC_DIR}/keycloak-tls.crt --key=${KC_DIR}/keycloak-tls.key --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f ${KC_DIR}/keycloak.yaml
+${form.kcTheme ? `kubectl apply -f ${KC_DIR}/theme-europesip.yaml
+` : ""}kubectl apply -f ${KC_DIR}/keycloak.yaml
 kubectl -n ${sh} wait keycloak/keycloak --for=condition=Ready --timeout=900s
 kubectl apply -f ${KC_DIR}/realm-dx.yaml
 kubectl -n ${sh} wait keycloakrealmimport/realm-dx --for=condition=Done --timeout=600s`,
@@ -748,6 +835,12 @@ export function cicdInstallSh(form, s, text){
   kubectl -n ${s.SHARED_NS} delete deploy/keycloak-operator svc/keycloak-operator secret/keycloak-admin secret/keycloak-db secret/keycloak-realm secret/keycloak-tls --ignore-not-found
   for r in $(helm list -n ${s.SHARED_NS} -q);`);
   const tools = !!(form.cicdOpenbao || form.cicdArgo || form.cicdOperator);
+  // ExternalSecrets first, while External Secrets Operator still runs: it removes their finalizers (otherwise the
+  // deletion of the namespaces hangs once the operator is uninstalled)
+  if (form.cicdOpenbao) t = t.replace("  set +e\n", `  set +e\n  for n in ${[...new Set([s.DX_NS, s.SHARED_NS, cns])].join(" ")}; do kubectl -n $n delete externalsecret --all --wait=true --timeout=2m 2>/dev/null; done\n`);
+  // The resources of the Script Application operator too, while it runs (it removes their finalizers; deletionPolicy
+  // Retain by default, so nothing is deleted in DX)
+  if (form.cicdOperator) t = t.replace("  set +e\n", `  set +e\n  kubectl -n ${cns} delete dxpages,scriptapplications,damcollections,postgresdatabases,dxconnections --all --wait=true --timeout=3m 2>/dev/null\n`);
   if (vault) {
     t = t.replace('cd "$(dirname "$0")"\n', `cd "$(dirname "$0")"\nsource lab-cicd/openbao-lib.sh; OB_PATH=${s.DX_NS}   # obv <path> <key>: a value from OpenBao\n`);
     t = t.split(LAB).join(S("wpsadmin", "password")).replace(/'@@OB:([\w-]+):([\w.-]+)@@'/g, (_, p, k) => `"$(obv ${p} ${k} 2>/dev/null)"`);
@@ -765,12 +858,12 @@ export function cicdInstallSh(form, s, text){
   kubectl -n ${s.SHARED_NS} delete deploy/europesip-mcp svc/europesip-mcp cm/openldap-demo-ldif cm/dx-pg-setup-sql secret/scriptapp-dx-ca secret/orbita-dx-ca \\
     secret/openldap-admin secret/dx-pg-superuser secret/dx-pg-dxuser secret/dx-pg-iquser secret/litellm-env secret/scriptapp-dx secret/orbita-dx --ignore-not-found
   kubectl delete namespace ${s.DX_NS} --ignore-not-found --wait=true --timeout=10m
-  if [ "$ALL" = 1 ]; then kubectl delete clustersecretstore openbao-dx --ignore-not-found; kubectl -n ${s.SHARED_NS} delete pvc --all --wait=false; kubectl delete namespace ${s.SHARED_NS} --ignore-not-found --wait=true --timeout=10m
+  if [ "$ALL" = 1 ]; then kubectl delete clustersecretstore openbao-dx --ignore-not-found 2>/dev/null; kubectl -n ${s.SHARED_NS} delete pvc --all --wait=false; kubectl delete namespace ${s.SHARED_NS} --ignore-not-found --wait=true --timeout=10m
   else echo "Kept in ${s.SHARED_NS}: ${keep.join(", ")} (./install.sh --cleanup --all removes them too)"; fi`);
   } else {
     t = t.replace(`  kubectl delete namespace ${s.DX_NS} ${s.SHARED_NS} --ignore-not-found --wait=true --timeout=10m`,
 `  kubectl delete namespace ${s.DX_NS} ${s.SHARED_NS} --ignore-not-found --wait=true --timeout=10m
-  if [ "$ALL" = 1 ]; then for r in $(helm list -n ${cns} -q); do helm uninstall $r -n ${cns} --wait --timeout 10m; done; kubectl delete clustersecretstore openbao-dx --ignore-not-found; kubectl delete namespace ${cns} --ignore-not-found --wait=true --timeout=10m
+  if [ "$ALL" = 1 ]; then for r in $(helm list -n ${cns} -q); do helm uninstall $r -n ${cns} --wait --timeout 10m; done; kubectl delete clustersecretstore openbao-dx --ignore-not-found 2>/dev/null; kubectl delete namespace ${cns} --ignore-not-found --wait=true --timeout=10m
   else echo "Kept: the CI/CD tools in ${cns} (./install.sh --cleanup --all removes them too)"; fi`);
   }
   t = t.replace("CLEANUP=0\n", "CLEANUP=0; ALL=0\n").replace("--cleanup) CLEANUP=1 ;;", "--cleanup) CLEANUP=1 ;; --all) ALL=1 ;;")

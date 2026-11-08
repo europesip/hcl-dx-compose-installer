@@ -15,11 +15,16 @@ NAME=dx-compose-poc REGION=eu-west-1 ./ec2-destroy.sh    # borra todo lo etiquet
 
 | Script | Qué crea | Precio aprox. (eu-west-1) |
 |---|---|---|
-| `ec2-create.sh` | una m6i.4xlarge (Ubuntu 24.04, 200 GB gp3) con k3s, Helm, Longhorn y las StorageClasses `dx-deploy-rwo` / `dx-deploy-rwx`, Traefik; DX en `dx-demo.<IP>.nip.io` | ~0,89 USD/hora |
-| `eks-create.sh` | EKS con 2 × m6i.2xlarge en su propia VPC, EBS CSI (RWO), EFS CSI y un sistema de ficheros EFS (RWX), ingress-nginx tras un NLB, un kubeconfig con su propio token | ~1,08 USD/hora |
-| `rosa-create.sh` | ROSA con planos de control alojados, 2 workers, EBS y EFS (experimental) | ~2 USD/hora |
+| `ec2-create.sh` | una m6i.4xlarge (Ubuntu 24.04, 200 GB gp3) con k3s, Helm, Longhorn y las StorageClasses `dx-deploy-rwo` / `dx-deploy-rwx`, Traefik; DX en `dx-demo.<IP>.nip.io` | ~0,89 USD/hora · ~21 USD/día · ~646 USD/mes |
+| `eks-create.sh` | EKS con 2 × m6i.2xlarge en su propia VPC, EBS CSI (RWO), EFS CSI y un sistema de ficheros EFS (RWX), ingress-nginx tras un NLB, un kubeconfig con su propio token | ~1,08 USD/hora · ~26 USD/día · ~789 USD/mes |
+| `rosa-create.sh` | ROSA con planos de control alojados, 2 workers, EBS y EFS (experimental) | ~2 USD/hora · ~48 USD/día · ~1.451 USD/mes |
 
-Cuestan dinero mientras existen: bórralos al terminar.
+Cuestan dinero mientras existen: bórralos al terminar. Un mes significa 24×7; la página muestra el coste por hora, por
+día y por mes del tamaño elegido.
+
+**Tamaños.** Los tamaños por defecto (16 vCPU y 64 GiB en total) dejan margen para la mayor instalación que puede generar
+el instalador, con todas las etapas y extras (Keycloak, OpenBao, Argo CD, ÓRBITA...), que pide unas 9,3 CPU y 20,6 GiB
+(busca ~13 CPU y ~27 GiB libres). La página avisa si se elige un tamaño menor.
 
 **Red de la instancia EC2 (`VPC_MODE`).** Por defecto (`name`) la instancia va en la VPC llamada `VPC_NAME` (el nombre
 del entorno si se deja vacío). Si no existe, se crea una VPC dedicada (una subred pública y un Internet gateway) que se

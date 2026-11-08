@@ -62,6 +62,11 @@ Yes: in the Custom deployment, choose OpenBao in *Advanced CI/CD*, then *Use the
 page. Only your Harbor user is asked; the operator enters the secrets in OpenBao. See [Advanced CI/CD: OpenBao](openbao.md)
 (also how to unseal it after a restart, and why a DX password change needs a `helm upgrade`).
 
+**How much CPU and memory do I need?**
+The HCL requirement (~8 CPU, ~14 GiB) covers only the HCL software. The prerequisites (OpenLDAP, PostgreSQL, LiteLLM) and
+the extras (Keycloak, OpenBao, Argo CD, ÓRBITA...) add to it: the installer shows the estimate as you choose the options,
+and RUNBOOK.md repeats it. Everything together asks for about 9.3 CPU and 20.6 GiB (look for ~13 CPU and ~27 GiB free).
+
 **Can I use my own image registry (Harbor, Quay...) instead of HCL Harbor?**
 Yes: on the credentials page, *Use another image registry*. Usual in air-gapped environments, where the security team
 controls and scans every image. The registry must already hold a copy of the HCL images and charts with the same names

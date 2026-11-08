@@ -7,6 +7,20 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## 2.3.0 · 2026-11-08 · Keycloak theme, logout, retries and resources
+
+- **Keycloak login theme**: the default Keycloak theme (with the Keycloak logo) or, ticking *EUROPESIP login theme*, an
+  EUROPESIP theme (logo, colours, gradient background) mounted from a ConfigMap. **Full logout**: "Log out" in DX also
+  ends the Keycloak session.
+- **Downloads are retried** in `install.sh` (charts, repositories, manifests); a `helm upgrade` is retried only when the
+  chart could not be downloaded.
+- **Resource estimate**: the deployment pages, the download page and RUNBOOK.md show the CPU and memory the chosen
+  installation asks for, split into HCL software, prerequisites and extras, with the warning that the HCL requirement only
+  covers the HCL software. The AWS sizes are checked against the biggest installation.
+- **AWS**: cost per hour, per day and per month (24×7) in the breakdown of the chosen size.
+- **Webinar script (Word / PDF)**: an appendix on the advanced options and the resources.
+- `install.sh --collect` no longer warns "could not copy the Liberty logs" when they were copied.
+
 ## 2.2.0 · 2026-11-08 · Own image registry, Keycloak, version on screen
 
 - **Version and build date in the footer**, so it is clear which release is running.

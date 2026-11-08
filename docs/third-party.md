@@ -115,8 +115,22 @@ client of Liberty. These are the tricks needed to make it work without breaking 
    changes go through the admin console.
 10. **Certificate**: the Keycloak Ingress uses a self-signed certificate created by the install step. Replace the
     `keycloak-tls` Secret with yours; DX does not need to trust it.
-11. **Logout**: DX logout does not end the Keycloak session yet (`redirect.logout*` in ConfigService, step 4 of the HCL
-    page, is not set).
+11. **Full logout**: `redirect.logout`, `redirect.logout.ssl` and `redirect.logout.url` in `ConfigService.properties`
+    (step 4 of the HCL page, through `propertiesFilesOverrides`). "Log out" in DX goes to the Keycloak end-session
+    endpoint (`client_id` + `post_logout_redirect_uri`, registered in the client), which ends the Keycloak session and
+    returns to the portal. Changing these properties restarts the Web Engine.
+12. **Login theme**: by default, the default Keycloak theme (`keycloak.v2`) with the Keycloak logo, so it is clear that
+    Keycloak is used. With *EUROPESIP login theme*, a theme `europesip` that extends `keycloak.v2` (its CSS variables: logo,
+    colours, background) is mounted from a ConfigMap through `spec.unsupported.podTemplate` of the Keycloak CR: no custom
+    image. The header uses the realm `displayNameHtml` (logo + "HCL DX Compose"). Keycloak reads themes when its pod
+    starts.
+
+## Downloads during the installation
+
+`install.sh` downloads charts and manifests from GitHub, Helm repositories and registries. Since 2.3.0 it retries them:
+`retry` repeats a download (`helm repo add`, `helm pull`, `helm registry login`, `kubectl apply -f https://...`) up to 5
+times, and `rhelm` repeats a `helm upgrade` only when it failed because the chart could not be downloaded (503, 504,
+"failed to fetch"...), never when the installation itself failed.
 
 ## HCL DX itself: things worth knowing
 

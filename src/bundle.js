@@ -5,6 +5,8 @@
 import {createEngine} from "./engine/core.js";
 import {renumber, webinarPhases, buildRunbook} from "./engine/stages.js";
 import {toEngineState, SECRET_KEYS} from "./state.js";
+import {retryScript, fixCollector} from "./retry.js";
+import {resourcesMd} from "./resources.js";
 import {altRegistryOn, registryForm, applyRegistry, REGISTRY_NOTE} from "./registry.js";
 import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, CICD_DIR} from "./cicd.js";
 export {zipBytes} from "./zip.js";
@@ -91,6 +93,8 @@ export function generate(form, lang){
     if (cicd) dirs["lab-cicd/"] = CICD_DIR[lang] || CICD_DIR.en;
   }
   runbook = cicdRunbook(form, s, buildRunbook(s, webinar ? {prep, demo} : {steps}, files, lang, {pgSql, dirs}), lang);
+  { const i = runbook.search(/\n## (Run it|Ejecutarlo|Phase 1|Fase 1|CI\/CD|Advanced CI\/CD)/);   // resources before running it
+    runbook = i < 0 ? runbook + "\n" + resourcesMd(form, lang) : runbook.slice(0, i + 1) + resourcesMd(form, lang) + "\n" + runbook.slice(i + 1); }
   out.unshift({name: P + "RUNBOOK.md", text: runbook});
   for (const e of out) e.text = renameText(e.text);   // install.sh, demo.sh, uninstall.sh and RUNBOOK.md
   for (const [p, f] of Object.entries(files)) out.push({name: P + p, text: f.text, mode: f.mode});
@@ -99,12 +103,16 @@ export function generate(form, lang){
     out[0] = {...out[0], text: out[0].text.replace(/^(> (?:⚠️|🔐)[^\n]*\n)/m, `$1\n${(REGISTRY_NOTE[lang] || REGISTRY_NOTE.en).replace("REG", form.REGISTRY.trim())}\n`)};
     for (const e of out) if (files[e.name.slice(P.length)]) files[e.name.slice(P.length)] = {...files[e.name.slice(P.length)], text: e.text};
   }
+  for (const e of out) {   // retries of downloads in the scripts, and the collector fix (src/retry.js)
+    if (/\/(install|prepare|demo)\.sh$/.test(e.name)) e.text = retryScript(e.text);
+    if (/collect-support-data\.sh$/.test(e.name)) { e.text = fixCollector(e.text); if (files[e.name.slice(P.length)]) files[e.name.slice(P.length)] = {...files[e.name.slice(P.length)], text: e.text}; }
+  }
   runbook = out[0].text;
   if (vault) {   // nothing secret may be left in the zip
     const left = out.filter(e => typeof e.text === "string" && /@@OB:/.test(e.text)).map(e => e.name);
     if (left.length) check.err.push("internal: secret sentinels left in " + left.join(", "));
   }
-  return {s, check, files, steps, prep, demo, webinar, entries: out, runbook, litellmKey: vault ? "" : engine.litellmKey, pgSql, pgMissing: s.db === "postgres" && !pgSql, vault};
+  return {form, s, check, files, steps, prep, demo, webinar, entries: out, runbook, litellmKey: vault ? "" : engine.litellmKey, pgSql, pgMissing: s.db === "postgres" && !pgSql, vault};
 }
 
 // Values that must not appear in a document meant to be shared
