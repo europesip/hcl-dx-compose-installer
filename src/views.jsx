@@ -7,6 +7,7 @@ import {ownChecks, wslCmds, linuxCmds, LAB0_GUIDE} from "./guides.js";
 import {generate, zipBytes, download, ZIP_NAME, ZIP_NAME_WEBINAR, WORD_NAME_EN, WORD_NAME_ES} from "./bundle.js";
 import {stageLabel} from "./engine/stages.js";
 import {SecurityNote} from "./security.jsx";
+import {kcHost} from "./cicd.js";
 
 const C = t => ({copyLabel: t.copy, copiedLabel: t.copied});
 const Bullet = ({children}) => <li className="flex gap-2.5"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-blue" /><span>{children}</span></li>;
@@ -301,6 +302,7 @@ function Info({children}){
 function CicdCard({t, form, set}){
   const os = form.platform === "openshift";
   const any = form.cicdOpenbao || form.cicdArgo || form.cicdOperator;
+  const noLdap = form.dir !== "openldap";
   return (
     <Card className="mt-5 border-dashed">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -311,7 +313,7 @@ function CicdCard({t, form, set}){
         <Badge tone="amber">{t.optional}</Badge>
       </div>
       {os && <Callout tone="warn" className="mt-4">{t.cicdNoOs}</Callout>}
-      <div className="mt-4 grid gap-4 md:grid-cols-3">
+      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div>
           <Check checked={!!form.cicdOpenbao} disabled={os} onChange={v => set({cicdOpenbao: v})}><b>OpenBao</b> · {t.cicdBao}</Check>
           <Info>{t.cicdBaoI}</Info>
@@ -324,6 +326,10 @@ function CicdCard({t, form, set}){
         <div>
           <Check checked={!!form.cicdOperator} disabled={os} onChange={v => set({cicdOperator: v})}><b>{t.cicdOp}</b> <Badge tone="amber">{t.optional}</Badge></Check>
           <Info>{t.cicdOpI}</Info>
+        </div>
+        <div>
+          <Check checked={!!form.keycloak && !noLdap} disabled={os || noLdap} onChange={v => set({keycloak: v})} hint={noLdap && !os ? t.kcNeedLdap : undefined}><b>Keycloak</b> · {t.kcWhat}</Check>
+          <Info>{t.kcI}</Info>
         </div>
       </div>
       {any && !os && (
@@ -348,10 +354,10 @@ function PgText({t}){
 // ---------------------------------------------------------------------------------------------
 export function Details({t, lang, form, set, go, back}){
   const [adv, setAdv] = useState(false), [pgAsk, setPgAsk] = useState(false), [aiAsk, setAiAsk] = useState(false);
-  const [harborAsk, setHarborAsk] = useState(false), [airAsk, setAirAsk] = useState(false);
+  const [harborAsk, setHarborAsk] = useState(false), [airAsk, setAirAsk] = useState(false), [altRead, setAltRead] = useState(false);
   const needsHost = form.platform !== "poc";
   const canVault = !!form.cicdOpenbao && form.platform !== "openshift" && form.preset !== "webinar", vault = canVault && !!form.useVault;
-  const pgMissing = form.db === "postgres" && !PG_OK.test((form.HCL_HARBOR_USER || "").trim());
+  const pgMissing = form.db === "postgres" && !PG_OK.test(((form.altRegistry ? form.HCL_EMAIL : form.HCL_HARBOR_USER) || "").trim());
   const F = (k, label, o = {}) => (
     <Field label={label} hint={o.hint} className={o.className}>
       {o.secret ? <Secret value={form[k]} onChange={e => set({[k]: e.target.value})} placeholder={o.placeholder} />
@@ -364,19 +370,25 @@ export function Details({t, lang, form, set, go, back}){
       <div className="grid gap-5 lg:grid-cols-2">
         <Card className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <H2 className="mb-0">{t.harbor}</H2>
+            <H2 className="mb-0">{form.altRegistry ? t.altCard : t.harbor}</H2>
             <button type="button" onClick={() => setHarborAsk(true)} className="text-xs font-semibold text-brand-blue hover:underline dark:text-blue-300"><span className="mr-1 inline-grid h-4 w-4 place-items-center rounded-full border border-current text-[10px] font-bold align-middle">i</span>{t.harborWhat}</button>
           </div>
           {canVault && <div className="rounded-xl bg-blue-50 p-3 dark:bg-navy-800/60">
             <Check checked={vault} onChange={v => set({useVault: v})}><b>{t.vaultUse}</b></Check>
             <Info>{vault ? t.vaultOn : t.vaultI}</Info>
           </div>}
-          {!form.airGapped && <>
+          {!form.altRegistry && <>
             {F("HCL_HARBOR_USER", t.harborUser, {placeholder: "name@company.com", hint: vault ? t.vaultHarbor : undefined})}
             {!vault && F("HCL_HARBOR_TOKEN", t.harborToken, {secret: true})}
           </>}
-          <Check checked={!!form.airGapped} onChange={v => set({airGapped: v})}>{t.airGapped}</Check>
-          {!form.airGapped && <SecurityNote t={t} lang={lang} kind="harbor" />}
+          <Check checked={!!form.altRegistry} onChange={v => v ? setAirAsk(true) : set({altRegistry: false})}>{t.altReg}</Check>
+          <button type="button" onClick={() => setAltRead(true)} className="ml-8 text-xs font-semibold text-brand-blue hover:underline dark:text-blue-300"><span className="mr-1 inline-grid h-4 w-4 place-items-center rounded-full border border-current text-[10px] font-bold align-middle">i</span>{t.altWhat}</button>
+          {form.altRegistry && <div className="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-navy-800">
+            {F("REGISTRY", t.altHost, {mono: true, placeholder: "harbor.company.com/hcl", hint: t.altHostHint})}
+            <div className="grid gap-4 sm:grid-cols-2">{F("REGISTRY_USER", t.altUser, {mono: true, hint: t.altUserHint})}{!vault && F("REGISTRY_PASSWORD", t.altPw, {secret: true})}</div>
+            {F("HCL_EMAIL", t.altEmail, {placeholder: "name@company.com", hint: t.altEmailHint})}
+          </div>}
+          {!form.altRegistry && <SecurityNote t={t} lang={lang} kind="harbor" />}
         </Card>
         <Card className="space-y-4">
           <H2>{t.access}</H2>
@@ -432,7 +444,8 @@ export function Details({t, lang, form, set, go, back}){
         <button type="button" onClick={() => setAdv(!adv)} className="text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">{adv ? "▾" : "▸"} {t.advanced}</button>
         {adv && (
           <Card className="mt-3 space-y-5 rise">
-            <div><H2>{t.names}</H2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{NAME_KEYS.map(k => F(k, k, {mono: true}))}</div></div>
+            <div><H2>{t.names}</H2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{NAME_KEYS.map(k => F(k, k, {mono: true}))}
+              {form.keycloak && form.dir === "openldap" && form.platform !== "openshift" && F("KC_HOST", t.kcHost, {mono: true, placeholder: kcHost(form), hint: t.kcHostHint})}</div></div>
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label={t.helm}><Segmented value={form.helm} onChange={v => set({helm: v})} options={[["4", "Helm 4"], ["3", "Helm 3"]]} /></Field>
               {F("TLS_CERT", t.tlsCert, {mono: true, hint: t.tlsHint})}
@@ -441,7 +454,7 @@ export function Details({t, lang, form, set, go, back}){
           </Card>
         )}
       </div>
-      <Nav t={t} back={back} next={() => form.airGapped ? setAirAsk(true) : pgMissing ? setPgAsk(true) : go("download")} />
+      <Nav t={t} back={back} next={() => pgMissing ? setPgAsk(true) : go("download")} />
       <Modal open={harborAsk} title={t.harborTitle} onClose={() => setHarborAsk(false)} actions={<Button onClick={() => setHarborAsk(false)}>{t.pgOk}</Button>}>
         {t.harborBody.map(x => <p key={x}>{x}</p>)}
         <p>{t.harborHow}</p>
@@ -451,10 +464,13 @@ export function Details({t, lang, form, set, go, back}){
         </p>
         <Callout tone="info">{t.harborAir}</Callout>
       </Modal>
-      <Modal open={airAsk} title={t.airTitle} onClose={() => setAirAsk(false)}
-        actions={<><Button variant="secondary" onClick={() => setAirAsk(false)}>{t.airClose}</Button><Button onClick={() => { set({airGapped: false}); setAirAsk(false); }}>{t.airUntick}</Button></>}>
-        <p className="font-semibold text-amber-700 dark:text-amber-300">{t.airBody[0]}</p>
-        <p>{t.airBody[1]}</p>
+      <Modal open={airAsk || altRead} title={t.altTitle} onClose={() => { setAirAsk(false); setAltRead(false); }}
+        actions={airAsk ? <><Button variant="secondary" onClick={() => setAirAsk(false)}>{t.cancel2}</Button><Button onClick={() => { set({altRegistry: true}); setAirAsk(false); }}>{t.altOk}</Button></>
+                        : <Button onClick={() => setAltRead(false)}>{t.pgOk}</Button>}>
+        {t.altBody.map(x => <p key={x}>{x}</p>)}
+        <p className="pt-2 font-semibold text-slate-900 dark:text-white">{t.altNeedT}</p>
+        <ul className="list-disc space-y-1 pl-5">{t.altNeed.map(x => <li key={x}>{x}</li>)}</ul>
+        <Callout tone="warn" className="mt-3">{t.altWarn}</Callout>
       </Modal>
       <Modal open={aiAsk} title={t.aiTitle} onClose={() => setAiAsk(false)} actions={<Button onClick={() => setAiAsk(false)}>{t.pgOk}</Button>}>
         <p className="font-semibold text-slate-900 dark:text-white">{t.aiPre}</p>

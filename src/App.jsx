@@ -1,5 +1,8 @@
 // HCL DX Compose Installer: a guided flow in five phases (welcome, environment, deployment, details,
 // download), one view at a time, with a progress bar.
+// Version and build time, set by vite.config.js at build time
+const APP_VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "dev";
+const BUILD_TIME = typeof __BUILD_TIME__ === "string" ? __BUILD_TIME__ : new Date().toISOString();
 import {useEffect, useMemo, useState} from "react";
 import {TEXTS, detectLang} from "./i18n.js";
 import {DEFAULTS, NO_STORE, normalise} from "./state.js";
@@ -66,7 +69,8 @@ export default function App(){
 
       <footer className="border-t border-slate-200 py-6 text-xs text-slate-500 dark:border-navy-800 dark:text-slate-500">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span>EUROPESIP · {t.footer} · <a className="underline hover:text-slate-800 dark:hover:text-slate-300" href="https://github.com/europesip/hcl-dx-compose-installer" target="_blank" rel="noreferrer">GitHub</a>{info && info.version ? ` · v${info.version}` : ""}</span>
+          <span>EUROPESIP · {t.footer} · <a className="underline hover:text-slate-800 dark:hover:text-slate-300" href="https://github.com/europesip/hcl-dx-compose-installer" target="_blank" rel="noreferrer">GitHub</a></span>
+          <span title={`${t.builtAt} ${BUILD_TIME}`} className="font-mono text-xs">v{APP_VERSION} · {t.builtAt} {BUILD_TIME.slice(0, 16).replace("T", " ")} UTC{info && info.version && info.version !== APP_VERSION ? ` · server ${info.version}` : ""}</span>
           <span className="max-w-xl sm:text-right">{t.footerHcl}</span>
         </div>
       </footer>

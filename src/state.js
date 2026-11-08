@@ -22,8 +22,11 @@ export const DEFAULTS = {
   // Advanced CI/CD (not on OpenShift, not in the webinar): OpenBao + External Secrets, Argo CD, the Script Application operator
   cicdOpenbao: false, openbaoMode: "install", cicdArgo: false, cicdOperator: false, cicdSameNs: true, CICD_NS: "dx-cicd",
   useVault: false,                   // credentials from OpenBao: only the Harbor user is asked
+  keycloak: false, KC_HOST: "",      // Keycloak (SSO) with the OpenLDAP users; independent of OpenBao
   // Credentials
-  HCL_HARBOR_USER: "", HCL_HARBOR_TOKEN: "", OPENROUTER_API_KEY: "", LAB_PASSWORD: "EuropeS1P",
+  HCL_HARBOR_USER: "", HCL_HARBOR_TOKEN: "",
+  altRegistry: false, REGISTRY: "", REGISTRY_USER: "", REGISTRY_PASSWORD: "", HCL_EMAIL: "",   // own image registry instead of hclcr.io
+  OPENROUTER_API_KEY: "", LAB_PASSWORD: "EuropeS1P",
   demoSame: true, DEMO_PASSWORD: "",
   LLM_PROVIDER: "openrouter", BEDROCK_API_KEY: "", BEDROCK_REGION: "us-east-1", ANTHROPIC_API_KEY: "",   // the AI: OpenRouter (recommended), AWS Bedrock or Claude directly (Anthropic API)   // password of the demo users of the LDAP (by default, the same as wpsadmin)
   AD_HOST: "", AD_PORT: "389", AD_BASE_DN: "", AD_BIND_USER: "", AD_BIND_PASSWORD: "", AD_CA_FILE: "",
@@ -34,7 +37,7 @@ export const DEFAULTS = {
 };
 
 export const NAME_KEYS = ["DX_NS", "SHARED_NS", "DX_RELEASE", "IQ_RELEASE", "SEARCH_RELEASE", "LDAP_RELEASE", "LITELLM_RELEASE", "PG_CLUSTER"];
-export const SECRET_KEYS = ["HCL_HARBOR_TOKEN", "OPENROUTER_API_KEY", "BEDROCK_API_KEY", "ANTHROPIC_API_KEY", "LAB_PASSWORD", "DEMO_PASSWORD", "AD_BIND_PASSWORD", "ORACLE_DX_PASSWORD"];
+export const SECRET_KEYS = ["HCL_HARBOR_TOKEN", "REGISTRY_PASSWORD", "OPENROUTER_API_KEY", "BEDROCK_API_KEY", "ANTHROPIC_API_KEY", "LAB_PASSWORD", "DEMO_PASSWORD", "AD_BIND_PASSWORD", "ORACLE_DX_PASSWORD"];
 // Values that are never stored in the browser
 export const NO_STORE = [...SECRET_KEYS, "envConfirmed"];
 export const POC_HOST = "dx-demo.127.0.0.1.nip.io";
@@ -61,14 +64,15 @@ export function normalise(f){
   if ((n.LLM_PROVIDER || "openrouter") !== "openrouter") { n.IQ_LLM = "claude"; n.iqrag = false; }   // Bedrock / Anthropic: only Claude, and no BGE-M3 for the RAG
   if (!n.iqdb) n.iqrag = false;
   if (n.platform === "poc" && n.INGRESS_KIND === "nginx") n.INGRESS_KIND = "traefik";
-  if (n.platform === "openshift" || n.preset === "webinar") Object.assign(n, {cicdOpenbao: false, cicdArgo: false, cicdOperator: false});   // not tested enough on OpenShift
+  if (n.platform === "openshift" || n.preset === "webinar") Object.assign(n, {cicdOpenbao: false, cicdArgo: false, cicdOperator: false, keycloak: false});   // not tested enough on OpenShift
   if (!n.cicdOpenbao) n.useVault = false;
   return n;
 }
 
 // The external dependencies that the chosen stages need
 export function depsOf(f){
-  return {ldap: f.dir === "openldap", pg: f.db === "postgres" || !!f.iqdb || !!f.lab5, llm: !!f.lab3, mcp: !!f.lab3b};
+  const kc = !!f.keycloak && f.dir === "openldap" && f.platform !== "openshift" && f.preset !== "webinar";   // Keycloak keeps its database in PostgreSQL
+  return {ldap: f.dir === "openldap", pg: f.db === "postgres" || !!f.iqdb || !!f.lab5 || kc, llm: !!f.lab3, mcp: !!f.lab3b};
 }
 
 const trim = v => String(v ?? "").trim();

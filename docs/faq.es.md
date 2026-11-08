@@ -64,7 +64,18 @@ de credenciales. Solo se pide tu usuario de Harbor; el operador da de alta los s
 [CI/CD avanzado: OpenBao](openbao.es.md) (también cómo desbloquearlo tras un reinicio y por qué cambiar una contraseña
 de DX necesita un `helm upgrade`).
 
-**¿Puedo añadir opciones, entornos o idiomas?**
+**¿Puedo usar mi propio repositorio de imágenes (Harbor, Quay...) en lugar de HCL Harbor?**
+Sí: en la página de credenciales, *Usar otro repositorio de imágenes*. Es habitual en entornos air-gapped, donde el equipo
+de seguridad controla y analiza cada imagen. El repositorio debe tener ya una copia de las imágenes y charts de HCL con los
+mismos nombres y rutas que en hclcr.io (o hacer de proxy / mirror de hclcr.io); si no, cambia las rutas de las imágenes en
+los custom values antes de instalar. Las imágenes de terceros (OpenLDAP, PostgreSQL, LiteLLM...) siguen viniendo de sus
+registros públicos.
+
+**¿Pueden los usuarios de DX entrar con Keycloak?**
+Sí: *Keycloak* en la sección avanzada del despliegue Personalizado (necesita el OpenLDAP de la etapa 2, no OpenBao). Lo
+que hizo falta para que funcionase: [Software de terceros](third-party.es.md).
+
+ opciones, entornos o idiomas?**
 Sí, las contribuciones son bienvenidas: abre un issue o un pull request. [Cómo funciona](how-it-works.es.md) explica el
 código.
 

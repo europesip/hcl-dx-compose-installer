@@ -5,6 +5,7 @@
 import {createEngine} from "./engine/core.js";
 import {renumber, webinarPhases, buildRunbook} from "./engine/stages.js";
 import {toEngineState, SECRET_KEYS} from "./state.js";
+import {altRegistryOn, registryForm, applyRegistry, REGISTRY_NOTE} from "./registry.js";
 import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, CICD_DIR} from "./cicd.js";
 export {zipBytes} from "./zip.js";
 
@@ -55,10 +56,12 @@ const renameStep = st => ({...st, title: renameText(st.title), note: renameText(
 export function generate(form, lang){
   engine.setLang(lang);
   const vault = vaultOn(form), cicd = cicdOn(form);
-  const s = toEngineState(vault ? vaultForm(form) : form);   // with the secrets manager the engine gets sentinels, not secrets (src/cicd.js)
+  const rf = registryForm(form);                              // own image registry (src/registry.js)
+  const s = toEngineState(vault ? vaultForm(rf) : rf);   // with the secrets manager the engine gets sentinels, not secrets (src/cicd.js)
   const check = engine.validate(s);
   if (vault) check.warn = check.warn.filter(w => !/password|contraseña/i.test(w));
   if (form.cicdOperator && cicd && !form.dxcLicense) check.err.push(lang === "es" ? "El operador de Script Applications incluye HCL DXClient: acepta su licencia." : "The Script Application operator includes HCL DXClient: accept its license.");
+  if (form.altRegistry && !altRegistryOn(form)) check.err.push(lang === "es" ? "Indica la dirección de tu repositorio de imágenes." : "Enter the address of your image registry.");
   if (cicd && form.cicdSameNs === false && !/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test((form.CICD_NS || "").trim())) check.err.push(lang === "es" ? "Namespace de CI/CD no válido." : "Invalid CI/CD namespace.");
   engine.ensureLitellmKey();                 // the same key in every file of this page load
   const lk = t => vault && typeof t === "string" ? t.split(engine.litellmKey).join("@@OB:litellm:masterKey@@") : t;
@@ -90,8 +93,13 @@ export function generate(form, lang){
   runbook = cicdRunbook(form, s, buildRunbook(s, webinar ? {prep, demo} : {steps}, files, lang, {pgSql, dirs}), lang);
   out.unshift({name: P + "RUNBOOK.md", text: runbook});
   for (const e of out) e.text = renameText(e.text);   // install.sh, demo.sh, uninstall.sh and RUNBOOK.md
-  runbook = out[0].text;
   for (const [p, f] of Object.entries(files)) out.push({name: P + p, text: f.text, mode: f.mode});
+  if (altRegistryOn(form)) {
+    out.splice(0, out.length, ...applyRegistry(form, out));
+    out[0] = {...out[0], text: out[0].text.replace(/^(> (?:⚠️|🔐)[^\n]*\n)/m, `$1\n${(REGISTRY_NOTE[lang] || REGISTRY_NOTE.en).replace("REG", form.REGISTRY.trim())}\n`)};
+    for (const e of out) if (files[e.name.slice(P.length)]) files[e.name.slice(P.length)] = {...files[e.name.slice(P.length)], text: e.text};
+  }
+  runbook = out[0].text;
   if (vault) {   // nothing secret may be left in the zip
     const left = out.filter(e => typeof e.text === "string" && /@@OB:/.test(e.text)).map(e => e.name);
     if (left.length) check.err.push("internal: secret sentinels left in " + left.join(", "));

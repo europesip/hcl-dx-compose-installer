@@ -10,6 +10,7 @@ parte de la instalación de DX.
 |---|---|
 | **OpenBao** (gestor de secretos) + External Secrets Operator | Guarda las contraseñas y claves de la instalación; nadie las escribe en ficheros |
 | **Argo CD** (GitOps) | Mantiene el clúster igual que un repositorio Git, con historial y vuelta atrás |
+| **Keycloak** (inicio de sesión único) | Los usuarios de DX entran en la página de Keycloak con su cuenta del OpenLDAP (SSO, doble factor si lo activas); independiente de OpenBao. Sus peculiaridades: [Software de terceros](third-party.es.md) |
 | **Operador de Script Applications** (EUROPESIP, opcional) | Despliega Script Applications, páginas, ficheros del DAM y bases de datos desde recursos de Kubernetes y los mantiene en DX ([repositorio](https://github.com/europesip/hcl-dx-scriptapp-operator)) |
 
 Las tres van en el mismo namespace que el resto de herramientas compartidas (OpenLDAP, PostgreSQL…): `dx-shared`

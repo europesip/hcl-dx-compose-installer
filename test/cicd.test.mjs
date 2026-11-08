@@ -65,3 +65,33 @@ test("not on OpenShift, not in the webinar", () => {
 test("the operator needs the DXClient license", () => {
   assert.match(all({cicdOperator: true, dxcLicense: false, lab1b: false, lab5: false}).check.err.join(" "), /DXClient/);
 });
+
+test("Keycloak: independent of OpenBao, needs the OpenLDAP, adds the DX layer and form logins", () => {
+  const g = all({keycloak: true});
+  assert.deepEqual(g.check.err, []);
+  assert.ok(g.entries.some(e => e.name === "dx-install/lab-keycloak/custom-values.keycloak.yaml"));
+  assert.ok(!g.entries.some(e => e.name.includes("lab-cicd/openbao")), "no OpenBao without asking for it");
+  const sh = g.entries.find(e => e.name.endsWith("install.sh")).text;
+  assert.match(sh, /-f lab-ldap\/custom-values\.ldap\.yaml \\\n  -f lab-keycloak\/custom-values\.keycloak\.yaml/);
+  assert.ok(!/auth\/login/.test(sh), "the checks sign in with the portal form");
+  assert.match(sh, /j_security_check/);
+  const ids = g.steps.map(s => s.origId);
+  assert.ok(ids.indexOf("K-1") > ids.indexOf("D-4"), "after PostgreSQL");
+  assert.equal(all({keycloak: true, dir: "ad"}).entries.some(e => e.name.includes("lab-keycloak")), false);
+  // with OpenBao, its secrets are ExternalSecrets
+  const v = all({keycloak: true, cicdOpenbao: true, useVault: true});
+  assert.match(v.entries.find(e => e.name.endsWith("lab-keycloak/keycloak-secrets.yaml")).text, /kind: ExternalSecret/);
+  assert.ok(!/@@OB:/.test(text(v)));
+});
+
+test("own image registry instead of hclcr.io", () => {
+  const g = all({altRegistry: true, REGISTRY: "harbor.acme.com/hcl", REGISTRY_USER: "robot", REGISTRY_PASSWORD: "robot-pw", HCL_EMAIL: "someone@europesip.com"});
+  assert.deepEqual(g.check.err, []);
+  const files = g.entries.filter(e => !e.name.endsWith("RUNBOOK.md")).map(e => e.text).join("\n");
+  assert.ok(!/hclcr\.io/.test(files), "no hclcr.io left");
+  assert.match(files, /repository: "harbor\.acme\.com\/hcl"/);
+  assert.match(files, /helm registry login harbor\.acme\.com -u 'robot'/);
+  assert.match(files, /oci:\/\/harbor\.acme\.com\/hcl\/dx-compose\/hcl-dx-deployment/);
+  assert.ok(g.pgSql, "the HCL e-mail still decides the table script");
+  assert.match(all({altRegistry: true, REGISTRY: ""}).check.err.join(" "), /registry|repositorio/i);
+});

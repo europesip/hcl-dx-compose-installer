@@ -5,7 +5,7 @@
 <p align="center"><b>From zero to a working HCL DX Compose, step by step.</b><br>
 A guided web installer for proofs of concept and test environments, by <a href="https://www.europesip.com">EUROPESIP</a>.</p>
 
-<p align="center"><b>English</b> · <a href="README.es.md">Español</a> · <a href="docs/faq.md">FAQ</a> · <a href="docs/deploy.md">Docker and Helm</a> · <a href="docs/aws.md">AWS</a> · <a href="docs/how-it-works.md">How it works</a></p>
+<p align="center"><b>English</b> · <a href="README.es.md">Español</a> · <a href="docs/faq.md">FAQ</a> · <a href="docs/deploy.md">Docker and Helm</a> · <a href="docs/aws.md">AWS</a> · <a href="docs/how-it-works.md">How it works</a> · <a href="CHANGELOG.md">Releases</a></p>
 
 <p align="center"><img src="docs/images/welcome.en.jpg" alt="The welcome page of the installer" width="860"></p>
 
@@ -35,7 +35,7 @@ A guided web installer for proofs of concept and test environments, by <a href="
 **Option 1 · On your Windows or Mac machine, with Docker**
 
 ```bash
-docker run --rm -p 8080:8080 ghcr.io/europesip/hcl-dx-compose-installer:2.1.2
+docker run --rm -p 8080:8080 ghcr.io/europesip/hcl-dx-compose-installer:2.2.0
 ```
 
 Then open http://localhost:8080.
@@ -43,7 +43,7 @@ Then open http://localhost:8080.
 **Option 2 · On a Kubernetes or OpenShift cluster, with Helm**
 
 ```bash
-helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer --version 2.1.2 \
+helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer --version 2.2.0 \
   -n dx-installer --create-namespace --set ingress.enabled=true --set ingress.host=installer.example.com \
   --set auth.enabled=true --set auth.username=admin --set auth.password='S3cret!'
 ```
@@ -91,6 +91,7 @@ More questions: **[FAQ](docs/faq.md)**.
 | [Docker and Helm](docs/deploy.md) | Every option to run the installer, authentication, what to do with the download |
 | [AWS environments](docs/aws.md) | What each AWS option creates, its price, how to delete it, ROSA and your Red Hat account |
 | [Advanced CI/CD: OpenBao](docs/openbao.md) | OpenBao secrets manager, Argo CD and the Script Application operator: unsealing, and why a DX password change needs a helm upgrade |
+| [Third-party software](docs/third-party.md) | OpenLDAP, PostgreSQL, LiteLLM, MCP, OpenBao, Argo CD and Keycloak: the peculiarities and tricks found in the lab |
 | [Security](docs/security.md) | Where each credential goes, limited outbound access, the original image, good practice |
 | [How it works](docs/how-it-works.md) | Your data, the code, development and CI |
 | [HCL DX Compose labs](https://github.com/europesip/hcl-dx-compose-labs) | The guides to learn every step by hand |
