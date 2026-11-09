@@ -27,6 +27,12 @@ test("PoC gets the nip.io host by default", () => {
   assert.equal(toEngineState({...DEFAULTS, platform: "poc"}).DX_HOST, "dx-demo.127.0.0.1.nip.io");
 });
 
+test("PoC: the DAM volume pod waits for the ServiceAccount default of a new k3s", () => {
+  const g = make("custom", {platform: "poc"});
+  const sh = g.entries.find(e => e.name === "dx-install/install.sh").text;
+  assert.match(sh, /until kubectl -n default get serviceaccount default[^\n]*\n\s*kubectl apply -f lab-poc\/prepare-dam-volume\.yaml/);
+});
+
 test("everything: stages 0 to 6, extras named, new ids", () => {
   const g = make("all");
   assert.deepEqual(g.check.err, []);

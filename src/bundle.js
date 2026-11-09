@@ -78,6 +78,10 @@ export function generate(form, lang){
   const webinar = form.preset === "webinar";
   let iqKey = false;
   if (webinar) ({files, iqKey} = webinarFiles(files, s));
+  // A k3s installed seconds ago has no ServiceAccount "default" yet: the one-off DAM volume pod would be refused
+  const DAM_POD = "kubectl apply -f lab-poc/prepare-dam-volume.yaml";
+  raw = raw.map(st => typeof st.cmd === "string" && st.cmd.includes(DAM_POD) ? {...st, cmd: st.cmd.replace(DAM_POD,
+    `until kubectl -n default get serviceaccount default >/dev/null 2>&1; do sleep 2; done   # a new k3s creates it a few seconds after it starts\n${DAM_POD}`)} : st);
   { const at = raw.findIndex(x => x.id === "1-4");   // DX checked with kubectl port-forward before it is published
     if (at >= 0) raw.splice(at + 1, 0, portForwardStep(s, lang)); }
   { const k = "lab-search/custom-values.search.yaml", f = files[k];   // the new Search Admin UI (content sources, crawlers), off by default in the chart

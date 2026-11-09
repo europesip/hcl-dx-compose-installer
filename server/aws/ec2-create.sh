@@ -19,9 +19,10 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 : "${LONGHORN_VERSION:=1.12.1}"
 : "${VPC_MODE:=name}"          # name: the VPC with the tag Name=VPC_NAME (created if it does not exist) | default: the default VPC
 : "${VPC_NAME:=$NAME}"
-: "${VPC_CIDR:=10.42.0.0/16}"  # only for a new VPC
+: "${VPC_CIDR:=10.100.0.0/16}" # only for a new VPC; never inside 10.42.0.0/16 or 10.43.0.0/16 (pods and services of k3s)
 case "$VPC_MODE" in name|default) ;; *) die "VPC_MODE must be name or default";; esac
 [[ "$VPC_NAME" =~ ^[A-Za-z0-9._-]{1,64}$ ]] || die "invalid VPC_NAME: $VPC_NAME"
+[[ "$VPC_CIDR" =~ ^10\.4[23]\. ]] && die "VPC_CIDR $VPC_CIDR overlaps the pod (10.42.0.0/16) or service (10.43.0.0/16) network of k3s"
 need aws ssh curl python3
 check_name
 whoami_aws
