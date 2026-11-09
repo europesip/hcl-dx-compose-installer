@@ -1,0 +1,72 @@
+name: "🐞 Bug"
+description: Something does not behave as it should, in the wizard, in the generated folder or in the installation it runs.
+title: "[Bug] "
+projects: ["europesip/1"]
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting it. **Never paste credentials, keys, tokens or licence data**: replace them with `***`.
+        If DX itself fails, run `./install.sh --collect` in the generated folder; it gathers what HCL Support needs.
+  - type: input
+    id: version
+    attributes:
+      label: Installer version
+      description: Shown in the footer of the wizard (for example 2.4.1), or in the first line of RUNBOOK.md.
+    validations: {required: true}
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where does it fail?
+      options:
+        - Web wizard (in the browser)
+        - Generated folder (install.sh, a step, uninstall.sh)
+        - The installed product (DX, IQ, Search, a third-party tool)
+        - AWS backend (creating or deleting an environment)
+        - Image or Helm chart of the installer
+    validations: {required: true}
+  - type: input
+    id: step
+    attributes:
+      label: Step
+      description: The step number of install.sh (for example 3-2), or the wizard page.
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Quick deployment (Everything, Custom, Webinar), options chosen and what you ran.
+      value: |
+        1.
+        2.
+        3.
+    validations: {required: true}
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations: {required: true}
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations: {required: true}
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: The output of the failing step, without secrets. It is shown as code.
+      render: shell
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Kubernetes distribution and version, DX Compose CF, where the installer ran (Docker, Helm, WSL...).
+      placeholder: "RKE2 1.33, DX Compose CF239, installer in Docker on WSL"
+  - type: textarea
+    id: done
+    attributes:
+      label: How do we know it is fixed?
+      description: The check that must pass after the fix (it becomes the acceptance criterion).
+      value: |
+        - [ ]

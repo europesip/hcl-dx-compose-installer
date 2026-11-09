@@ -94,6 +94,7 @@ More questions: **[FAQ](docs/faq.md)**.
 | [Third-party software](docs/third-party.md) | OpenLDAP, PostgreSQL, LiteLLM, MCP, OpenBao, Argo CD and Keycloak: the peculiarities and tricks found in the lab |
 | [Security](docs/security.md) | Where each credential goes, limited outbound access, the original image, good practice |
 | [How it works](docs/how-it-works.md) | Your data, the code, development and CI |
+| [How we work](docs/workflow.md) | Issues, the project board, pull requests and specs |
 | [HCL DX Compose labs](https://github.com/europesip/hcl-dx-compose-labs) | The guides to learn every step by hand |
 | [ÓRBITA](https://github.com/europesip/orbita) | An intranet for HCL DX Compose that the installer can add |
 
