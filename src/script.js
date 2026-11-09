@@ -259,7 +259,7 @@ const STAGE = {
      why: "In production DX authenticates against the corporate directory. The chart has a native LDAP block, so nothing is configured by hand in XML, and the bind credentials live in a Kubernetes Secret.",
      points: ["Native LDAP block of the chart (configuration.webEngine.ldap, type other), bind credentials in the dx-ldap-bind secret.",
               "Every upgrade carries all the layers so far: one more -f per stage, so that the labs are easy to follow. Forgetting a layer brings that part back to the product defaults; --reuse-values avoids it, but the best practice is one single values file with everything, always applied.",
-              "The basic registry is kept, so wpsadmin can still sign in. Then give the Administrator role to the dxadmins group."]},
+              "The basic registry is kept, so wpsadmin can still sign in. Then, step 2-2, give the Administrator role to the dxadmins group with XMLAccess (lab-ldap/admin-role.xml)."]},
     {slides: "13", time: "~13 min", show: "The transfer in the Web Engine log, and the tables counted in PostgreSQL",
      why: "Derby is fine to start, but a real installation keeps the Web Engine data in an external database. The chart moves it with a single upgrade.",
      points: ["Two secrets with the dbtype and dbdomain properties, and useExternalDatabase: true in the values.",
@@ -279,7 +279,7 @@ const STAGE = {
      why: "Search V2 replaces the classic portal search with OpenSearch, secured with mutual TLS.",
      points: ["hcl-dx-search 2.37.0: OpenSearch, the Search Middleware and the File Processor.",
               "Mutual TLS: a lab CA and the admin, node and client certificates, one command each, then one secret per certificate.",
-              "One more DX upgrade enables Search V2; the crawlers index WCM, JCR, the portal and DAM every 15 minutes."]},
+              "One more DX upgrade enables Search V2 and its new Search Admin UI (adminUI), at /dx/ui/search/admin-ui: content sources, crawlers and field mappings. The crawlers index WCM, JCR, the portal and DAM every 15 minutes."]},
   ],
   es: [
     {slides: "6-10", time: "4 min", show: "El entorno preparado, el namespace de DX y los charts de HCL",
@@ -299,7 +299,7 @@ const STAGE = {
      why: "En producción DX se autentica contra el directorio corporativo. El chart tiene un bloque LDAP nativo, así que no se configura nada a mano en XML, y las credenciales de bind van en un Secret de Kubernetes.",
      points: ["Bloque LDAP nativo del chart (configuration.webEngine.ldap, type other), credenciales de bind en el secret dx-ldap-bind.",
               "Cada upgrade lleva todas las capas hasta el momento: un -f más por etapa, para que los labs sean fáciles de seguir. Si se olvida una capa, esa parte vuelve a los valores por defecto del producto; --reuse-values lo evita, pero la buena práctica es un único fichero de valores con todo, aplicado siempre.",
-              "Se mantiene el registro básico, así que wpsadmin sigue pudiendo entrar. Después, da el rol Administrator al grupo dxadmins."]},
+              "Se mantiene el registro básico, así que wpsadmin sigue pudiendo entrar. Después, en el paso 2-2, da el rol Administrator al grupo dxadmins con XMLAccess (lab-ldap/admin-role.xml)."]},
     {slides: "13", time: "~13 min", show: "La transferencia en el log del Web Engine, y las tablas contadas en PostgreSQL",
      why: "Derby sirve para empezar, pero una instalación real guarda los datos del Web Engine en una base de datos externa. El chart los traslada con un único upgrade.",
      points: ["Dos secrets con las propiedades dbtype y dbdomain, y useExternalDatabase: true en los values.",
@@ -319,7 +319,7 @@ const STAGE = {
      why: "Search V2 sustituye la búsqueda clásica del portal por OpenSearch, protegida con TLS mutuo.",
      points: ["hcl-dx-search 2.37.0: OpenSearch, el Search Middleware y el File Processor.",
               "TLS mutuo: una CA del lab y los certificados admin, node y client, un comando para cada uno, y después un secret por certificado.",
-              "Un upgrade más de DX activa Search V2; los crawlers indexan WCM, JCR, el portal y DAM cada 15 minutos."]},
+              "Un upgrade más de DX activa Search V2 y su nueva interfaz de administración (adminUI), en /dx/ui/search/admin-ui: fuentes de contenido, crawlers y mapeo de campos. Los crawlers indexan WCM, JCR, el portal y DAM cada 15 minutos."]},
   ],
 };
 

@@ -40,6 +40,37 @@ function stageOf(id){
 }
 const EXTRA = {en: "Extra", es: "Extra"};
 
+// Stage 2 (demo OpenLDAP): the Administrator role on the virtual resource PORTAL for the group dxadmins, with XMLAccess
+// (the webinar shows it; until now the file was added by hand). Not with Active Directory: its groups are the customer's.
+export function adminRoleFile(files){
+  const v = files["lab-ldap/custom-values.ldap.yaml"]; if (!v) return null;
+  const base = (v.text.match(/suffix:\s*"?([^"\s#]+)/) || [])[1]; if (!base) return null;
+  return {path: "lab-ldap/admin-role.xml", text: `<?xml version="1.0" encoding="UTF-8"?>
+<!-- Stage 2 · gives the Administrator role on the virtual resource PORTAL to the LDAP group dxadmins -->
+<request xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="PortalConfig_8.5.0.xsd" type="update">
+  <portal action="locate">
+    <virtual-resource action="update" name="PORTAL">
+      <access-control externalized="false" owner="undefined" private="false">
+        <role actionset="Administrator" update="set">
+          <mapping subjectid="cn=dxadmins,ou=groups,${base}" subjecttype="user_group" update="set"/>
+        </role>
+      </access-control>
+    </virtual-resource>
+  </portal>
+</request>
+`};
+}
+export function adminRoleStep(s, lang){
+  const es = lang === "es";
+  return {id: "2A-3r", lab: "", opt: false, manual: "",
+    title: es ? "Rol Administrator para el grupo dxadmins (XMLAccess)" : "Administrator role for the group dxadmins (XMLAccess)",
+    note: es ? "XMLAccess es la interfaz de configuración de DX: esta petición da el rol Administrator, sobre el recurso virtual PORTAL, al grupo dxadmins del LDAP. Lo mismo se puede hacer en la página Resource Permissions."
+      : "XMLAccess is the configuration interface of DX: this request gives the Administrator role, on the virtual resource PORTAL, to the LDAP group dxadmins. The same can be done in the Resource Permissions page.",
+    cmd: `WPS_PW=$(kubectl -n ${s.DX_NS} get secret web-engine-secret -o jsonpath='{.data.password}' | base64 -d)
+curl -sk -u "wpsadmin:$WPS_PW" -H 'Content-Type: text/xml' --data-binary @lab-ldap/admin-role.xml \\
+  https://${s.DX_HOST}/wps/config | grep -o '<status[^>]*>'`};
+}
+
 // Before publishing DX (HCL webinar feedback): most installation problems come from the network (DNS, firewall, load
 // balancer, the ports of the workstation), so DX is checked first through kubectl port-forward, without Ingress, DNS
 // or open ports. It never fails: it shows the HTTP code.

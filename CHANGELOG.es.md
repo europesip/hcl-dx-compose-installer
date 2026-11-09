@@ -18,6 +18,11 @@ es la misma que en la 2.0.x.
 - **DX comprobado con `kubectl port-forward` antes del Ingress** (paso nuevo tras instalar DX, en la instalación y en el
   webinar): la mayoría de los problemas vienen de la red, así que primero se llega a DX por un túnel hasta su HAProxy,
   sin Ingress, DNS ni puertos abiertos; muestra el código HTTP y nunca falla.
+- **Rol Administrator para dxadmins (XMLAccess), nuevo paso 2-2** con su fichero `lab-ldap/admin-role.xml`, generado por el
+  instalador (solo con el OpenLDAP de demo; hasta ahora el webinar lo añadía a mano).
+- **Interfaz de administración de Search activada** (`configuration.searchMiddleware.adminUI.enabled: true` en
+  `custom-values.search.yaml`, desactivada por defecto en el chart): fuentes de contenido, crawlers y mapeo de campos en
+  `/dx/ui/search/admin-ui`.
 - **Certificados de OpenSearch, un paso cada uno** (5-1 a 5-5): la CA, los certificados admin, node y client y los
   secrets, cada comando visible en lugar de un bucle.
 - **Deployment key de IQ con `--set`**: sale de `custom-iq-values.yaml` al Secret `iq-deployment-key`

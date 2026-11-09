@@ -4,7 +4,7 @@
 //     Word script of the webinar inside it (src/word.js).
 import {createEngine} from "./engine/core.js";
 import {disclaimerMd} from "./disclaimer.js";
-import {renumber, webinarPhases, webinarFiles, buildRunbook, portForwardStep} from "./engine/stages.js";
+import {renumber, webinarPhases, webinarFiles, buildRunbook, portForwardStep, adminRoleFile, adminRoleStep} from "./engine/stages.js";
 import {toEngineState, SECRET_KEYS} from "./state.js";
 import {retryScript, fixCollector} from "./retry.js";
 import {buildInfo, stampOf, accessStep, environmentInfoSh, collectorExtras} from "./support.js";
@@ -79,7 +79,12 @@ export function generate(form, lang){
   let iqKey = false;
   if (webinar) ({files, iqKey} = webinarFiles(files, s));
   { const at = raw.findIndex(x => x.id === "1-4");   // DX checked with kubectl port-forward before it is published
-    if (at >= 0) raw.splice(at + 1, 0, portForwardStep(s, lang)); }   // DX namespace live, OpenLDAP secret apart, IQ key in a Secret
+    if (at >= 0) raw.splice(at + 1, 0, portForwardStep(s, lang)); }
+  { const k = "lab-search/custom-values.search.yaml", f = files[k];   // the new Search Admin UI (content sources, crawlers), off by default in the chart
+    if (f && !/adminUI:/.test(f.text)) files = {...files, [k]: {...f, text: f.text.replace(/^(\s*)damIndexing: true.*$/m, (m, sp) =>
+      `${m}\n${sp}# Search Admin UI (content sources and crawlers): https://${s.DX_HOST}/dx/ui/search/admin-ui\n${sp}adminUI:\n${sp}  enabled: true`)}}; }
+  { const f = s.dir !== "ad" && adminRoleFile(files), at = raw.findIndex(x => x.id === "2A-3");   // dxadmins as Administrator (XMLAccess)
+    if (f && at >= 0) { files = {...files, [f.path]: {text: f.text}}; raw.splice(at + 1, 0, adminRoleStep(s, lang)); } }   // DX namespace live, OpenLDAP secret apart, IQ key in a Secret
   const pgSql = !!engine.pgSqlFor(s);
   const out = [], P = "dx-install/";
   let steps, prep, demo, runbook;

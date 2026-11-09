@@ -40,6 +40,10 @@ test("everything: stages 0 to 6, extras named, new ids", () => {
   const ids = g.steps.map(s => s.origId);
   assert.deepEqual(ids.slice(ids.indexOf("1-4"), ids.indexOf("1-4") + 3), ["1-4", "1-4p", "1-5"]);
   assert.match(g.steps.find(s => s.origId === "1-4p").cmd, /port-forward svc\/dx-deployment-haproxy 8443:443/);
+  // the Administrator role for dxadmins (XMLAccess), right after the LDAP upgrade, with its file
+  assert.equal(ids[ids.indexOf("2A-3") + 1], "2A-3r");
+  assert.match(g.files["lab-ldap/admin-role.xml"].text, /cn=dxadmins,ou=groups,dc=dxdemo,dc=com/);
+  assert.match(g.files["lab-search/custom-values.search.yaml"].text, /damIndexing: true[^\n]*\n\s*# Search Admin UI[^\n]*\n\s*adminUI:\n\s*enabled: true/);
   const noIq = generate({...applyPreset({...DEFAULTS, ...CREDS}, "custom"), lab3: false}, "en");
   assert.ok(!noIq.steps.some(s => s.origId === "3-4"));
   assert.equal(noIq.steps.find(s => s.origId === "D-5")?.stage ?? 0, 0, "without IQ, LiteLLM (if any) stays a prerequisite");
