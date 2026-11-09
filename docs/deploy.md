@@ -10,7 +10,7 @@
 ## Run it with Docker
 
 ```bash
-docker run --rm -p 8080:8080 ghcr.io/europesip/hcl-dx-compose-installer:2.4.1
+docker run --rm -p 8080:8080 ghcr.io/europesip/hcl-dx-compose-installer:2.5.0
 ```
 
 Open http://localhost:8080. The image runs as a non-root user and works with a read-only root file system
@@ -24,7 +24,7 @@ functions: `-e AWS_ENABLED=false`.
 
 ```bash
 helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer \
-  --version 2.4.1 -n dx-installer --create-namespace \
+  --version 2.5.0 -n dx-installer --create-namespace \
   --set ingress.enabled=true --set ingress.className=nginx --set ingress.host=installer.example.com \
   --set auth.enabled=true --set auth.username=admin --set auth.password='S3cret!'   # if it is reachable from outside
 ```

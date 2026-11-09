@@ -7,7 +7,7 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
-## Unreleased
+## 2.5.0 · 2026-11-09 · Scope disclaimer
 
 - **Scope disclaimer** ([#5](https://github.com/europesip/hcl-dx-compose-installer/issues/5)): *Get started* opens a dialog
   with what the installer is for and what it is not (demos and PoCs, no production tuning, the most frequent options,
