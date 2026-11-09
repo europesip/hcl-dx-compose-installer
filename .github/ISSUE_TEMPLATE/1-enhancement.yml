@@ -1,0 +1,80 @@
+name: "🚀 Enhancement (spec)"
+description: A new capability, option or use case. Written as a short spec, so that it can be built and tested from the issue alone.
+title: "[Enhancement] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is the **spec** of the change: what and why, not how. Keep it short and testable.
+        The maintainers add the priority (`P1`-`P3`), the area, the **Effort** and the **Release** when it is triaged.
+        See [docs/workflow.md](https://github.com/europesip/hcl-dx-compose-installer/blob/main/docs/workflow.md).
+        **Never paste credentials, keys or licence data.**
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One paragraph. What should the installer do that it does not do today, and for whom?
+    validations: {required: true}
+  - type: textarea
+    id: current
+    attributes:
+      label: Current behaviour (checked in the code)
+      description: How it works today, with the files, stages or options involved (for example `src/cicd.js`, stage 3, the Custom page).
+    validations: {required: true}
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: "The expected behaviour, from the user's point of view: screens, options, generated files and commands. Split it in parts if it is big."
+    validations: {required: true}
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checkable statements. Prefer "Given ... when ... then ...". The change is done when every box is ticked.
+      value: |
+        - [ ] Given ..., when ..., then ...
+        - [ ] The golden test still passes (the engine output is unchanged unless this spec says otherwise)
+    validations: {required: true}
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this change deliberately does not do.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Web wizard (pages, texts, i18n)
+        - Engine (generated steps, values, commands)
+        - Generated folder (install.sh, bundle, scripts)
+        - Guides (RUNBOOK, Word/PDF webinar script)
+        - AWS backend (EC2, EKS, ROSA)
+        - Advanced CI/CD (OpenBao, Argo CD, operator, Keycloak)
+        - Packaging (image, Helm chart, CI)
+        - Documentation
+    validations: {required: true}
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test plan
+      description: How it will be proven. Unit tests, the golden test, an installation on the lab cluster (which stages), a real AWS run...
+    validations: {required: true}
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Release impact
+      options:
+        - label: CHANGELOG in English and Spanish
+        - label: Documentation in English and Spanish (README, docs/)
+        - label: RUNBOOK or webinar Word/PDF script
+        - label: Resource estimator (new pods or requests)
+        - label: Third-party versions (charts, images, operators)
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: HCL documentation, related issues, labs, PoC folders, discussions.

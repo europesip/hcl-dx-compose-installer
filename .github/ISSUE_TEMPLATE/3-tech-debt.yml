@@ -1,0 +1,51 @@
+name: "🧱 Tech debt"
+description: A shortcut taken on purpose (or found later) that should be paid back before it becomes a bug.
+title: "[Tech debt] "
+labels: ["tech-debt"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What the shortcut is, in one paragraph.
+    validations: {required: true}
+  - type: textarea
+    id: current
+    attributes:
+      label: Current situation (checked in the code)
+      description: Files and behaviour involved, and why it was done this way.
+    validations: {required: true}
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk if it is not fixed
+      description: What can break, for whom, and how likely it is.
+    validations: {required: true}
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations: {required: true}
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ]
+        - [ ] The golden test still passes
+    validations: {required: true}
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Web wizard (pages, texts, i18n)
+        - Engine (generated steps, values, commands)
+        - Generated folder (install.sh, bundle, scripts)
+        - Guides (RUNBOOK, Word/PDF webinar script)
+        - AWS backend (EC2, EKS, ROSA)
+        - Advanced CI/CD (OpenBao, Argo CD, operator, Keycloak)
+        - Packaging (image, Helm chart, CI)
+        - Documentation
+    validations: {required: true}

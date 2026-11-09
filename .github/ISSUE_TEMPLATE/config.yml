@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ❓ Questions and FAQ
+    url: https://github.com/europesip/hcl-dx-compose-installer/blob/main/docs/faq.md
+    about: Most questions about the installer are answered here.
+  - name: 🏢 HCL DX Compose product issues
+    url: https://support.hcl-software.com/
+    about: Problems of DX Compose itself (not of the installer) go to HCL Support.
