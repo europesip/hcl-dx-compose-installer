@@ -4,7 +4,7 @@
 //     Word script of the webinar inside it (src/word.js).
 import {createEngine} from "./engine/core.js";
 import {disclaimerMd} from "./disclaimer.js";
-import {renumber, webinarPhases, buildRunbook} from "./engine/stages.js";
+import {renumber, webinarPhases, webinarFiles, buildRunbook, portForwardStep} from "./engine/stages.js";
 import {toEngineState, SECRET_KEYS} from "./state.js";
 import {retryScript, fixCollector} from "./retry.js";
 import {resourcesMd} from "./resources.js";
@@ -19,17 +19,17 @@ export const WORD_NAME_EN = "DX-Compose-webinar-script.docx";
 export const WORD_NAME_ES = "Guion-webinar-DX-Compose.docx";
 
 const DIRS = {
-  en: {"install.sh": "runs every step, by stages", "prepare.sh": "webinar phase 1: the prerequisites except LiteLLM", "demo.sh": "webinar phase 2: stages 0 to 5, one command at a time",
+  en: {"install.sh": "runs every step, by stages", "prepare.sh": "webinar phase 1: OpenLDAP and PostgreSQL (the rest is done live)", "demo.sh": "webinar phase 2: stages 0 to 5, one command at a time",
        "uninstall.sh": "deletes everything that was installed", "RUNBOOK.md": "this document", "charts/": "HCL charts, downloaded by the first steps"},
-  es: {"install.sh": "ejecuta todos los pasos, por etapas", "prepare.sh": "fase 1 del webinar: los pre-requisitos salvo LiteLLM", "demo.sh": "fase 2 del webinar: etapas 0 a 5, comando a comando",
+  es: {"install.sh": "ejecuta todos los pasos, por etapas", "prepare.sh": "fase 1 del webinar: OpenLDAP y PostgreSQL (el resto, en directo)", "demo.sh": "fase 2 del webinar: etapas 0 a 5, comando a comando",
        "uninstall.sh": "borra todo lo instalado", "RUNBOOK.md": "este documento", "charts/": "charts de HCL, los descargan los primeros pasos"},
 };
 
 const finishPrep = lang => lang === "es"
   ? ["echo \"${G}${B}✔ Entorno preparado para la sesión en $(( (SECONDS-T0)/60 )) min.${N}\"",
-     "echo \"  Detente aquí. El día de la demo: ./demo.sh (etapas 0 a 5, empezando por el paso 0 con LiteLLM).\""]
+     "echo \"  Detente aquí. El día de la demo: ./demo.sh (etapas 0 a 5).\""]
   : ["echo \"${G}${B}✔ Environment ready for the session in $(( (SECONDS-T0)/60 )) min.${N}\"",
-     "echo \"  Stop here. On the day of the demo: ./demo.sh (stages 0 to 5, starting with step 0 and LiteLLM).\""];
+     "echo \"  Stop here. On the day of the demo: ./demo.sh (stages 0 to 5).\""];
 
 // The folders of the zip are named after what they hold (lab-base, lab-ldap, lab-bbdd...), not after
 // the numbered labs of the repository (1-dx, 2a-ldap, 2b-postgres...). The engine keeps the lab names
@@ -73,15 +73,19 @@ export function generate(form, lang){
   let raw = engine.directSteps(s).map(renameStep).map(st => ({...st, cmd: lk(st.cmd)}));
   ({files, steps: raw} = applyCicd(form, s, files, raw, lang));
   const webinar = form.preset === "webinar";
+  let iqKey = false;
+  if (webinar) ({files, iqKey} = webinarFiles(files, s));
+  { const at = raw.findIndex(x => x.id === "1-4");   // DX checked with kubectl port-forward before it is published
+    if (at >= 0) raw.splice(at + 1, 0, portForwardStep(s, lang)); }   // DX namespace live, OpenLDAP secret apart, IQ key in a Secret
   const pgSql = !!engine.pgSqlFor(s);
   const out = [], P = "dx-install/";
   let steps, prep, demo, runbook;
   const dirs = {};
   if (webinar) {
-    ({prep, demo} = webinarPhases(raw, s, lang));
+    ({prep, demo} = webinarPhases(raw, s, lang, {iqKey}));
     steps = [...prep, ...demo];
     out.push({name: P + "prepare.sh", mode: 0o100755, text: engine.buildInstallSh(s, prep, {name: "prepare.sh", headline: lang === "es" ? "preparación del webinar" : "webinar preparation",
-      purpose: "Webinar phase 1: installs every prerequisite except LiteLLM, then stops (the environment is ready for the session).", finish: finishPrep(lang), reinstall: "prepare.sh"})});
+      purpose: "Webinar phase 1: the namespace of the third-party tools, OpenLDAP and PostgreSQL, then stops (the environment is ready for the session).", finish: finishPrep(lang), reinstall: "prepare.sh"})});
     out.push({name: P + "demo.sh", mode: 0o100755, text: engine.buildInstallSh(s, demo, {name: "demo.sh", pause: true, verify: true, headline: lang === "es" ? "demo del webinar" : "webinar demo",
       purpose: "Webinar phase 2 (the day of the demo): stages 0 to 5, showing each command and waiting for Enter.", reinstall: "prepare.sh"})});
     out.push({name: P + "uninstall.sh", mode: 0o100755, text: engine.buildUninstallSh(s, "prepare.sh")});

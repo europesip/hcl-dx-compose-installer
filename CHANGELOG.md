@@ -7,6 +7,25 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## Unreleased · Webinar: more of it live
+
+- **Webinar, stage 0 live**: `prepare.sh` now only creates the namespace of the third-party tools and installs OpenLDAP
+  and PostgreSQL. The demo creates the DX namespace (it shows the generic YAML and the OpenShift one, with the SCC
+  annotations HCL requires, then applies one), signs in to the HCL Harbor and pulls the charts.
+  The OpenLDAP admin secret moves to `lab-ldap/secrets.openldap.yaml`; the DX bind secret is applied in step 2-1.
+- **LiteLLM opens stage 4, with IQ** (HCL feedback: installing it before DX was confusing), in the installation and in
+  the webinar: only IQ uses it, and the HCL documentation has it under IQ. Without IQ it is not installed.
+- **DX checked with `kubectl port-forward` before the Ingress** (new step after the DX install, installation and webinar):
+  most installation problems come from the network, so DX is reached first through a tunnel to its HAProxy, without
+  Ingress, DNS or open ports; it shows the HTTP code and never fails.
+- **OpenSearch certificates, one step each** (5-1 to 5-5): the CA, the admin, node and client certificates and the
+  secrets, every command visible instead of a loop.
+- **IQ deployment key with `--set`**: it leaves `custom-iq-values.yaml` for the Secret `iq-deployment-key`
+  (`lab-iq/secrets.yaml`); the IQ install reads it into a variable and passes it with `--set`, because chart 1.0.3
+  cannot read it from a secret yet.
+- RUNBOOK and Word/PDF script: the two usual ways to create Kubernetes objects (imperative and declarative) and why the
+  webinar follows the declarative one (GitOps); the values layers, `--reuse-values` and the single values file.
+
 ## 2.5.0 · 2026-11-09 · Scope disclaimer
 
 - **Scope disclaimer** ([#5](https://github.com/europesip/hcl-dx-compose-installer/issues/5)): *Get started* opens a dialog
