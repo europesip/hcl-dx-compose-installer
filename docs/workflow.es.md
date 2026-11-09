@@ -43,7 +43,7 @@ Un responsable completa el issue en el tablero:
 | 🧪 **In testing / Blocked** | Probándose en el clúster del laboratorio, o detenido por una dependencia |
 | ✅ **Done** | Terminado y comprobado |
 
-El proyecto tiene varias vistas: la tabla completa, el tablero Kanban, el tablero por release (con y sin lo
+El [proyecto](https://github.com/orgs/europesip/projects/1) tiene varias vistas: la tabla completa, el tablero Kanban, el tablero por release (con y sin lo
 terminado) y una tabla para la deuda técnica, otra para las mejoras y otra para los bugs. Sus gráficos muestran el
 estado actual, la evolución del trabajo y la carga por release.
 

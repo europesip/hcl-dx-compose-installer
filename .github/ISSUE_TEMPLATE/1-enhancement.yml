@@ -1,6 +1,7 @@
 name: "🚀 Enhancement (spec)"
 description: A new capability, option or use case. Written as a short spec, so that it can be built and tested from the issue alone.
 title: "[Enhancement] "
+projects: ["europesip/1"]
 labels: ["enhancement"]
 body:
   - type: markdown

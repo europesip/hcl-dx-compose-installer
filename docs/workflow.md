@@ -42,7 +42,7 @@ A maintainer completes the issue on the board:
 | 🧪 **In testing / Blocked** | Being tested on the lab cluster, or stopped by a dependency |
 | ✅ **Done** | Finished and checked |
 
-The project has several views: the full table, the Kanban board, the board by release (with and without the
+The [project](https://github.com/orgs/europesip/projects/1) has several views: the full table, the Kanban board, the board by release (with and without the
 finished items), and one table each for tech debt, enhancements and bugs. Its insights show the current status,
 the work over time and the load per release.
 

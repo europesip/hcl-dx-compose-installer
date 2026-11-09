@@ -1,6 +1,7 @@
 name: "🧱 Tech debt"
 description: A shortcut taken on purpose (or found later) that should be paid back before it becomes a bug.
 title: "[Tech debt] "
+projects: ["europesip/1"]
 labels: ["tech-debt"]
 body:
   - type: textarea

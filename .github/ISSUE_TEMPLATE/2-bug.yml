@@ -1,6 +1,7 @@
 name: "🐞 Bug"
 description: Something does not behave as it should, in the wizard, in the generated folder or in the installation it runs.
 title: "[Bug] "
+projects: ["europesip/1"]
 labels: ["bug"]
 body:
   - type: markdown
