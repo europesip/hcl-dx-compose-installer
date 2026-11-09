@@ -9,6 +9,7 @@ import {stageLabel} from "./engine/stages.js";
 import {SecurityNote} from "./security.jsx";
 import {kcHost} from "./cicd.js";
 import {resources, fmt} from "./resources.js";
+import {DISCLAIMER, LICENSE_URL} from "./disclaimer.js";
 
 const C = t => ({copyLabel: t.copy, copiedLabel: t.copied});
 const Bullet = ({children}) => <li className="flex gap-2.5"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-blue" /><span>{children}</span></li>;
@@ -43,8 +44,34 @@ function HostsHelp({t, host}){
 }
 
 // ---------------------------------------------------------------------------------------------
-export function Welcome({t, go}){
+// The scope disclaimer (#5): asked every time the wizard starts; Continue only after ticking the box
+function Disclaimer({open, lang, onCancel, onAccept}){
+  const d = DISCLAIMER[lang] || DISCLAIMER.en;
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    if (!open) return undefined;
+    setOk(false);
+    const id = setTimeout(() => document.getElementById("dxi-disclaimer-accept")?.focus(), 0);
+    const esc = e => e.key === "Escape" && onCancel();
+    window.addEventListener("keydown", esc);
+    return () => { clearTimeout(id); window.removeEventListener("keydown", esc); };
+  }, [open]);
+  return (
+    <Modal open={open} title={d.title} onClose={onCancel}
+      actions={<><Button variant="secondary" onClick={onCancel}>{d.cancel}</Button><Button onClick={onAccept} disabled={!ok}>{d.cont}</Button></>}>
+      <ul className="space-y-2.5">{d.items.map(([h, p]) => <li key={h}><b className="text-slate-900 dark:text-white">{h}.</b> {p}</li>)}</ul>
+      <p><a href={LICENSE_URL} target="_blank" rel="noreferrer" className="font-semibold text-brand-blue hover:underline dark:text-blue-300">{d.licence}</a></p>
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-navy-950">
+        <input id="dxi-disclaimer-accept" type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-[#0040ff]" checked={ok} onChange={e => setOk(e.target.checked)} />
+        <span className="font-medium text-slate-900 dark:text-white">{d.accept}</span>
+      </label>
+    </Modal>
+  );
+}
+
+export function Welcome({t, lang, go}){
   const [noOpen, setNoOpen] = useState(false);
+  const [discOpen, setDiscOpen] = useState(false);
   const cards = [[t.w1t, t.w1, <IconLayers key="a" />], [t.w2t, t.w2, <IconServer key="b" />], [t.w3t, t.w3, <IconSpark key="c" />]];
   return (
     <div>
@@ -56,7 +83,7 @@ export function Welcome({t, go}){
           <h1 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl">{t.heroTitle}</h1>
           <p className="mt-4 text-base text-slate-300 sm:text-lg">{t.heroSubA}<button type="button" onClick={() => setNoOpen(true)}
             className="font-semibold text-white underline decoration-brand-pink decoration-2 underline-offset-4 hover:text-pink-200">{t.heroSubLink}</button>{t.heroSubB}</p>
-          <Button onClick={() => go("env")} className="mt-8 px-7 py-3 text-base">{t.start}</Button>
+          <Button onClick={() => setDiscOpen(true)} className="mt-8 px-7 py-3 text-base">{t.start}</Button>
         </div>
       </section>
       <div className="mt-8 grid gap-5 md:grid-cols-3">
@@ -75,6 +102,7 @@ export function Welcome({t, go}){
       <Modal open={noOpen} title={t.noTitle} onClose={() => setNoOpen(false)} actions={<Button onClick={() => setNoOpen(false)}>{t.noOk}</Button>}>
         {t.noBody.map(x => <p key={x}>{x}</p>)}
       </Modal>
+      <Disclaimer open={discOpen} lang={lang} onCancel={() => setDiscOpen(false)} onAccept={() => { setDiscOpen(false); go("env"); }} />
     </div>
   );
 }

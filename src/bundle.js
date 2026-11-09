@@ -3,6 +3,7 @@
 //   - Webinar: the same zip with prepare.sh (phase 1) and demo.sh (phase 2, stages 0-5), plus the
 //     Word script of the webinar inside it (src/word.js).
 import {createEngine} from "./engine/core.js";
+import {disclaimerMd} from "./disclaimer.js";
 import {renumber, webinarPhases, buildRunbook} from "./engine/stages.js";
 import {toEngineState, SECRET_KEYS} from "./state.js";
 import {retryScript, fixCollector} from "./retry.js";
@@ -95,6 +96,7 @@ export function generate(form, lang){
   runbook = cicdRunbook(form, s, buildRunbook(s, webinar ? {prep, demo} : {steps}, files, lang, {pgSql, dirs}), lang);
   { const i = runbook.search(/\n## (Run it|Ejecutarlo|Phase 1|Fase 1|CI\/CD|Advanced CI\/CD)/);   // resources before running it
     runbook = i < 0 ? runbook + "\n" + resourcesMd(form, lang) : runbook.slice(0, i + 1) + resourcesMd(form, lang) + "\n" + runbook.slice(i + 1); }
+  runbook = runbook.replace(/^(# .*\n)/, m => m + "\n" + disclaimerMd(lang));   // scope disclaimer (#5)
   out.unshift({name: P + "RUNBOOK.md", text: runbook});
   for (const e of out) e.text = renameText(e.text);   // install.sh, demo.sh, uninstall.sh and RUNBOOK.md
   for (const [p, f] of Object.entries(files)) out.push({name: P + p, text: f.text, mode: f.mode});

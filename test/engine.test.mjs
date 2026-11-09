@@ -220,3 +220,19 @@ test("Word guide: important notes on LITELLM_BASE_URL, the documentation contrad
     for (const x of xs) assert.ok(xml.includes(x), x);
   }
 });
+
+test("scope disclaimer (#5) at the top of RUNBOOK.md and of the webinar script, in both languages", async () => {
+  const {buildScript} = await import("../src/script.js");
+  for (const [lang, title, asIs] of [["en", "what this installer is, and what it is not", "As is"], ["es", "qué es este instalador, y qué no es", "Tal cual"]]) {
+    for (const preset of ["all", "webinar"]) {
+      const g = make(preset, {}, lang);
+      const head = g.runbook.split("\n").slice(0, 4).join("\n");
+      assert.match(head, new RegExp(title), `${lang} ${preset} runbook`);
+      assert.match(g.runbook, new RegExp(`\\*\\*${asIs}`));
+      assert.equal(g.entries.find(e => e.name.endsWith("RUNBOOK.md")).text, g.runbook);
+    }
+    const blocks = buildScript(make("webinar", {}, lang), lang, []).blocks;
+    const i = blocks.findIndex(b => b.t === "h1" && b.text.includes(title));
+    assert.ok(i > 0 && i < blocks.findIndex(b => b.t === "h1" && b !== blocks[i]) + 1, `${lang} script`);
+  }
+});

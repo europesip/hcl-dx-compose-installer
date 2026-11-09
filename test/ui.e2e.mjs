@@ -10,13 +10,23 @@ const p = await ctx.newPage(); const errs = [];
 p.on("pageerror", e => errs.push(e.message)); p.on("console", m => m.type() === "error" && errs.push(m.text()));
 const shot = async n => { await p.waitForTimeout(500); await p.screenshot({path: `${out}/${n}.png`, fullPage: true}); };
 const next = () => p.click("main button:has-text('Siguiente')");
+// The scope disclaimer (#5): shown on every start, Continue disabled until the box is ticked
+const disclaimer = async () => {
+  await p.waitForSelector("[role=dialog] >> text=Antes de empezar");
+  const cont = p.locator("[role=dialog] button:has-text('Continuar')");
+  if (await cont.isEnabled()) throw new Error("Continue must be disabled until the disclaimer is accepted");
+  await p.check("#dxi-disclaimer-accept"); await cont.click();
+};
 const save = async selector => { const [d] = await Promise.all([p.waitForEvent("download"), p.click(selector)]); await d.saveAs(out + "/" + d.suggestedFilename()); return d.suggestedFilename(); };
 
 // 1. Own cluster, webinar
 await p.goto(url); await p.evaluate(() => localStorage.clear()); await p.reload();
 if (!(await p.textContent("h1")).includes("Instala HCL DX Compose")) throw new Error("the browser language (es) was not detected");
 await shot("1-welcome");
-await p.click("text=Empezar"); await p.click("text=Sí, tengo un clúster"); await next();
+await p.click("text=Empezar"); await p.click("[role=dialog] button:has-text('Cancelar')");
+if (await p.$("[role=dialog]")) throw new Error("Cancel must close the disclaimer");
+await p.click("text=Empezar"); await shot("1b-disclaimer"); await disclaimer();
+await p.click("text=Sí, tengo un clúster"); await next();
 await p.selectOption("select", "nginx");
 await p.fill("input[placeholder='dx-demo.example.com']", "dx-demo.apps.example.com");
 await p.click("text=He comprobado"); await shot("2-own"); await next();
@@ -33,7 +43,8 @@ const files = [await save("a:has-text('Instalación (.zip)')"), await save("a:ha
 
 // 2. WSL PoC, everything
 await p.evaluate(() => localStorage.clear()); await p.reload();
-await p.click("text=Empezar"); await p.click("text=No, ayúdame a crear uno"); await next();
+await p.click("text=Empezar"); await disclaimer();   // asked again on every start
+await p.click("text=No, ayúdame a crear uno"); await next();
 await p.click("text=Mi PC con Windows (WSL2)"); await next(); await shot("6-wsl");
 await p.click("text=k3s funciona"); await next();
 await p.click("text=Todo"); await next();
