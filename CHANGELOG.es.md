@@ -7,7 +7,7 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
-## Sin publicar
+## 2.5.0 · 2026-11-09 · Aviso de alcance
 
 - **Aviso de alcance** ([#5](https://github.com/europesip/hcl-dx-compose-installer/issues/5)): *Empezar* abre un diálogo
   con para qué sirve el instalador y para qué no (demos y PoC, sin ajuste para producción, las opciones más frecuentes,
