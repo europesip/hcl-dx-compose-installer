@@ -7,6 +7,13 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## Sin publicar
+
+- **Aviso de alcance** ([#5](https://github.com/europesip/hcl-dx-compose-installer/issues/5)): *Empezar* abre un diálogo
+  con para qué sirve el instalador y para qué no (demos y PoC, sin ajuste para producción, las opciones más frecuentes,
+  Servicios Profesionales para entornos grandes, se ofrece tal cual bajo licencia MIT). Hay que aceptarlo cada vez que se
+  empieza. El mismo texto abre el RUNBOOK.md generado y la guía Word/PDF del webinar.
+
 ## 2.4.1 · 2026-11-08 · Operador de Script Applications 0.3.1
 
 - El operador se instala en la **0.3.1**: una sola petición XMLAccess a la vez a DX (las simultáneas a veces volvían

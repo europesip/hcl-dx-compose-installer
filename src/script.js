@@ -3,6 +3,7 @@
 // Content: the purpose of the webinar (from its deck), who EUROPESIP is, the live session, security,
 // the preparation and each stage of the demo with why, the commands, the files and the slide it goes with.
 import {keyChanges, sourceOf, isSecretStep, secretValues, maskText, filesOfStep} from "./bundle.js";
+import {disclaimerBlocks} from "./disclaimer.js";
 import {STAGES, STAGE_DOCS} from "./engine/stages.js";
 import {resources, fmt, FULL} from "./resources.js";
 
@@ -376,6 +377,7 @@ export function buildScript(gen, lang, summaryRows, {mask = true} = {}){
   B.push({t: "cover", title: WEBINAR.title, subtitle: t.docTitle, live: t.live(date), host: `https://${s.DX_HOST}`,
           generated: new Date().toISOString().slice(0, 10), note: mask ? t.masked : t.plain, noteTone: mask ? "ok" : "error"});
   B.push({t: "toc", title: t.toc, note: t.tocNote});
+  disclaimerBlocks(lang).forEach(b => B.push(b));   // scope disclaimer (#5)
 
   // Purpose, EUROPESIP, the live session, security
   B.push({t: "h1", text: t.purpose}); t.purposeP.forEach(x => B.push({t: "p", text: x}));
