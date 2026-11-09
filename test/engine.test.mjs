@@ -34,6 +34,19 @@ test("everything: stages 0 to 6, extras named, new ids", () => {
   assert.ok(g.steps.every(s => /^[0-6]-\d+$/.test(s.id)));
   assert.ok(g.steps.some(s => s.extra && s.title.startsWith("Extra · ")));
   assert.equal(g.steps.find(s => s.origId === "4-2").stage, 5);
+  assert.equal(g.steps.find(s => s.origId === "D-5").stage, 4, "LiteLLM in stage 4, with IQ");
+  assert.equal(g.steps.find(s => s.origId === "D-5").id, "4-1");
+  // DX is checked with kubectl port-forward right after its install and before the Ingress
+  const ids = g.steps.map(s => s.origId);
+  assert.deepEqual(ids.slice(ids.indexOf("1-4"), ids.indexOf("1-4") + 3), ["1-4", "1-4p", "1-5"]);
+  assert.match(g.steps.find(s => s.origId === "1-4p").cmd, /port-forward svc\/dx-deployment-haproxy 8443:443/);
+  // the Administrator role for dxadmins (XMLAccess), right after the LDAP upgrade, with its file
+  assert.equal(ids[ids.indexOf("2A-3") + 1], "2A-3r");
+  assert.match(g.files["lab-ldap/admin-role.xml"].text, /cn=dxadmins,ou=groups,dc=dxdemo,dc=com/);
+  assert.match(g.files["lab-search/custom-values.search.yaml"].text, /damIndexing: true[^\n]*\n\s*# Search Admin UI[^\n]*\n\s*adminUI:\n\s*enabled: true/);
+  const noIq = generate({...applyPreset({...DEFAULTS, ...CREDS}, "custom"), lab3: false}, "en");
+  assert.ok(!noIq.steps.some(s => s.origId === "3-4"));
+  assert.equal(noIq.steps.find(s => s.origId === "D-5")?.stage ?? 0, 0, "without IQ, LiteLLM (if any) stays a prerequisite");
   const names = g.entries.map(e => e.name);
   for (const f of ["install.sh", "uninstall.sh", "RUNBOOK.md", "lab-base/custom-values.yaml", "lab-iq/custom-iq-values.rag.yaml", "lab-orbita/secrets.yaml"]) assert.ok(names.includes("dx-install/" + f), f);
   const install = g.entries.find(e => e.name === "dx-install/install.sh");
@@ -48,9 +61,26 @@ test("webinar: two phases, no LiteLLM in the preparation, stages 0 to 5, no extr
   assert.ok(g.webinar);
   assert.ok(g.prep.every(s => /^P-\d+$/.test(s.id)));
   assert.ok(!g.prep.some(s => /litellm/i.test(s.title + s.cmd.replace(/secrets\.yaml/g, ""))), "no LiteLLM in the preparation");
-  assert.ok(g.prep.some(s => /openldap/i.test(s.cmd)) && g.prep.some(s => /cnpg/.test(s.cmd)) && g.prep.some(s => /helm pull/.test(s.cmd)));
+  assert.ok(g.prep.some(s => /openldap/i.test(s.cmd)) && g.prep.some(s => /cnpg/.test(s.cmd)));
+  // live in the demo (webinar feedback): the DX namespace, the HCL Harbor and the charts, nothing of dx-demo in the preparation
+  assert.ok(!g.prep.some(s => /helm (pull|registry)|namespace-dx|lab-base\/secrets|lab-ldap\/secrets\.yaml/.test(s.cmd)), "nothing of the DX namespace in the preparation");
+  const st0 = g.demo.filter(s => s.stage === 0).map(s => s.cmd).join("\n");
+  assert.ok(st0.indexOf("namespace-dx.openshift.yaml") < st0.indexOf("helm registry login") && st0.includes("helm pull") && !/litellm/i.test(st0), "namespace, then Harbor and the charts; no LiteLLM in stage 0");
+  assert.ok(!/\[ -f charts/.test(st0), "the pulls are shown as they are");
+  assert.ok(g.files["lab-base/namespace-dx.yaml"] && g.files["lab-base/namespace-dx.openshift.yaml"] && !g.files["lab-base/namespaces.yaml"]);
+  assert.ok(g.files["lab-ldap/secrets.openldap.yaml"] && !/dx-ldap-bind/.test(g.files["lab-ldap/secrets.openldap.yaml"].text));
+  assert.ok(g.demo.find(s => s.stage === 2).cmd.startsWith("kubectl apply -f lab-ldap/secrets.yaml"));
+  // one step per OpenSearch certificate; the IQ deployment key from its Secret, with --set
+  assert.equal(g.demo.filter(s => s.stage === 5 && /openssl/.test(s.cmd)).length, 4);
+  assert.ok(!g.demo.some(s => /for n in/.test(s.cmd)));
+  assert.match(g.demo.find(s => s.origId === "3-4").cmd, /--set configuration\.licensing\.deploymentKey="\$IQ_DEPLOYMENT_KEY"/);
+  assert.doesNotMatch(g.files["lab-iq/custom-iq-values.yaml"].text, /^\s*deploymentKey:/m);
+  assert.match(g.files["lab-iq/secrets.yaml"].text, /name: iq-deployment-key/);
+  assert.match(g.runbook, /GitOps/);
   assert.deepEqual([...new Set(g.demo.map(s => s.stage))], [0, 1, 2, 3, 4, 5]);
-  assert.ok(g.demo.filter(s => s.stage === 0).some(s => s.origId === "D-5"), "LiteLLM in stage 0");
+  // LiteLLM opens stage 4, with IQ (HCL feedback), before the IQ install
+  const st4 = g.demo.filter(s => s.stage === 4).map(s => s.origId);
+  assert.deepEqual(st4.slice(0, 3), ["D-5", "D-6", "3-4"], "LiteLLM and its check open stage 4");
   assert.ok(!g.demo.some(s => s.extra));
   const names = g.entries.map(e => e.name);
   for (const f of ["prepare.sh", "demo.sh", "uninstall.sh", "RUNBOOK.md"]) assert.ok(names.includes("dx-install/" + f), f);

@@ -7,6 +7,39 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## 2.6.0 · 2026-11-10 · Webinar más en directo y soporte
+
+- **Webinar, etapa 0 en directo**: `prepare.sh` solo crea el namespace de las herramientas de terceros e instala OpenLDAP
+  y PostgreSQL. La demo crea el namespace de DX (enseña el YAML genérico y el de OpenShift, con las anotaciones de SCC
+  que exige HCL, y aplica uno), hace login en el Harbor de HCL y descarga los charts. El secret del
+  administrador de OpenLDAP pasa a `lab-ldap/secrets.openldap.yaml`; el secret de bind de DX se aplica en el paso 2-1.
+- **LiteLLM abre la etapa 4, con IQ** (indicación de HCL: instalarlo antes de DX resultaba confuso), en la instalación y
+  en el webinar: solo lo usa IQ, y la documentación de HCL lo tiene dentro de IQ. Sin IQ no se instala.
+- **DX comprobado con `kubectl port-forward` antes del Ingress** (paso nuevo tras instalar DX, en la instalación y en el
+  webinar): la mayoría de los problemas vienen de la red, así que primero se llega a DX por un túnel hasta su HAProxy,
+  sin Ingress, DNS ni puertos abiertos; muestra el código HTTP y nunca falla.
+- **Rol Administrator para dxadmins (XMLAccess), nuevo paso 2-2** con su fichero `lab-ldap/admin-role.xml`, generado por el
+  instalador (solo con el OpenLDAP de demo; hasta ahora el webinar lo añadía a mano).
+- **Interfaz de administración de Search activada** (`configuration.searchMiddleware.adminUI.enabled: true` en
+  `custom-values.search.yaml`, desactivada por defecto en el chart): fuentes de contenido, crawlers y mapeo de campos en
+  `/dx/ui/search/admin-ui`.
+- **Certificados de OpenSearch, un paso cada uno** (5-1 a 5-5): la CA, los certificados admin, node y client y los
+  secrets, cada comando visible en lugar de un bucle.
+- **Deployment key de IQ con `--set`**: sale de `custom-iq-values.yaml` al Secret `iq-deployment-key`
+  (`lab-iq/secrets.yaml`); la instalación de IQ la lee en una variable y la pasa con `--set`, porque el chart 1.0.3
+  aún no puede leerla de un secret.
+- RUNBOOK y guion Word/PDF: las dos formas habituales de crear objetos de Kubernetes (imperativa y declarativa) y por
+  qué el webinar sigue la declarativa (GitOps); las capas de valores, `--reuse-values` y el fichero único de valores.
+- **Soporte** (comentarios de usuarios): `BUILD-INFO.txt` en la carpeta (versión del instalador, plataforma, Ingress,
+  Helm y opciones, sin secretos) y la misma marca al principio de los scripts y del RUNBOOK; `support/environment-info.sh`
+  (equipo, herramientas, clúster, Ingress y el acceso a DX capa a capa), incluido también en `--collect`; un paso de
+  diagnóstico del acceso tras el Ingress (DX por `kubectl port-forward`, controlador de Ingress, puerto 443, DNS).
+- **Compatibilidad con Helm 3**: los scripts generados para Helm 4 adaptan solos `--wait=legacy` y `--force-conflicts`
+  cuando encuentran Helm 3.
+- Página de **errores frecuentes** ([docs/troubleshooting.es.md](docs/troubleshooting.es.md)): k3s dentro de WSL y los
+  puertos 80/443, `nip.io` bloqueado por el DNS, Helm 3, `ImagePullBackOff`, las variables de LiteLLM; enlazada desde el
+  README y las preguntas frecuentes.
+
 ## 2.5.0 · 2026-11-09 · Aviso de alcance
 
 - **Aviso de alcance** ([#5](https://github.com/europesip/hcl-dx-compose-installer/issues/5)): *Empezar* abre un diálogo
