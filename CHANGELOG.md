@@ -7,7 +7,7 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
-## Unreleased · Webinar: more of it live
+## 2.6.0 · 2026-11-10 · Webinar more live, supportability
 
 - **Webinar, stage 0 live**: `prepare.sh` now only creates the namespace of the third-party tools and installs OpenLDAP
   and PostgreSQL. The demo creates the DX namespace (it shows the generic YAML and the OpenShift one, with the SCC
@@ -29,6 +29,14 @@ installation is the same as in 2.0.x.
   cannot read it from a secret yet.
 - RUNBOOK and Word/PDF script: the two usual ways to create Kubernetes objects (imperative and declarative) and why the
   webinar follows the declarative one (GitOps); the values layers, `--reuse-values` and the single values file.
+- **Supportability** (user feedback): `BUILD-INFO.txt` in the folder (installer version, platform, Ingress, Helm and
+  options, no secrets) and the same stamp at the top of the scripts and the RUNBOOK; `support/environment-info.sh`
+  (workstation, tools, cluster, Ingress and the access to DX layer by layer), also added to `--collect`; an access
+  diagnosis step after the Ingress (DX through `kubectl port-forward`, Ingress controller, port 443, DNS).
+- **Helm 3 compatibility**: the scripts generated for Helm 4 adapt `--wait=legacy` and `--force-conflicts` by themselves
+  when they find Helm 3.
+- **Frequent errors** page ([docs/troubleshooting.md](docs/troubleshooting.md)): k3s inside WSL and ports 80/443, `nip.io`
+  blocked by DNS, Helm 3, `ImagePullBackOff`, the LiteLLM variables; linked from the README and the FAQ.
 
 ## 2.5.0 · 2026-11-09 · Scope disclaimer
 

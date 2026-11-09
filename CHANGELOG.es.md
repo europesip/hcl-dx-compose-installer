@@ -7,7 +7,7 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
-## Sin publicar · Webinar: más en directo
+## 2.6.0 · 2026-11-10 · Webinar más en directo y soporte
 
 - **Webinar, etapa 0 en directo**: `prepare.sh` solo crea el namespace de las herramientas de terceros e instala OpenLDAP
   y PostgreSQL. La demo crea el namespace de DX (enseña el YAML genérico y el de OpenShift, con las anotaciones de SCC
@@ -30,6 +30,15 @@ es la misma que en la 2.0.x.
   aún no puede leerla de un secret.
 - RUNBOOK y guion Word/PDF: las dos formas habituales de crear objetos de Kubernetes (imperativa y declarativa) y por
   qué el webinar sigue la declarativa (GitOps); las capas de valores, `--reuse-values` y el fichero único de valores.
+- **Soporte** (comentarios de usuarios): `BUILD-INFO.txt` en la carpeta (versión del instalador, plataforma, Ingress,
+  Helm y opciones, sin secretos) y la misma marca al principio de los scripts y del RUNBOOK; `support/environment-info.sh`
+  (equipo, herramientas, clúster, Ingress y el acceso a DX capa a capa), incluido también en `--collect`; un paso de
+  diagnóstico del acceso tras el Ingress (DX por `kubectl port-forward`, controlador de Ingress, puerto 443, DNS).
+- **Compatibilidad con Helm 3**: los scripts generados para Helm 4 adaptan solos `--wait=legacy` y `--force-conflicts`
+  cuando encuentran Helm 3.
+- Página de **errores frecuentes** ([docs/troubleshooting.es.md](docs/troubleshooting.es.md)): k3s dentro de WSL y los
+  puertos 80/443, `nip.io` bloqueado por el DNS, Helm 3, `ImagePullBackOff`, las variables de LiteLLM; enlazada desde el
+  README y las preguntas frecuentes.
 
 ## 2.5.0 · 2026-11-09 · Aviso de alcance
 
