@@ -5,7 +5,7 @@
 <p align="center"><b>De cero a un HCL DX Compose funcionando, paso a paso.</b><br>
 Un instalador web guiado para pruebas de concepto y entornos de pruebas, de <a href="https://www.europesip.com">EUROPESIP</a>.</p>
 
-<p align="center"><a href="README.md">English</a> · <b>Español</b> · <a href="docs/faq.es.md">Preguntas frecuentes</a> · <a href="docs/deploy.es.md">Docker y Helm</a> · <a href="docs/aws.es.md">AWS</a> · <a href="docs/how-it-works.es.md">Cómo funciona</a> · <a href="CHANGELOG.es.md">Versiones</a></p>
+<p align="center"><a href="README.md">English</a> · <b>Español</b> · <a href="docs/faq.es.md">Preguntas frecuentes</a> · <a href="docs/troubleshooting.es.md">Errores frecuentes</a> · <a href="docs/deploy.es.md">Docker y Helm</a> · <a href="docs/aws.es.md">AWS</a> · <a href="docs/how-it-works.es.md">Cómo funciona</a> · <a href="CHANGELOG.es.md">Versiones</a></p>
 
 <p align="center"><img src="docs/images/welcome.es.jpg" alt="La página de bienvenida del instalador" width="860"></p>
 
@@ -84,7 +84,7 @@ Todo el detalle: **[Seguridad del instalador](docs/security.es.md)**.
 - **¿AWS cuesta dinero?** Sí, desde ~0,89 USD/hora. Bórralo desde la página al terminar.
 - **¿Se envían mis credenciales a algún sitio?** No: ver [Seguridad](docs/security.es.md).
 
-Más preguntas: **[Preguntas frecuentes](docs/faq.es.md)**.
+Más preguntas: **[Preguntas frecuentes](docs/faq.es.md)**. Si algo falla: **[Errores frecuentes](docs/troubleshooting.es.md)**.
 
 ## Saber más
 

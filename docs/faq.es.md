@@ -1,6 +1,6 @@
 # Instalador de HCL DX Compose · Preguntas frecuentes
 
-[English](faq.md) · **Español** · [README](../README.es.md)
+[English](faq.md) · **Español** · [Errores frecuentes](troubleshooting.es.md) · [README](../README.es.md)
 
 **¿Qué es?**
 Un instalador web guiado para **HCL DX Compose**, de EUROPESIP. Te ayuda a preparar un entorno Kubernetes, elegir qué
