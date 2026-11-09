@@ -5,7 +5,7 @@
 <p align="center"><b>From zero to a working HCL DX Compose, step by step.</b><br>
 A guided web installer for proofs of concept and test environments, by <a href="https://www.europesip.com">EUROPESIP</a>.</p>
 
-<p align="center"><b>English</b> · <a href="README.es.md">Español</a> · <a href="docs/faq.md">FAQ</a> · <a href="docs/deploy.md">Docker and Helm</a> · <a href="docs/aws.md">AWS</a> · <a href="docs/how-it-works.md">How it works</a> · <a href="CHANGELOG.md">Releases</a></p>
+<p align="center"><b>English</b> · <a href="README.es.md">Español</a> · <a href="docs/faq.md">FAQ</a> · <a href="docs/troubleshooting.md">Frequent errors</a> · <a href="docs/deploy.md">Docker and Helm</a> · <a href="docs/aws.md">AWS</a> · <a href="docs/how-it-works.md">How it works</a> · <a href="CHANGELOG.md">Releases</a></p>
 
 <p align="center"><img src="docs/images/welcome.en.jpg" alt="The welcome page of the installer" width="860"></p>
 
@@ -82,7 +82,7 @@ All the details: **[Security of the installer](docs/security.md)**.
 - **Does AWS cost money?** Yes, from ~0.89 USD/hour. Delete it from the page when you finish.
 - **Are my credentials sent anywhere?** No: see [Security](docs/security.md).
 
-More questions: **[FAQ](docs/faq.md)**.
+More questions: **[FAQ](docs/faq.md)**. Something fails: **[Frequent errors](docs/troubleshooting.md)**.
 
 ## Learn more
 
