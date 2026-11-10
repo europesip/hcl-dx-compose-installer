@@ -34,6 +34,12 @@ es la misma que en la 2.0.x.
   Helm y opciones, sin secretos) y la misma marca al principio de los scripts y del RUNBOOK; `support/environment-info.sh`
   (equipo, herramientas, clúster, Ingress y el acceso a DX capa a capa), incluido también en `--collect`; un paso de
   diagnóstico del acceso tras el Ingress (DX por `kubectl port-forward`, controlador de Ingress, puerto 443, DNS).
+- **Correcciones encontradas en las pruebas de la versión**: el PoC de un nodo (WSL2 / Linux) espera a la ServiceAccount
+  `default` de un k3s recién instalado (el paso 0-1 fallaba); la VPC nueva del entorno EC2 de AWS usa `10.100.0.0/16` en
+  lugar de `10.42.0.0/16`, que es la red de pods de k3s (los pods no llegaban a la API de Kubernetes y Longhorn no
+  arrancaba). Ahora se rechaza un rango de VPC dentro de las redes de k3s. El diagnóstico del acceso prueba todas las direcciones
+  del Ingress (LoadBalancer, externa e interna del nodo, la que resuelve el nombre) antes de decir que falla el puerto
+  443: en la nube, el LoadBalancer de k3s muestra una dirección privada.
 - **Compatibilidad con Helm 3**: los scripts generados para Helm 4 adaptan solos `--wait=legacy` y `--force-conflicts`
   cuando encuentran Helm 3.
 - Página de **errores frecuentes** ([docs/troubleshooting.es.md](docs/troubleshooting.es.md)): k3s dentro de WSL y los

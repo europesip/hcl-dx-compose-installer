@@ -33,6 +33,12 @@ installation is the same as in 2.0.x.
   options, no secrets) and the same stamp at the top of the scripts and the RUNBOOK; `support/environment-info.sh`
   (workstation, tools, cluster, Ingress and the access to DX layer by layer), also added to `--collect`; an access
   diagnosis step after the Ingress (DX through `kubectl port-forward`, Ingress controller, port 443, DNS).
+- **Fixes found in the release tests**: the single-node PoC (WSL2 / Linux) waits for the ServiceAccount `default` of a
+  k3s installed seconds before (step 0-1 failed); the new VPC of the AWS EC2 environment uses `10.100.0.0/16` instead of
+  `10.42.0.0/16`, which is the pod network of k3s (the pods could not reach the Kubernetes API and Longhorn never got
+  ready). A VPC range inside the k3s networks is now refused. The access diagnosis tries every address of the Ingress
+  (LoadBalancer, node external and internal, the resolved one) before saying that port 443 fails: in a cloud the k3s
+  LoadBalancer shows a private address.
 - **Helm 3 compatibility**: the scripts generated for Helm 4 adapt `--wait=legacy` and `--force-conflicts` by themselves
   when they find Helm 3.
 - **Frequent errors** page ([docs/troubleshooting.md](docs/troubleshooting.md)): k3s inside WSL and ports 80/443, `nip.io`
