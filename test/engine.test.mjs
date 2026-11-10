@@ -195,7 +195,7 @@ test("zip folders named after their content (lab-base, lab-ldap, lab-bbdd...), n
   for (const [p, extra] of [["all", {}], ["webinar", {}], ["custom", {dir: "ad", db: "oracle", platform: "poc"}]]) {
     const g = make(p, extra);
     const dirs = new Set(g.entries.map(e => e.name.split("/")[1]).filter(x => !/\./.test(x)));
-    for (const d of dirs) assert.ok(/^(lab-[a-z-]+|support)$/.test(d), d);
+    for (const d of dirs) assert.ok(/^(lab-[a-z-]+|support|internals-ca|prep-pki)$/.test(d), d);
     const text = g.entries.filter(e => !e.name.endsWith(".sql")).map(e => e.text).join("\n") + g.steps.map(s => s.cmd).join("\n");
     assert.ok(!/(^|[^\w.-])(0-poc|1-dx|1b-scriptapp|2a-ldap|2a-ad|2b-postgres|2b-oracle|3-iq|3b-mcp|4-search|5-orbita)\//m.test(text));
     assert.ok(!/\bLab [0-5][AB]?\b/.test(text));
@@ -271,4 +271,49 @@ test("scope disclaimer (#5) at the top of RUNBOOK.md and of the webinar script, 
     const i = blocks.findIndex(b => b.t === "h1" && b.text.includes(title));
     assert.ok(i > 0 && i < blocks.findIndex(b => b.t === "h1" && b !== blocks[i]) + 1, `${lang} script`);
   }
+});
+
+test("demo LDAP users carry the real EUROPESIP names and e-mails (uid, groups and passwords unchanged)", () => {
+  const ldif = make("all").files["lab-ldap/demo-users.ldif"].text;
+  assert.match(ldif, /^mail: andres@europesip\.com$/m);
+  assert.match(ldif, /^sn: Gorostidi$/m);
+  assert.match(ldif, /^mail: macarena\.cortes@europesip\.com$/m);
+  assert.match(ldif, /^cn:: /m);                                  // non-ASCII names go base64 (RFC 2849)
+  assert.match(ldif, /^uid: macarena$/m);
+  assert.ok(!/@dxdemo\.com/.test(ldif));
+});
+
+test("corporate CA: OpenLDAP and PostgreSQL over SSL, DX signs in by e-mail and trusts the CA", () => {
+  const g = make("all"), f = k => g.files[k].text, cmds = g.steps.map(s => s.cmd).join("\n");
+  assert.ok(g.steps.some(s => /Corporate CA/.test(s.title)));
+  assert.match(cmds, /Corporate Directory Root CA/); assert.match(cmds, /Corporate Database Root CA/);
+  assert.ok(g.files["internals-ca/README.md"]);
+  assert.match(f("lab-ldap/openldap-values.yaml"), /tls_enabled: true\n\s*secret: openldap-tls/);
+  assert.match(cmds, /olcSecurity: tls=1/);                       // plain LDAP closed at install
+  assert.match(cmds, /ldaps:\/\/localhost:1636/);
+  const v = f("lab-ldap/custom-values.ldap.yaml");
+  assert.match(v, /port: 636/); assert.match(v, /sslEnabled: true/); assert.match(v, /corporate-cas: "dx-corporate-cas"/);
+  assert.match(v, /<loginProperty name="mail"\/>/);
+  assert.match(cmds, /-n dx-demo create secret generic dx-corporate-cas --from-file=internals-ca\/corporate-directory-ca\.crt --from-file=internals-ca\/corporate-database-ca\.crt/);
+  assert.match(f("lab-bbdd/cluster-dx-pg.yaml"), /hostnossl all all all reject/);
+  assert.match(f("lab-bbdd/cluster-dx-pg.yaml"), /serverTLSSecret: dx-pg-tls/);
+  assert.match(f("lab-bbdd/dx_dbdomain.properties"), /DbUrl=jdbc:postgresql:\/\/\S+\?sslmode=verify-full$/m);
+  assert.ok(!/^[^#].*sslmode=disable/m.test(f("lab-bbdd/dx_dbdomain.properties")));
+  assert.ok(!/^[^#].*DbUrl=.*&/m.test(f("lab-bbdd/dx_dbdomain.properties")));   // the DB transfer breaks with "&" in the URL   // only in the comment that compares both URLs
+  assert.match(f("lab-bbdd/custom-values.postgres.yaml"), /corporate-cas: "dx-corporate-cas"/);
+});
+
+test("webinar: basic LDAP layer first, then overrides + LDAPS (2-3) and plain LDAP closed live (2-4)", () => {
+  const g = make("webinar"), demo = g.steps.filter(s => /^[0-5]-/.test(s.id));
+  assert.ok(g.files["lab-ldap/custom-values.ldap-basic.yaml"]);
+  assert.match(g.files["lab-ldap/custom-values.ldap-basic.yaml"].text, /port: 389/);
+  assert.ok(!/configOverrideFiles/.test(g.files["lab-ldap/custom-values.ldap-basic.yaml"].text));
+  const by = id => demo.find(s => s.id === id);
+  assert.match(by("2-1").cmd, /custom-values\.ldap-basic\.yaml/);
+  assert.match(by("2-3").cmd, /dx-corporate-cas[\s\S]*-f lab-ldap\/custom-values\.ldap\.yaml/);
+  assert.match(by("2-4").cmd, /olcSecurity: tls=1/);
+  assert.ok(g.steps.some(s => /^P-/.test(s.id) && /Corporate CA/.test(s.title)));      // the CA in the preparation
+  assert.ok(!g.steps.filter(s => /^P-/.test(s.id)).some(s => /olcSecurity/.test(s.cmd)));   // plain LDAP still open for 2-1
+  assert.match(g.files["lab-ldap/example-active-directory.yaml"].text, /sAMAccountName[\s\S]*memberOf:member/);   // advanced AD example, shown not applied
+  assert.ok(!g.steps.some(s => /example-active-directory/.test(s.cmd)));
 });

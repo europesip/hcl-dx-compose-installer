@@ -1,12 +1,13 @@
-// Golden test against the configuration wizard of hcl-dx-compose-labs (docs/index.html, frozen since
+// Golden test against the configuration wizard of hcl-dx-compose-labs-wizard (index.html; it was docs/index.html of
+// hcl-dx-compose-labs, which became the webinar showroom on 2026-11-10; frozen since
 // installer 2.0.0): for the same state, the engine of the installer must still produce the same lab
 // files and the same command for every step (the installer renumbers the steps and writes its own
 // scripts and RUNBOOK, which are not compared). Needs Playwright (Chromium).
-//   WIZARD=/path/to/hcl-dx-compose-labs/docs/index.html node test/golden.e2e.mjs
+//   WIZARD=/path/to/hcl-dx-compose-labs-wizard/index.html node test/golden.e2e.mjs
 import { chromium } from 'playwright';
 import {engine} from "../src/bundle.js";
 import {resolve} from "node:path";
-const wizard = 'file://' + resolve(process.env.WIZARD || '../dx-compose-webinar/docs/index.html');
+const wizard = 'file://' + resolve(process.env.WIZARD || '../hcl-dx-compose-labs-wizard/index.html');
 const CASES = [
   {name: "defaults", f: {}},
   {name: "all-labs", f: {depPg: true, depMcp: true, lab1b: true, lab3b: true, iqdb: true, iqrag: true, lab5: true, dxcLicense: true, HCL_HARBOR_USER: "x@europesip.com", HCL_HARBOR_TOKEN: "tok123456", OPENROUTER_API_KEY: "sk-or-v1-zzz"}},

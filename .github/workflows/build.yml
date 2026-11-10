@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/checkout@v7
-        with: {repository: europesip/hcl-dx-compose-labs, path: labs}
+        with: {repository: europesip/hcl-dx-compose-labs-wizard, path: labs}   # the frozen wizard (the labs repository became the showroom)
       - uses: actions/setup-node@v6
         with: {node-version: 24, cache: npm}
       - run: npm ci
@@ -37,7 +37,7 @@ jobs:
       - name: Golden test against the frozen wizard of the labs (same lab files and commands)
         run: |
           npx playwright install --with-deps chromium
-          WIZARD=labs/docs/index.html node test/golden.e2e.mjs
+          WIZARD=labs/index.html node test/golden.e2e.mjs
       - run: npm run build
 
   image:

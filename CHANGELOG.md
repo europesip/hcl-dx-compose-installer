@@ -7,6 +7,29 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## 2.7.0 · 2026-11-10 · Corporate CAs (LDAPS, PostgreSQL over SSL), sign-in by e-mail, the webinar showroom
+
+- **OpenLDAP and PostgreSQL always come with SSL** (any configuration that installs them), as a corporate directory and
+  database would: two corporate root CAs, *EUROPESIP Corporate Directory Root CA* and *EUROPESIP Corporate Database
+  Root CA*, whose certificates stay in `internals-ca/` (what corporate IT would give you); `prep-pki/` plays the part
+  of corporate IT (CA keys and server certificates, preparation only). OpenLDAP serves LDAPS (636) and requires TLS
+  (`olcSecurity: tls=1`); PostgreSQL (CloudNativePG) uses its own server certificate and rejects any connection
+  without SSL (`hostnossl all all all reject`). The OpenSearch CA stays separate.
+- **DX trusts the corporate CAs** through `configuration.webEngine.customTruststoreSecrets` (secret `dx-corporate-cas`),
+  connects to the LDAP over LDAPS (`port: 636`, `sslEnabled: true`) and to PostgreSQL with
+  `?sslmode=verify-full` (the only form that works in every step of CF239 and validates the certificate: see the
+  showroom `issues.md`). Keycloak federates the LDAP over LDAPS with the directory CA in its truststore.
+- **Sign in with the e-mail or the short name**: a configuration override (`loginProperty` `uid` and `mail` on the
+  `ldapRegistry` of the chart), next to the `preferredLanguage` one.
+- **The demo LDAP users carry the real EUROPESIP names and e-mails** (uid, groups and passwords unchanged).
+- **Webinar, stage 2**: a basic LDAP layer first (`custom-values.ldap-basic.yaml`, plain 389), then step 2-3 uploads the
+  corporate CAs and applies the complete layer (overrides + LDAPS), and step 2-4 closes plain LDAP live. The webinar
+  folder also includes `lab-ldap/example-active-directory.yaml`, an advanced Active Directory example (not applied).
+- **IQ 1.0.3 ignores `dbTlsEnabled`**: with the IQ database in PostgreSQL, `pg_hba` keeps an exception for `iqdb` only.
+- **The labs repository became the webinar showroom**: the generated webinar files (credentials redacted), the slides
+  and the video. The installer links the PoC on WSL2 guide from the tag `labs-archive-2026-11-10`, and the golden test
+  uses the frozen wizard of `hcl-dx-compose-labs-wizard`.
+
 ## 2.6.0 · 2026-11-10 · Webinar more live, supportability
 
 - **Webinar, stage 0 live**: `prepare.sh` now only creates the namespace of the third-party tools and installs OpenLDAP
