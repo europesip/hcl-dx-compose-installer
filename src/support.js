@@ -83,9 +83,13 @@ export function accessCheck(s){
     `  echo "2 · Ingress controller $ISVC (port-forward): $(http_ok $(http_code --resolve $H:19443:127.0.0.1 https://$H:19443/wps/portal))"; pf_stop`,
     `else echo "2 · Ingress controller: no Service found with -l ${sel}"; fi`,
     `# 3 · Port 443 of the controller from this machine, without DNS`,
-    s.poc ? `IP=127.0.0.1   # the PoC: Traefik/ingress-nginx listen on 80/443 of WSL`
-      : `IP=$(kubectl -n "\${INS:-x}" get svc "\${ISVC:-x}" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)\n[ -n "$IP" ] || IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' || true)`,
-    `echo "3 · Port 443 of $IP (no DNS)            : $(http_ok $(http_code --resolve $H:443:$IP https://$H/wps/portal))"`);
+    s.poc ? `IP=127.0.0.1   # the PoC: Traefik/ingress-nginx listen on 80/443 of WSL\nC3=$(http_code --resolve $H:443:$IP https://$H/wps/portal)`
+      : [`# candidates: the LoadBalancer address, the external and internal address of a node, the address the name resolves to`,
+         `# (in a cloud the LoadBalancer of k3s and the node show private addresses this machine may not reach): the first that answers`,
+         `CANDS="$(kubectl -n "\${INS:-x}" get svc "\${ISVC:-x}" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true) $(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}' 2>/dev/null || true) $(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' 2>/dev/null || true) $(getent hosts $H | awk '{print $1}' | head -1 || true)"`,
+         `IP=; C3=000; for c in $CANDS; do C3=$(http_code --resolve $H:443:$c https://$H/wps/portal); case $C3 in 2??|3??) IP=$c; break ;; esac; done`,
+         `[ -n "$IP" ] || IP=$(echo $CANDS | awk '{print $1}')`].join("\n"),
+    `echo "3 · Port 443 of $IP (no DNS)            : $(http_ok $C3)"`);
   L.push(
     `# ${s.openshift ? 2 : 4} · The real URL (DNS + everything)`,
     `echo "${s.openshift ? 2 : 4} · https://$H ($(getent hosts $H | awk '{print $1}' | head -1 || true))  : $(http_ok $(http_code https://$H/wps/portal))"`,
