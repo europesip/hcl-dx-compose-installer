@@ -1,4 +1,4 @@
-// HCL DX Compose Installer: a guided flow in five phases (welcome, environment, deployment, details,
+// DX Installer Wizard: a guided flow in five phases (welcome, environment, deployment, details,
 // download), one view at a time, with a progress bar.
 // Version and build time, set by vite.config.js at build time
 const APP_VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "dev";

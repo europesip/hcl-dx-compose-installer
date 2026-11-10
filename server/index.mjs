@@ -1,4 +1,4 @@
-// HCL DX Compose Installer · server: the web page (the build in dist/) and a small API that runs the
+// DX Installer Wizard · server: the web page (the build in dist/) and a small API that runs the
 // AWS scripts of server/aws (create or delete an environment) and streams their output to the page.
 //
 // The installation itself (files, steps, RUNBOOK.md, the zip and the Word script) is generated in the
@@ -238,7 +238,7 @@ async function serveStatic(req, res, url){
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
   if (url.pathname === "/healthz") return send(res, 200, "ok", {"Content-Type": "text/plain"});
-  if (!authorised(req)) return send(res, 401, "authentication required", {"WWW-Authenticate": 'Basic realm="HCL DX Compose Installer"', "Content-Type": "text/plain"});
+  if (!authorised(req)) return send(res, 401, "authentication required", {"WWW-Authenticate": 'Basic realm="DX Installer Wizard"', "Content-Type": "text/plain"});
   try {
     if (url.pathname.startsWith("/api/")) return await api(req, res, url);
     if (req.method !== "GET" && req.method !== "HEAD") return send(res, 405, "method not allowed");
@@ -248,7 +248,7 @@ const server = http.createServer(async (req, res) => {
     if (!res.headersSent) send(res, 500, {error: "internal error"});
   }
 });
-server.listen(PORT, () => console.log(`HCL DX Compose Installer ${VERSION} on :${PORT} (AWS ${AWS_ENABLED ? "enabled" : "disabled"})`));
+server.listen(PORT, () => console.log(`DX Installer Wizard ${VERSION} on :${PORT} (AWS ${AWS_ENABLED ? "enabled" : "disabled"})`));
 for (const sig of ["SIGTERM", "SIGINT"]) process.on(sig, () => {
   for (const j of jobs.values()) if (j.status === "running" && j.pid) try { process.kill(-j.pid, "SIGTERM"); } catch { /* gone */ }
   server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 3000).unref();

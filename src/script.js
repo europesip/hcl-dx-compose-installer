@@ -60,7 +60,7 @@ const T = {
     haproxy: "IMPORTANT · HAProxy protocol: with DX published through an Ingress or a Route, the DX HAProxy Service is ClusterIP and only listens on 443 with TLS. If configuration.automatedSetup.haproxyProtocol is left empty (the default), the Search chart chooses http, the crawlers call port 80 and index 0 documents. This is not in the HCL documentation either. lab-search/custom-search-values.yaml sets haproxyProtocol: https.",
     gen: "How this document was made",
     genP: [
-      "This document and the installation zip that goes with it were generated automatically by the HCL DX Compose Installer, a wizard that EUROPESIP developed to run these labs, from the options chosen in it.",
+      "This document and the installation zip that goes with it were generated automatically by the DX Installer Wizard, a wizard that EUROPESIP developed to run these labs, from the options chosen in it.",
       "From the data entered for the webinar demo (the type of installation, the access URL, the stages, the AI provider, the credentials...), the installer builds every file of the installation and this document, with the guidelines to deliver the lab step by step. Another environment or other options give another document, always consistent with its zip.",
       "The installer is open source (MIT licence), runs in your own machine or cluster, and can be used for any PoC, demo or test installation of HCL DX Compose:",
     ],
@@ -103,7 +103,7 @@ const T = {
       "EUROPESIP is a Spanish technology consultancy with more than 20 years in enterprise environments: its own technical team, a clear methodology and real support in every phase of a project.",
       "It is an HCL Software Business Partner and its Competence Centre in Spain for HCL Domino and HCL Digital Experience, and it also works with IBM WebSphere, Kubernetes and enterprise middleware. Its technology partners include HCL Software, IBM, AWS, Red Hat and SUSE.",
       "Its experience with HCL DX includes large public-sector portals: together with Evolutio, EUROPESIP manages the maintenance, licences and evolution of the HCL DX portals of the Gestión Integral de Servicios Sociales (GISS) in Spain, high-traffic platforms used every day by citizens and professionals.",
-      "EUROPESIP also builds open-source assets for HCL DX Compose: the HCL DX Compose labs, the HCL DX Compose Installer (which generated this document) and ÓRBITA, an employee intranet for DX Compose.",
+      "EUROPESIP also builds open-source assets for HCL DX Compose: the HCL DX Compose labs, the DX Installer Wizard (which generated this document) and ÓRBITA, an employee intranet for DX Compose.",
     ],
     session: "The live session",
     sessionP: d => `This material is what will be shown and taught in the live webinar on ${d}. It follows the deck of the session slide by slide: for every stage it says why it is done, which commands run, which files and values to show, and what the audience should see.`,
@@ -134,7 +134,7 @@ const T = {
       "Next steps for the audience: replay the webinar; use the GitHub repositories, with the documentation of every step; and get support from HCL's Customer Support Engineers and EUROPESIP.",
       "Then open the Q&A: questions that are not answered live are answered in the follow-ups.",
     ],
-    refs: "References", refsL: ["HCL DX Compose labs: github.com/europesip/hcl-dx-compose-labs", "HCL DX Compose showroom (files, slides and video of the webinar): github.com/europesip/hcl-dx-compose-showroom", "HCL DX Compose Installer: github.com/europesip/hcl-dx-compose-installer (the wizard that generated this document)", "EUROPESIP: www.europesip.com · info@europesip.com"],
+    refs: "References", refsL: ["HCL DX Compose labs: github.com/europesip/hcl-dx-compose-labs", "HCL DX Compose showroom (files, slides and video of the webinar): github.com/europesip/hcl-dx-compose-showroom", "DX Installer Wizard: github.com/europesip/hcl-dx-compose-installer (the wizard that generated this document)", "EUROPESIP: www.europesip.com · info@europesip.com"],
     after: "After the webinar", afterL: ["Delete the environment: ./uninstall.sh (it asks you to type delete).", "Rotate the credentials: CLI secret of hclcr.io, OpenRouter key, passwords.", "Delete the zip of the installation, which contains the credentials."],
     appA: "Appendix A · Credentials and keys", appAP: "The steps that create Secrets, certificates and keys, in the order they run.",
     litellm: "LiteLLM master key generated for this installation:",
@@ -155,7 +155,7 @@ const T = {
     haproxy: "IMPORTANTE · Protocolo del HAProxy: con DX publicado mediante un Ingress o una Route, el Service del HAProxy de DX es ClusterIP y solo escucha en el 443 con TLS. Si configuration.automatedSetup.haproxyProtocol se deja vacío (el valor por defecto), el chart de Search elige http, los crawlers llaman al puerto 80 e indexan 0 documentos. Tampoco está en la documentación de HCL. lab-search/custom-search-values.yaml fija haproxyProtocol: https.",
     gen: "Cómo se ha hecho este documento",
     genP: [
-      "Este documento y el ZIP de instalación que lo acompaña se han generado automáticamente con el Instalador de HCL DX Compose, un asistente que EUROPESIP ha desarrollado para hacer estos laboratorios, a partir de las opciones escogidas en él.",
+      "Este documento y el ZIP de instalación que lo acompaña se han generado automáticamente con el DX Installer Wizard, un asistente que EUROPESIP ha desarrollado para hacer estos laboratorios, a partir de las opciones escogidas en él.",
       "En base a los datos introducidos para la demostración del webinar (tipo de instalación, URL de acceso, etapas, proveedor de IA, credenciales...), el instalador genera todos los ficheros de la instalación y este documento, con las pautas para dar el laboratorio paso a paso. Otro entorno u otras opciones dan otro documento, siempre coherente con su ZIP.",
       "El instalador es de código abierto (licencia MIT), se ejecuta en tu propia máquina o clúster y sirve para cualquier PoC, demo o instalación de pruebas de HCL DX Compose:",
     ],
@@ -198,7 +198,7 @@ const T = {
       "EUROPESIP es una consultora tecnológica española con más de 20 años en entornos enterprise: equipo técnico propio, metodología clara y acompañamiento real en cada fase de un proyecto.",
       "Es Business Partner de HCL Software y su Centro de Competencia en España para HCL Domino y HCL Digital Experience, y trabaja también con IBM WebSphere, Kubernetes y middleware enterprise. Entre sus partners tecnológicos están HCL Software, IBM, AWS, Red Hat y SUSE.",
       "Su experiencia con HCL DX incluye grandes portales del sector público: junto a Evolutio, EUROPESIP gestiona el mantenimiento, las licencias y la evolución de los portales HCL DX de la Gestión Integral de Servicios Sociales (GISS), plataformas de alto tráfico que usan a diario ciudadanos y profesionales.",
-      "EUROPESIP crea además material de código abierto para HCL DX Compose: los laboratorios de HCL DX Compose, el Instalador de HCL DX Compose (que ha generado este documento) y ÓRBITA, una intranet para empleados sobre DX Compose.",
+      "EUROPESIP crea además material de código abierto para HCL DX Compose: los laboratorios de HCL DX Compose, el DX Installer Wizard (que ha generado este documento) y ÓRBITA, una intranet para empleados sobre DX Compose.",
     ],
     session: "La sesión en directo",
     sessionP: d => `Este material es el que se mostrará y enseñará en el webinar en directo del ${d}. Sigue la presentación de la sesión diapositiva a diapositiva: para cada etapa explica por qué se hace, qué comandos se ejecutan, qué ficheros y valores enseñar y qué debe ver la audiencia.`,
@@ -229,7 +229,7 @@ const T = {
       "Próximos pasos para la audiencia: volver a ver el webinar; usar los repositorios de GitHub, con la documentación de cada paso; y contar con el soporte de los Customer Support Engineers de HCL y de EUROPESIP.",
       "Después, el turno de preguntas: las que no se respondan en directo se responden en el seguimiento.",
     ],
-    refs: "Referencias", refsL: ["Laboratorios de HCL DX Compose: github.com/europesip/hcl-dx-compose-labs", "Showroom de HCL DX Compose (ficheros, presentación y vídeo del webinar): github.com/europesip/hcl-dx-compose-showroom", "Instalador de HCL DX Compose: github.com/europesip/hcl-dx-compose-installer (el asistente que ha generado este documento)", "EUROPESIP: www.europesip.com · info@europesip.com"],
+    refs: "Referencias", refsL: ["Laboratorios de HCL DX Compose: github.com/europesip/hcl-dx-compose-labs", "Showroom de HCL DX Compose (ficheros, presentación y vídeo del webinar): github.com/europesip/hcl-dx-compose-showroom", "DX Installer Wizard: github.com/europesip/hcl-dx-compose-installer (el asistente que ha generado este documento)", "EUROPESIP: www.europesip.com · info@europesip.com"],
     after: "Después del webinar", afterL: ["Borra el entorno: ./uninstall.sh (pide escribir delete).", "Rota las credenciales: CLI secret de hclcr.io, clave de OpenRouter, contraseñas.", "Borra el zip de la instalación, que contiene las credenciales."],
     appA: "Anexo A · Credenciales y claves", appAP: "Los pasos que crean Secrets, certificados y claves, en el orden en que se ejecutan.",
     litellm: "Clave maestra de LiteLLM generada para esta instalación:",
@@ -418,7 +418,7 @@ export function buildScript(gen, lang, summaryRows, {mask = true} = {}){
   // Starting point: the installer that generated this document, the PostgreSQL table script and the prerequisites
   B.push({t: "h1", text: t.start});
   B.push({t: "h2", text: t.gen}); t.genP.forEach(x => B.push({t: "p", text: x}));
-  B.push({t: "links", items: [["HCL DX Compose Installer", INSTALLER_URL]]});
+  B.push({t: "links", items: [["DX Installer Wizard", INSTALLER_URL]]});
   B.push({t: "image", key: "welcome", caption: t.genShots[0]}); B.push({t: "image", key: "deployment", caption: t.genShots[1]});
   if (s.db === "postgres") {
     B.push({t: "h2", text: t.pgT}); B.push({t: "p", text: t.pgP});

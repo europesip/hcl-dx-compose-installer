@@ -1,4 +1,4 @@
-HCL DX Compose Installer {{ .Chart.AppVersion }} is running.
+DX Installer Wizard {{ .Chart.AppVersion }} is running.
 {{- if .Values.ingress.enabled }}
 Open: http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}{{ .Values.ingress.path }}
 {{- else if .Values.route.enabled }}

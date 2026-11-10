@@ -1,4 +1,4 @@
-# Shared helpers of the AWS scripts of the HCL DX Compose Installer.
+# Shared helpers of the AWS scripts of the DX Installer Wizard.
 # The scripts run in the installer pod (the web page starts them and shows their output) or on
 # your own machine with the AWS CLI. The credentials always come from the standard AWS variables
 # (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, optional AWS_SESSION_TOKEN) or your AWS profile.
