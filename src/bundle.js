@@ -2,6 +2,8 @@
 //   - All / Custom: the dx-install/ zip (install.sh, uninstall.sh, RUNBOOK.md and every file filled in);
 //   - Webinar: the same zip with prepare.sh (phase 1) and demo.sh (phase 2, stages 0-5), plus the
 //     Word script of the webinar inside it (src/word.js).
+import {peopleLdif} from "./people.js";
+import {corporateCaFiles, corporateCaSteps, corporateCaKeycloak} from "./corporate-ca.js";
 import {createEngine} from "./engine/core.js";
 import {disclaimerMd} from "./disclaimer.js";
 import {renumber, webinarPhases, webinarFiles, buildRunbook, portForwardStep, adminRoleFile, adminRoleStep} from "./engine/stages.js";
@@ -22,10 +24,10 @@ export const WORD_NAME_ES = "Guion-webinar-DX-Compose.docx";
 const DIRS = {
   en: {"install.sh": "runs every step, by stages", "prepare.sh": "webinar phase 1: OpenLDAP and PostgreSQL (the rest is done live)", "demo.sh": "webinar phase 2: stages 0 to 5, one command at a time",
        "uninstall.sh": "deletes everything that was installed", "RUNBOOK.md": "this document", "charts/": "HCL charts, downloaded by the first steps",
-       "BUILD-INFO.txt": "what this folder was generated for (installer version, platform, Ingress, Helm, options): send it if something fails", "support/": "support data: environment-info.sh and the HCL collector (--collect)"},
+       "BUILD-INFO.txt": "what this folder was generated for (installer version, platform, Ingress, Helm, options): send it if something fails", "support/": "support data: environment-info.sh and the HCL collector (--collect)", "internals-ca/": "the CAs of corporate IT (directory and databases) that DX must trust", "prep-pki/": "plays the part of corporate IT: the keys of those CAs and the server certificates (preparation only)"},
   es: {"install.sh": "ejecuta todos los pasos, por etapas", "prepare.sh": "fase 1 del webinar: OpenLDAP y PostgreSQL (el resto, en directo)", "demo.sh": "fase 2 del webinar: etapas 0 a 5, comando a comando",
        "uninstall.sh": "borra todo lo instalado", "RUNBOOK.md": "este documento", "charts/": "charts de HCL, los descargan los primeros pasos",
-       "BUILD-INFO.txt": "para qué se generó esta carpeta (versión del instalador, plataforma, Ingress, Helm, opciones): envíalo si algo falla", "support/": "datos para soporte: environment-info.sh y el recolector de HCL (--collect)"},
+       "BUILD-INFO.txt": "para qué se generó esta carpeta (versión del instalador, plataforma, Ingress, Helm, opciones): envíalo si algo falla", "support/": "datos para soporte: environment-info.sh y el recolector de HCL (--collect)", "internals-ca/": "las CAs de IT corporativo (directorio y bases de datos) en las que DX debe confiar", "prep-pki/": "hace el papel de IT corporativo: las claves de esas CAs y los certificados de servidor (solo la preparación)"},
 };
 
 const finishPrep = lang => lang === "es"
@@ -73,8 +75,11 @@ export function generate(form, lang){
   const lk = t => vault && typeof t === "string" ? t.split(engine.litellmKey).join("@@OB:litellm:masterKey@@") : t;
   let files = Object.fromEntries(Object.entries(engine.bundleFiles(s)).map(([p, f]) =>
     [renamePath(p), /\.sql$/.test(p) ? f : {...f, text: lk(alignFile(renamePath(p), renameText(f.text)))}]));   // the HCL table script is left as it is
+  files = Object.fromEntries(Object.entries(files).map(([p, f]) => [p, p.endsWith("demo-users.ldif") ? {...f, text: peopleLdif(f.text)} : f]));   // real EUROPESIP people (src/people.js)
+  files = corporateCaFiles(files, s, {webinar: form.preset === "webinar"});   // OpenLDAP and PostgreSQL over SSL (src/corporate-ca.js)
   let raw = engine.directSteps(s).map(renameStep).map(st => ({...st, cmd: lk(st.cmd)}));
   ({files, steps: raw} = applyCicd(form, s, files, raw, lang));
+  files = corporateCaKeycloak(files, s);
   const webinar = form.preset === "webinar";
   let iqKey = false;
   if (webinar) ({files, iqKey} = webinarFiles(files, s));
@@ -89,6 +94,7 @@ export function generate(form, lang){
       `${m}\n${sp}# Search Admin UI (content sources and crawlers): https://${s.DX_HOST}/dx/ui/search/admin-ui\n${sp}adminUI:\n${sp}  enabled: true`)}}; }
   { const f = s.dir !== "ad" && adminRoleFile(files), at = raw.findIndex(x => x.id === "2A-3");   // dxadmins as Administrator (XMLAccess)
     if (f && at >= 0) { files = {...files, [f.path]: {text: f.text}}; raw.splice(at + 1, 0, adminRoleStep(s, lang)); } }   // DX namespace live, OpenLDAP secret apart, IQ key in a Secret
+  raw = corporateCaSteps(raw, s, files, lang, {webinar});
   const pgSql = !!engine.pgSqlFor(s);
   const out = [], P = "dx-install/";
   let steps, prep, demo, runbook;
@@ -101,7 +107,7 @@ export function generate(form, lang){
     out.push({name: P + "demo.sh", mode: 0o100755, text: engine.buildInstallSh(s, demo, {name: "demo.sh", pause: true, verify: true, headline: lang === "es" ? "demo del webinar" : "webinar demo",
       purpose: "Webinar phase 2 (the day of the demo): stages 0 to 5, showing each command and waiting for Enter.", reinstall: "prepare.sh"})});
     out.push({name: P + "uninstall.sh", mode: 0o100755, text: engine.buildUninstallSh(s, "prepare.sh")});
-    for (const k of ["prepare.sh", "demo.sh", "uninstall.sh", "BUILD-INFO.txt", "support/"]) dirs[k] = DIRS[lang][k];
+    for (const k of ["prepare.sh", "demo.sh", "uninstall.sh", "BUILD-INFO.txt", "support/", ...(files["internals-ca/README.md"] ? ["internals-ca/", "prep-pki/"] : [])]) dirs[k] = DIRS[lang][k];
   } else {
     const at = raw.findIndex(x => x.id === "1-6");     // diagnosis of the access, after the portal check
     if (at >= 0) raw.splice(at + 1, 0, accessStep(s, lang));
@@ -109,7 +115,7 @@ export function generate(form, lang){
     out.push({name: P + "install.sh", mode: 0o100755, text: cicdInstallSh(form, s, engine.buildInstallSh(s, steps, {headline: lang === "es" ? "instalación" : "installation"}))});
     out.push({name: P + "uninstall.sh", mode: 0o100755, text: engine.buildUninstallSh(s, "install.sh")});
     for (const k of ["install.sh", "uninstall.sh"]) dirs[k] = DIRS[lang][k];
-    for (const k of ["BUILD-INFO.txt", "support/"]) dirs[k] = DIRS[lang][k];
+    for (const k of ["BUILD-INFO.txt", "support/", ...(files["internals-ca/README.md"] ? ["internals-ca/", "prep-pki/"] : [])]) dirs[k] = DIRS[lang][k];
     if (cicd) dirs["lab-cicd/"] = CICD_DIR[lang] || CICD_DIR.en;
   }
   runbook = cicdRunbook(form, s, buildRunbook(s, webinar ? {prep, demo} : {steps}, files, lang, {pgSql, dirs}), lang);

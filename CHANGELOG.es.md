@@ -7,6 +7,29 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## 2.7.0 · 2026-11-10 · CAs corporativas (LDAPS, PostgreSQL por SSL), login por email, el showroom del webinar
+
+- **OpenLDAP y PostgreSQL vienen siempre con SSL** (en cualquier configuración que los instale), como lo harían un
+  directorio y una base de datos corporativos: dos CAs raíz corporativas, *EUROPESIP Corporate Directory Root CA* y
+  *EUROPESIP Corporate Database Root CA*, cuyos certificados quedan en `internals-ca/` (lo que te daría IT); `prep-pki/`
+  hace el papel de IT (claves de las CAs y certificados de servidor, solo la preparación). OpenLDAP sirve LDAPS (636) y
+  exige TLS (`olcSecurity: tls=1`); PostgreSQL (CloudNativePG) usa su certificado de servidor y rechaza cualquier
+  conexión sin SSL (`hostnossl all all all reject`). La CA de OpenSearch sigue aparte.
+- **DX confía en las CAs corporativas** con `configuration.webEngine.customTruststoreSecrets` (secret `dx-corporate-cas`),
+  se conecta al LDAP por LDAPS (`port: 636`, `sslEnabled: true`) y a PostgreSQL con `?sslmode=verify-full` (la única
+  forma que funciona en todos los pasos de CF239 y valida el certificado: ver el `issues.md` del showroom). Keycloak
+  federa el LDAP por LDAPS con la CA del directorio en su truststore.
+- **Login con el email o con el nombre corto**: un configuration override (`loginProperty` `uid` y `mail` en el
+  `ldapRegistry` del chart), junto al de `preferredLanguage`.
+- **Los usuarios LDAP de demo llevan los nombres y emails reales de EUROPESIP** (uid, grupos y contraseñas sin cambios).
+- **Webinar, etapa 2**: primero una capa LDAP básica (`custom-values.ldap-basic.yaml`, 389 en claro); el paso 2-3 sube las
+  CAs corporativas y aplica la capa completa (overrides + LDAPS), y el paso 2-4 cierra el LDAP en claro en directo. La
+  carpeta del webinar incluye también `lab-ldap/example-active-directory.yaml`, un ejemplo avanzado de Active Directory
+  (no se aplica).
+- **IQ 1.0.3 ignora `dbTlsEnabled`**: con la base de datos de IQ en PostgreSQL, `pg_hba` mantiene una excepción solo para `iqdb`.
+- **El showroom del webinar**: los ficheros generados del webinar (con las credenciales ocultas), la presentación y el
+  vídeo se publican en su propio repositorio, [hcl-dx-compose-showroom](https://github.com/europesip/hcl-dx-compose-showroom).
+
 ## 2.6.0 · 2026-11-10 · Webinar más en directo y soporte
 
 - **Webinar, etapa 0 en directo**: `prepare.sh` solo crea el namespace de las herramientas de terceros e instala OpenLDAP

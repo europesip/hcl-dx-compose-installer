@@ -118,7 +118,7 @@ export function renumber(steps, lang){
 // ---------------------------------------------------------------------------------------------
 // Webinar: preparation (before the session) and the demo (stages 0 to 5)
 // ---------------------------------------------------------------------------------------------
-const PREP_IDS = new Set(["0-1", "0-2", "D-1", "D-2", "D-3", "D-4"]);
+const PREP_IDS = new Set(["0-1", "0-2", "D-1", "D-CA", "D-2", "D-3", "D-4"]);
 
 // Webinar files (output layer; the engine stays as the frozen wizard): the namespace of the third-party tools
 // alone for the preparation, and the DX one shown and created live in the demo (generic and OpenShift versions);
