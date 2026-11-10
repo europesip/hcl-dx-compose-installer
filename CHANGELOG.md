@@ -26,9 +26,8 @@ installation is the same as in 2.0.x.
   corporate CAs and applies the complete layer (overrides + LDAPS), and step 2-4 closes plain LDAP live. The webinar
   folder also includes `lab-ldap/example-active-directory.yaml`, an advanced Active Directory example (not applied).
 - **IQ 1.0.3 ignores `dbTlsEnabled`**: with the IQ database in PostgreSQL, `pg_hba` keeps an exception for `iqdb` only.
-- **The labs repository became the webinar showroom**: the generated webinar files (credentials redacted), the slides
-  and the video. The installer links the PoC on WSL2 guide from the tag `labs-archive-2026-11-10`, and the golden test
-  uses the frozen wizard of `hcl-dx-compose-labs-wizard`.
+- **The webinar showroom**: the generated webinar files (credentials redacted), the slides and the video are published
+  in their own repository, [hcl-dx-compose-showroom](https://github.com/europesip/hcl-dx-compose-showroom).
 
 ## 2.6.0 · 2026-11-10 · Webinar more live, supportability
 

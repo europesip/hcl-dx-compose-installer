@@ -97,7 +97,8 @@ Más preguntas: **[Preguntas frecuentes](docs/faq.es.md)**. Si algo falla: **[Er
 | [Seguridad](docs/security.es.md) | Adónde va cada credencial, salida a Internet limitada, la imagen original, buenas prácticas |
 | [Cómo funciona](docs/how-it-works.es.md) | Tus datos, el código, desarrollo y CI |
 | [Cómo trabajamos](docs/workflow.es.md) | Issues, el tablero del proyecto, pull requests y especificaciones |
-| [Showroom de HCL DX Compose](https://github.com/europesip/hcl-dx-compose-labs) | Los ficheros, la presentación y el vídeo del webinar «Deploy HCL DX Compose in Minutes» (12/11/2026), generados por este instalador. Los antiguos labs paso a paso están en el tag `labs-archive-2026-11-10` |
+| [Laboratorios de HCL DX Compose](https://github.com/europesip/hcl-dx-compose-labs) | Las guías para aprender cada paso a mano |
+| [Showroom de HCL DX Compose](https://github.com/europesip/hcl-dx-compose-showroom) | Los ficheros, la presentación y el vídeo del webinar «Deploy HCL DX Compose in Minutes» (12/11/2026), generados por este instalador |
 | [ÓRBITA](https://github.com/europesip/orbita) | Una intranet para HCL DX Compose que el instalador puede añadir |
 
 Las contribuciones son bienvenidas: abre un issue o un pull request.

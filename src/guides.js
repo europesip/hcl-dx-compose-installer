@@ -54,5 +54,5 @@ export const linuxCmds = [
   {lang: "bash", cmd: k3s},
   {lang: "bash", cmd: "kubectl get nodes && helm version --short"},
 ];
-export const LAB0_GUIDE = {en: "https://github.com/europesip/hcl-dx-compose-labs/blob/labs-archive-2026-11-10/lab0-poc-wsl/GUIDE.md",
-                           es: "https://github.com/europesip/hcl-dx-compose-labs/blob/labs-archive-2026-11-10/lab0-poc-wsl/GUIDE.es.md"};
+export const LAB0_GUIDE = {en: "https://github.com/europesip/hcl-dx-compose-labs/blob/main/lab0-poc-wsl/GUIDE.md",
+                           es: "https://github.com/europesip/hcl-dx-compose-labs/blob/main/lab0-poc-wsl/GUIDE.es.md"};

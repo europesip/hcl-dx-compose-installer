@@ -27,9 +27,8 @@ es la misma que en la 2.0.x.
   carpeta del webinar incluye también `lab-ldap/example-active-directory.yaml`, un ejemplo avanzado de Active Directory
   (no se aplica).
 - **IQ 1.0.3 ignora `dbTlsEnabled`**: con la base de datos de IQ en PostgreSQL, `pg_hba` mantiene una excepción solo para `iqdb`.
-- **El repositorio de labs pasa a ser el showroom del webinar**: los ficheros generados del webinar (con las credenciales
-  ocultas), la presentación y el vídeo. El instalador enlaza la guía del PoC en WSL2 desde el tag
-  `labs-archive-2026-11-10`, y el golden test usa el wizard congelado de `hcl-dx-compose-labs-wizard`.
+- **El showroom del webinar**: los ficheros generados del webinar (con las credenciales ocultas), la presentación y el
+  vídeo se publican en su propio repositorio, [hcl-dx-compose-showroom](https://github.com/europesip/hcl-dx-compose-showroom).
 
 ## 2.6.0 · 2026-11-10 · Webinar más en directo y soporte
 
