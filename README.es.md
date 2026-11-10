@@ -1,6 +1,8 @@
 <p align="center"><img src="public/europesip-logo.svg" alt="EUROPESIP" width="260"></p>
 
-<h1 align="center">Instalador de HCL DX Compose</h1>
+<h1 align="center">DX Installer Wizard</h1>
+
+<p align="center"><i>para HCL DX Compose · de EuropeSIP (no es un producto de HCL)</i></p>
 
 <p align="center"><b>De cero a un HCL DX Compose funcionando, paso a paso.</b><br>
 Un instalador web guiado para pruebas de concepto y entornos de pruebas, de <a href="https://www.europesip.com">EUROPESIP</a>.</p>
@@ -35,7 +37,7 @@ Un instalador web guiado para pruebas de concepto y entornos de pruebas, de <a h
 **Opción 1 · En tu máquina Windows o Mac, con Docker**
 
 ```bash
-docker run --rm -p 8080:8080 ghcr.io/europesip/hcl-dx-compose-installer:2.7.0
+docker run --rm -p 8080:8080 ghcr.io/europesip/hcl-dx-compose-installer:2.7.1
 ```
 
 Después abre http://localhost:8080.
@@ -43,7 +45,7 @@ Después abre http://localhost:8080.
 **Opción 2 · En un clúster Kubernetes u OpenShift, con Helm**
 
 ```bash
-helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer --version 2.7.0 \
+helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer --version 2.7.1 \
   -n dx-installer --create-namespace --set ingress.enabled=true --set ingress.host=installer.example.com \
   --set auth.enabled=true --set auth.username=admin --set auth.password='S3cret!'
 ```

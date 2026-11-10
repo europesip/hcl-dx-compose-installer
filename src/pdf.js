@@ -58,7 +58,7 @@ export async function buildPdf(gen, lang, summaryRows, {mask = true, logos = {}}
     else if (b.t === "break") content.push({text: "", pageBreak: "after"});
   }
   const dd = {
-    info: {title: doc.title, author: "EUROPESIP", creator: "HCL DX Compose Installer"},
+    info: {title: doc.title, author: "EUROPESIP", creator: "DX Installer Wizard"},
     pageSize: "A4", pageMargins: [48, 56, 48, 52],
     header: (page) => page === 1 ? null : (imgE ? {image: imgE, width: 90, alignment: "right", margin: [0, 22, 48, 0]} : {text: "EUROPESIP", alignment: "right", margin: [0, 22, 48, 0], color: GREY, fontSize: 8}),
     footer: (page, pages) => ({text: `${doc.footer}${doc.page} ${page} / ${pages}`, alignment: "center", fontSize: 8, color: GREY, margin: [0, 18, 0, 0]}),

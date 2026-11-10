@@ -1,4 +1,4 @@
-HCL DX Compose Installer
+DX Installer Wizard (for HCL DX Compose) · by EuropeSIP
 Copyright 2026 EUROPESIP (https://www.europesip.com) · MIT License (see LICENSE)
 
 The generation engine (src/engine/core.js) and the lab files it contains come from the

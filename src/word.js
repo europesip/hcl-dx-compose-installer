@@ -85,7 +85,7 @@ export async function buildWord(gen, lang, summaryRows, {mask = true, as = "blob
   }
   const header = new Header({children: [new Paragraph({alignment: AlignmentType.RIGHT, children: logos.europesip ? [logo(logos.europesip, 110, 16)] : [run("EUROPESIP", {size: 16, color: GREY})]})]});
   const document = new Document({
-    creator: "HCL DX Compose Installer · EUROPESIP", title: doc.title, description: "https://" + doc.host, features: {updateFields: true},
+    creator: "DX Installer Wizard · EUROPESIP", title: doc.title, description: "https://" + doc.host, features: {updateFields: true},
     styles: {default: {document: {run: {font: "Calibri", size: 21, color: INK}}},
       paragraphStyles: [
         {id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true, run: {size: 36, bold: true, color: BLUE}, paragraph: {spacing: {before: 360, after: 160}}},

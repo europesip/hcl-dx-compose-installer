@@ -1,4 +1,4 @@
-# HCL DX Compose Installer: the React page and a small Node server, with the tools that create the
+# DX Installer Wizard: the React page and a small Node server, with the tools that create the
 # AWS environments (aws, eksctl, rosa, oc, kubectl, helm, ssh).
 FROM node:24-alpine AS build
 WORKDIR /app
@@ -18,7 +18,7 @@ ARG ROSA_VERSION=1.2.66
 ARG OC_VERSION=4.19.50
 ARG KUBECTL_VERSION=v1.35.5
 ARG HELM_VERSION=v4.3.1
-LABEL org.opencontainers.image.title="HCL DX Compose Installer" \
+LABEL org.opencontainers.image.title="DX Installer Wizard" \
       org.opencontainers.image.description="Web installer for HCL DX Compose: from the environment (your cluster, a PC or AWS) to a ready-to-run installation" \
       org.opencontainers.image.source="https://github.com/europesip/hcl-dx-compose-installer" \
       org.opencontainers.image.licenses="MIT" \

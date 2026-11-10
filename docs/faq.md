@@ -1,4 +1,4 @@
-# HCL DX Compose Installer · FAQ
+# DX Installer Wizard · FAQ
 
 **English** · [Español](faq.es.md) · [Frequent errors](troubleshooting.md) · [README](../README.md)
 

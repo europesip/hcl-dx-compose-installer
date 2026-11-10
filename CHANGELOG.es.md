@@ -7,6 +7,13 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## 2.7.1 · 2026-11-10 · Nombre nuevo: DX Installer Wizard, de EuropeSIP
+
+- **El instalador pasa a llamarse «DX Installer Wizard»** (de EuropeSIP), en la página web, el README, los ficheros
+  generados, los guiones Word y PDF y las notas del chart: el nombre anterior, «HCL DX Compose Installer», podía hacer
+  pensar en un producto de HCL. No lo es: es una herramienta de código abierto de EuropeSIP para HCL DX Compose. No cambia
+  nada más (mismos nombres de repositorio, imagen y chart).
+
 ## 2.7.0 · 2026-11-10 · CAs corporativas (LDAPS, PostgreSQL por SSL), login por email, el showroom del webinar
 
 - **OpenLDAP y PostgreSQL vienen siempre con SSL** (en cualquier configuración que los instale), como lo harían un

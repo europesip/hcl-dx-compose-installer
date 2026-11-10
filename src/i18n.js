@@ -8,7 +8,7 @@ export function detectLang(){
 
 export const TEXTS = {
   en: {
-    app: "HCL DX Compose Installer", by: "by EUROPESIP",
+    app: "DX Installer Wizard", by: "by EuropeSIP",
     phases: ["Welcome", "Environment", "Deployment", "Details", "Download"],
     stepOf: (a, b) => `Step ${a} of ${b}`,
     next: "Next", back: "Back", start: "Get started", restart: "Start again", copy: "Copy", copied: "Copied",
@@ -226,7 +226,7 @@ export const TEXTS = {
     footer: "Open source (MIT)", footerHcl: "HCL, HCL Digital Experience and HCL DX Compose are trademarks of HCL Technologies. This is not an HCL product.",
   },
   es: {
-    app: "Instalador de HCL DX Compose", by: "de EUROPESIP",
+    app: "DX Installer Wizard", by: "de EuropeSIP",
     phases: ["Bienvenida", "Entorno", "Despliegue", "Datos", "Descarga"],
     stepOf: (a, b) => `Paso ${a} de ${b}`,
     next: "Siguiente", back: "Atrás", start: "Empezar", restart: "Empezar de nuevo", copy: "Copiar", copied: "Copiado",
