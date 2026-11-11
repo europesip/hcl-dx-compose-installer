@@ -5,6 +5,7 @@
 //
 // The engine (core.js) produces the steps with their original lab ids (D-2, 2A-3, 3-4...). Here they
 // are given their stage and a new id "<stage>-<n>", and the webinar is split into its two phases.
+import {HARBOR_NOTE, harborPromptCmd, secretsStepCmd, secretsStepNote, encryptStep} from "../sops.js";
 
 export const STAGES = {
   en: ["Prerequisites", "Base DX installation", "LDAP configuration", "Transfer to an external database", "AI Assistant", "Search", "ÓRBITA (extra)"],
@@ -123,8 +124,7 @@ const PREP_IDS = new Set(["0-1", "0-2", "D-1", "D-CA", "D-2", "D-3", "D-4"]);
 // Webinar files (output layer; the engine stays as the frozen wizard): the namespace of the third-party tools
 // alone for the preparation, and the DX one shown and created live in the demo (generic and OpenShift versions);
 // the OpenLDAP admin secret apart from the DX bind secret (dx-demo does not exist during the preparation); and
-// the IQ deployment key in a Secret instead of the IQ values (the chart cannot read it from a secret yet, so
-// demo.sh passes it with --set).
+// a comment next to the IQ deployment key (the chart cannot read it from a secret yet, #17).
 const splitDocs = text => { const parts = text.split(/^---\s*$/m); return {head: parts[0], docs: parts.slice(1)}; };
 export function webinarFiles(files, s){
   const ns = s.DX_NS, sh = s.SHARED_NS, out = {...files};
@@ -169,32 +169,21 @@ metadata:
       out["lab-ldap/secrets.yaml"] = {...ld, text: head + docs.filter(d => !inNs(d)).map(d => "---" + d).join("")};
     }
   }
-  // the IQ deployment key: from custom-iq-values.yaml to a Secret in lab-iq/secrets.yaml
-  let iqKey = false;
-  const iv = out["lab-iq/custom-iq-values.yaml"], is = out["lab-iq/secrets.yaml"];
-  const m = iv && iv.text.match(/^(\s*)deploymentKey:\s*(.+?)\s*$/m);
-  if (m && is && /^kind: Secret$/m.test(is.text) && !/ExternalSecret/.test(is.text)) {
-    iqKey = true;
-    out["lab-iq/custom-iq-values.yaml"] = {...iv, text: iv.text.replace(/^([ \t]*)licensing:[ \t]*\n[ \t]*deploymentKey:.*$/m,
-      `$1# licensing.deploymentKey is NOT here: the chart cannot read it from a secret yet (only from its values), so\n$1# demo.sh reads it from the Secret iq-deployment-key (lab-iq/secrets.yaml) and passes it with --set.`)};
-    out["lab-iq/secrets.yaml"] = {...is, text: is.text.replace(/\n*$/, "\n") + `---
-# The IQ deployment key. The chart hcl-dx-iq 1.0.3 cannot read it from a secret yet, only from its values: the
-# install command (step 4-1) reads it from here into a variable and passes it with --set, so it is never written
-# in a values file nor shown on screen.
-apiVersion: v1
-kind: Secret
-metadata:
-  name: iq-deployment-key
-  namespace: ${ns}
-type: Opaque
-stringData:
-  deploymentKey: ${m[2]}
-`};
-  }
-  return {files: out, iqKey};
+  // the IQ deployment key stays in custom-iq-values.yaml (#17), with a comment that says why and how to keep it
+  // out of Git in clear text
+  const iv = out["lab-iq/custom-iq-values.yaml"];
+  if (iv && /^[ \t]*licensing:[ \t]*\n[ \t]*deploymentKey:/m.test(iv.text) && !/hcl-dx-iq 1\.0\.3 cannot read it/.test(iv.text))
+    out["lab-iq/custom-iq-values.yaml"] = {...iv, text: iv.text.replace(/^([ \t]*)licensing:[ \t]*\n/m, (m, sp) =>
+      `${sp}# The deployment key of the IQ licence. hcl-dx-iq 1.0.3 cannot read it from a Secret yet, only from its values,\n` +
+      `${sp}# so it is here. To keep it out of Git in clear text: encrypt this field with SOPS (as the secrets of lab-base),\n` +
+      `${sp}# or leave it out of this file and pass it on the helm command with --set configuration.licensing.deploymentKey=...\n` + m)};
+  // the webinar shows no Script Applications: the comment of preferredLanguage says what DX does with it
+  const lv = out["lab-ldap/custom-values.ldap.yaml"];
+  if (lv) out["lab-ldap/custom-values.ldap.yaml"] = {...lv, text: lv.text.replace("returns it (Script Applications such as ÓRBITA and Hello DX use it for their language).", "returns it, and DX shows the portal in that language.")};
+  return {files: out};
 }
 
-export function webinarPhases(rawSteps, s, lang, {iqKey = false} = {}){
+export function webinarPhases(rawSteps, s, lang, {sops = false} = {}){
   const es = lang === "es", t = (en, sp) => es ? sp : en;
   const ns = s.DX_NS, sh = s.SHARED_NS, by = id => rawSteps.find(x => x.id === id);
   const prep = [];
@@ -215,6 +204,8 @@ export function webinarPhases(rawSteps, s, lang, {iqKey = false} = {}){
     add(prep, st, {id: `P-${i++}`, lab: P});
   }
 
+  if (sops) prep.push({...encryptStep(lang), id: `P-${i++}`, lab: P});
+
   // ---- Demo: stage 0 checks the preparation, creates the DX namespace, signs in to the HCL registry and pulls
   // the charts; then stages 1 to 5 (LiteLLM opens stage 4, see renumber)
   const check = {id: "D-0", title: t("Check that the environment is ready", "Comprobar que el entorno está preparado"),
@@ -231,18 +222,16 @@ export function webinarPhases(rawSteps, s, lang, {iqKey = false} = {}){
 cat lab-base/namespace-dx.openshift.yaml    # OpenShift
 kubectl apply -f ${nsFile}`};
   const charts = by("1-2") && {...by("1-2"), stageAs: 0, title: t("HCL Harbor (hclcr.io): sign in and pull the charts", "Harbor de HCL (hclcr.io): login y descarga de los charts"),
-    note: t("The Helm charts of DX, IQ and Search, with your Harbor user and CLI secret. The images are pulled by the cluster itself, with the regcred pull secret (stage 1).",
-            "Los charts de Helm de DX, IQ y Search, con tu usuario y CLI secret de Harbor. Las imágenes las descarga el propio clúster, con el pull secret regcred (etapa 1)."),
-    cmd: by("1-2").cmd.replace(/^\[ -f \S+ \] \|\| /gm, "")};
+    note: HARBOR_NOTE[es ? "es" : "en"],
+    cmd: harborPromptCmd(by("1-2").cmd.replace(/^\[ -f \S+ \] \|\| /gm, ""))};
   const certs = webinarCerts(ns, t);
   const demoRaw = [];
   for (const st of rawSteps) {
     if (PREP_IDS.has(st.id) || st.id === "D-0" || st.id === "1-2") continue;
-    if (st.id === "1-3") { demoRaw.push({...st, note: st.note + " " + DECL[lang === "es" ? "es" : "en"]}); continue; }
+    if (st.id === "1-3") { demoRaw.push({...st, note: secretsStepNote(st.note) + " " + DECL[lang === "es" ? "es" : "en"], cmd: secretsStepCmd(st.cmd, sops)}); continue; }
     if (/^2A-/.test(st.id) && !demoRaw.some(x => x.ldapSecret)) {
       demoRaw.push({...st, ldapSecret: true, cmd: `kubectl apply -f lab-ldap/secrets.yaml     # the bind secret dx-ldap-bind (${ns})\n${st.cmd}`}); continue; }
     if (st.id === "4-1") { demoRaw.push(...certs); continue; }
-    if (st.id === "3-4" && iqKey) { demoRaw.push({...st, cmd: iqWithSet(st.cmd, ns)}); continue; }
     demoRaw.push(st);
   }
   demoRaw.unshift(nsStep, ...(charts ? [charts] : []));
@@ -256,12 +245,6 @@ const DECL = {
   es: "Hay dos formas habituales de crear objetos de Kubernetes como estos secrets: la imperativa, con comandos como kubectl create secret, y la declarativa, describiéndolos en ficheros YAML que se aplican con kubectl apply. GitOps trabaja con la declarativa, así que es la que sigue este webinar (el secret TLS se construye a partir de los ficheros del certificado).",
 };
 export const DECLARATIVE_NOTE = DECL;
-
-// The IQ install with the deployment key read from its Secret and passed with --set
-function iqWithSet(cmd, ns){
-  return `IQ_DEPLOYMENT_KEY=$(kubectl -n ${ns} get secret iq-deployment-key -o jsonpath='{.data.deploymentKey}' | base64 -d)\n` +
-    cmd.replace(/(-f lab-iq\/custom-iq-values\.yaml)/, `$1 \\\n  --set configuration.licensing.deploymentKey="$IQ_DEPLOYMENT_KEY"`);
-}
 
 // The OpenSearch certificates of the webinar: one step per certificate, every command visible (the engine
 // builds them in a loop)

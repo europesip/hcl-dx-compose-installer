@@ -59,6 +59,9 @@ const inputCls = "w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2
 export function Input({mono, className, ...p}){
   return <input className={cx(inputCls, mono && "font-mono", className)} spellCheck={false} autoComplete="off" {...p} />;
 }
+export function Textarea({mono, className, ...p}){
+  return <textarea className={cx(inputCls, mono && "font-mono", className)} spellCheck={false} autoComplete="off" {...p} />;
+}
 export function Secret(p){
   const [show, setShow] = useState(false);
   return (
