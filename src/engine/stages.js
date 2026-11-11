@@ -119,6 +119,8 @@ export function renumber(steps, lang){
 // ---------------------------------------------------------------------------------------------
 // Webinar: preparation (before the session) and the demo (stages 0 to 5)
 // ---------------------------------------------------------------------------------------------
+// CPU and memory in use on each node, as in the webinar (#17); optional: some clusters (EKS) have no metrics-server
+const TOP_NODES = `kubectl top nodes 2>/dev/null || echo "kubectl top nodes: no metrics-server in this cluster (optional)"   # CPU and memory in use on each node`;
 const PREP_IDS = new Set(["0-1", "0-2", "D-1", "D-CA", "D-2", "D-3", "D-4"]);
 
 // Webinar files (output layer; the engine stays as the frozen wizard): the namespace of the third-party tools
@@ -211,7 +213,7 @@ export function webinarPhases(rawSteps, s, lang, {sops = false} = {}){
   const check = {id: "D-0", title: t("Check that the environment is ready", "Comprobar que el entorno está preparado"),
     note: t(`What the preparation left ready: the cluster and, in ${sh}, OpenLDAP and PostgreSQL.`, `Lo que dejó listo la preparación: el clúster y, en ${sh}, OpenLDAP y PostgreSQL.`),
     opt: false, manual: "", lab: "",
-    cmd: [`kubectl get nodes`, `kubectl get storageclass ${s.SC_RWO} ${s.SC_RWX}`,
+    cmd: [`kubectl get nodes`, TOP_NODES, `kubectl get storageclass ${s.SC_RWO} ${s.SC_RWX}`,
       `kubectl -n ${sh} get pods                      # OpenLDAP and PostgreSQL: Running`,
       `kubectl -n ${sh} get clusters.postgresql.cnpg.io   # ${s.PG_CLUSTER}: Cluster in healthy state`].join("\n")};
   const nsFile = s.openshift ? "lab-base/namespace-dx.openshift.yaml" : "lab-base/namespace-dx.yaml";

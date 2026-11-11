@@ -43,6 +43,9 @@ Webinar preset only. The engine (src/engine/core.js) is not changed: the golden 
    - BUILD-INFO.txt: `sops : age · N public keys (names) · files (encrypted by prepare.sh)`.
    - Only public keys go through the wizard: nothing secret leaves the browser; the real `sops` encrypts.
 
+5. **Step 0-1 (always):** `kubectl top nodes` after `kubectl get nodes`, as in the video; when the cluster has no
+   metrics-server it prints a note instead of failing (demo.sh runs with `set -e`).
+
 ## Acceptance criteria
 - [x] Webinar: step 0-3 has no password on the command line; demo.sh asks for it, or reads it without a terminal.
 - [x] Webinar: the IQ deployment key is in `lab-iq/custom-iq-values.yaml` with its comment; no Secret, no `--set`.

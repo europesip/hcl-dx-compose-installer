@@ -73,3 +73,8 @@ test("SOPS only applies to the webinar", () => {
   assert.equal(file(g, ".sops.yaml"), undefined);
   assert.doesNotMatch(file(g, "install.sh"), /sops /);
 });
+
+test("webinar: step 0-1 shows the CPU and memory of the nodes, without failing when there is no metrics-server", () => {
+  const st = make().demo.find(x => x.id === "0-1");
+  assert.match(st.cmd, /^kubectl get nodes\nkubectl top nodes 2>\/dev\/null \|\| echo /);
+});

@@ -21,6 +21,8 @@ es la misma que en la 2.0.x.
 - **Webinar, deployment key de IQ:** vuelve a `lab-iq/custom-iq-values.yaml`, con un comentario que explica por qué
   (hcl-dx-iq 1.0.3 no la lee de un Secret) y cómo no tenerla en claro en Git (SOPS o `--set`); desaparecen el Secret
   `iq-deployment-key` y el `--set` del paso 4-3.
+- **Webinar, paso 0-1:** `kubectl top nodes` (CPU y memoria en uso de cada nodo), como en el vídeo; no detiene la demo
+  si el clúster no tiene metrics-server.
 - Webinar: sin menciones a Keycloak/ÓRBITA en los comentarios del clúster de PostgreSQL y de la capa LDAP.
 
 ## 2.7.1 · 2026-11-10 · Nombre nuevo: DX Installer Wizard, de EuropeSIP
