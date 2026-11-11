@@ -7,6 +7,23 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## Unreleased · The webinar zip as in the webinar of 2026-11-12 (#17)
+
+- **SOPS (age) for the base secrets of the webinar**, optional and off by default (*Your details › SOPS: encrypted
+  secrets*): one or more age **public** keys, each with an optional name; a private key is refused. The zip gets
+  `.sops.yaml` (every key, names as comments), prepare.sh a last step that encrypts `lab-base/secret-harbor.yaml` and
+  `lab-base/secrets.yaml` with the real `sops` CLI (again, if a demo decrypted them), step 1-1 decrypts them, and the
+  RUNBOOK says who can decrypt and how to add or remove a key (`sops updatekeys`). BUILD-INFO.txt names the keys.
+- **Webinar, step 0-3:** the HCL Harbor CLI secret is no longer on the command line (nor in RUNBOOK.md / demo.sh): only
+  the user, Helm asks for the password; then `ls -l charts/`. Without a terminal, demo.sh reads it from the pull secret.
+  The pull secret has its own file, `lab-base/secret-harbor.yaml`.
+- **Webinar, IQ deployment key:** back in `lab-iq/custom-iq-values.yaml`, with a comment that says why (hcl-dx-iq 1.0.3
+  cannot read it from a Secret) and how to keep it out of Git in clear text (SOPS or `--set`); the Secret
+  `iq-deployment-key` and the `--set` of step 4-3 are gone.
+- **Webinar, step 0-1:** `kubectl top nodes` (CPU and memory in use on each node), as in the video; it does not stop
+  the demo when the cluster has no metrics-server.
+- Webinar: no Keycloak/ÓRBITA mentions in the comments of the PostgreSQL cluster and the LDAP layer.
+
 ## 2.7.1 · 2026-11-10 · New name: DX Installer Wizard, by EuropeSIP
 
 - **The installer is now called "DX Installer Wizard"** (by EuropeSIP), in the web page, the README, the generated

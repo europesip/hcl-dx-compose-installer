@@ -91,7 +91,7 @@ initTLSSecret:
     const c = s.PG_CLUSTER, sans = ["rw", "ro", "r"].flatMap(k => [`${c}-${k}`, `${c}-${k}.${sh}`, `${c}-${k}.${sh}.svc`, `${c}-${k}.${sh}.svc.cluster.local`]);
     out[`${PKI}/postgres.ext`] = {text: ext(sans, CA.pg.cn)};
     set("lab-bbdd/cluster-dx-pg.yaml", t => t
-      .replace(/^  postgresql:[ \t]*\n/m, m => `${m}    # SSL only: any connection without encryption is rejected (DX, Keycloak and ÓRBITA connect over SSL)\n    pg_hba:\n${s.iqdb ? "      # Exception: IQ 1.0.3 ignores dbTlsEnabled and connects to iqdb without SSL\n      - host iqdb dx_iq_db_user all scram-sha-256\n" : ""}      - hostnossl all all all reject\n`)
+      .replace(/^  postgresql:[ \t]*\n/m, m => `${m}    # SSL only: any connection without encryption is rejected (${webinar ? "DX connects" : "DX, Keycloak and ÓRBITA connect"} over SSL)\n    pg_hba:\n${s.iqdb ? "      # Exception: IQ 1.0.3 ignores dbTlsEnabled and connects to iqdb without SSL\n      - host iqdb dx_iq_db_user all scram-sha-256\n" : ""}      - hostnossl all all all reject\n`)
       .replace(/^  storage:[ \t]*\n/m, m => `  # Server certificate signed by the ${CA.pg.cn} (${CAS}/${CA.pg.file}.crt): DX verifies it (sslmode=verify-full)\n  certificates:\n    serverTLSSecret: dx-pg-tls\n    serverCASecret: dx-pg-corporate-ca\n${m}`));
     // sslmode=verify-full and nothing else (verified on CF239): DX gives the PostgreSQL driver the CAs of
     // customTruststoreSecrets, in Liberty and in its own Java tools (status checks, DB transfer). A second parameter

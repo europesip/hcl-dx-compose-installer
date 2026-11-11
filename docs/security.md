@@ -56,6 +56,25 @@ docker build -t dx-installer . && docker run --rm -p 8080:8080 dx-installer
 The zip you download contains the credentials in plain text (it has to, to install): keep it private and delete it
 when you no longer need it. The Word script of the webinar hides them by default.
 
+## Webinar: the base secrets encrypted with SOPS
+
+The webinar can keep the pull secret and wpsadmin encrypted with [SOPS](https://github.com/getsops/sops) and
+[age](https://github.com/FiloSottile/age), as they would be in a Git repository (option *SOPS: encrypted secrets* in
+*Your details*).
+
+- **Only public keys** (`age1…`) are asked for, one or more (one per person, with an optional name). A public key can
+  only encrypt; each person decrypts with their own private key (`~/.config/sops/age/keys.txt`), which never goes
+  through the wizard. A private key pasted by mistake (`AGE-SECRET-KEY-1…`) is refused.
+- The wizard writes `.sops.yaml` and the commands; **prepare.sh encrypts** `lab-base/secret-harbor.yaml` and
+  `lab-base/secrets.yaml` with the real `sops` CLI on your machine (it must be installed). Until then, the files of the
+  zip are in plain text, as always.
+- Step 1-1 decrypts them: the pull secret on the fly (`sops -d … | kubectl apply -f -`), wpsadmin in place.
+- To add or remove someone: change the list in `.sops.yaml` and run `sops updatekeys -y` on each encrypted file. When
+  you remove someone, rotate the secrets too. Keep a copy of your private key: without it, the files cannot be decrypted.
+
+In the webinar, the HCL Harbor sign-in (step 0-3) only has the user on the command line: Helm asks for the CLI secret,
+which is not shown and is not written in RUNBOOK.md or demo.sh.
+
 ## Protect the page
 
 If the installer can be reached from outside your machine, turn on its user and password: `auth.enabled=true` in the

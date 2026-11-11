@@ -12,6 +12,7 @@ import {retryScript, fixCollector} from "./retry.js";
 import {buildInfo, stampOf, accessStep, environmentInfoSh, collectorExtras} from "./support.js";
 import {resourcesMd} from "./resources.js";
 import {altRegistryOn, registryForm, applyRegistry, REGISTRY_NOTE} from "./registry.js";
+import {sopsOn, parseSopsKeys, sopsErrors, baseSecretFiles, harborPromptDemo, sopsRunbookNote, SOPS_FILES} from "./sops.js";
 import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, CICD_DIR} from "./cicd.js";
 export {zipBytes} from "./zip.js";
 
@@ -24,10 +25,10 @@ export const WORD_NAME_ES = "Guion-webinar-DX-Compose.docx";
 const DIRS = {
   en: {"install.sh": "runs every step, by stages", "prepare.sh": "webinar phase 1: OpenLDAP and PostgreSQL (the rest is done live)", "demo.sh": "webinar phase 2: stages 0 to 5, one command at a time",
        "uninstall.sh": "deletes everything that was installed", "RUNBOOK.md": "this document", "charts/": "HCL charts, downloaded by the first steps",
-       "BUILD-INFO.txt": "what this folder was generated for (installer version, platform, Ingress, Helm, options): send it if something fails", "support/": "support data: environment-info.sh and the HCL collector (--collect)", "internals-ca/": "the CAs of corporate IT (directory and databases) that DX must trust", "prep-pki/": "plays the part of corporate IT: the keys of those CAs and the server certificates (preparation only)"},
+       "BUILD-INFO.txt": "what this folder was generated for (installer version, platform, Ingress, Helm, options): send it if something fails", "support/": "support data: environment-info.sh and the HCL collector (--collect)", "internals-ca/": "the CAs of corporate IT (directory and databases) that DX must trust", "prep-pki/": "plays the part of corporate IT: the keys of those CAs and the server certificates (preparation only)", ".sops.yaml": "SOPS rules: which files are encrypted and for which age public keys"},
   es: {"install.sh": "ejecuta todos los pasos, por etapas", "prepare.sh": "fase 1 del webinar: OpenLDAP y PostgreSQL (el resto, en directo)", "demo.sh": "fase 2 del webinar: etapas 0 a 5, comando a comando",
        "uninstall.sh": "borra todo lo instalado", "RUNBOOK.md": "este documento", "charts/": "charts de HCL, los descargan los primeros pasos",
-       "BUILD-INFO.txt": "para qué se generó esta carpeta (versión del instalador, plataforma, Ingress, Helm, opciones): envíalo si algo falla", "support/": "datos para soporte: environment-info.sh y el recolector de HCL (--collect)", "internals-ca/": "las CAs de IT corporativo (directorio y bases de datos) en las que DX debe confiar", "prep-pki/": "hace el papel de IT corporativo: las claves de esas CAs y los certificados de servidor (solo la preparación)"},
+       "BUILD-INFO.txt": "para qué se generó esta carpeta (versión del instalador, plataforma, Ingress, Helm, opciones): envíalo si algo falla", "support/": "datos para soporte: environment-info.sh y el recolector de HCL (--collect)", "internals-ca/": "las CAs de IT corporativo (directorio y bases de datos) en las que DX debe confiar", "prep-pki/": "hace el papel de IT corporativo: las claves de esas CAs y los certificados de servidor (solo la preparación)", ".sops.yaml": "reglas de SOPS: qué ficheros se cifran y para qué claves públicas de age"},
 };
 
 const finishPrep = lang => lang === "es"
@@ -81,8 +82,10 @@ export function generate(form, lang){
   ({files, steps: raw} = applyCicd(form, s, files, raw, lang));
   files = corporateCaKeycloak(files, s);
   const webinar = form.preset === "webinar";
-  let iqKey = false;
-  if (webinar) ({files, iqKey} = webinarFiles(files, s));
+  const sops = sopsOn(form), sopsKeys = sops ? parseSopsKeys(form.SOPS_KEYS).keys : [];
+  check.err.push(...sopsErrors(form, lang));
+  if (webinar) ({files} = webinarFiles(files, s));
+  if (webinar) files = baseSecretFiles(files, s, {sops, keys: sopsKeys});   // pull secret apart, .sops.yaml (src/sops.js)
   // A k3s installed seconds ago has no ServiceAccount "default" yet: the one-off DAM volume pod would be refused
   const DAM_POD = "kubectl apply -f lab-poc/prepare-dam-volume.yaml";
   raw = raw.map(st => typeof st.cmd === "string" && st.cmd.includes(DAM_POD) ? {...st, cmd: st.cmd.replace(DAM_POD,
@@ -100,14 +103,14 @@ export function generate(form, lang){
   let steps, prep, demo, runbook;
   const dirs = {};
   if (webinar) {
-    ({prep, demo} = webinarPhases(raw, s, lang, {iqKey}));
+    ({prep, demo} = webinarPhases(raw, s, lang, {sops}));
     steps = [...prep, ...demo];
     out.push({name: P + "prepare.sh", mode: 0o100755, text: engine.buildInstallSh(s, prep, {name: "prepare.sh", headline: lang === "es" ? "preparación del webinar" : "webinar preparation",
       purpose: "Webinar phase 1: the namespace of the third-party tools, OpenLDAP and PostgreSQL, then stops (the environment is ready for the session).", finish: finishPrep(lang), reinstall: "prepare.sh"})});
     out.push({name: P + "demo.sh", mode: 0o100755, text: engine.buildInstallSh(s, demo, {name: "demo.sh", pause: true, verify: true, headline: lang === "es" ? "demo del webinar" : "webinar demo",
       purpose: "Webinar phase 2 (the day of the demo): stages 0 to 5, showing each command and waiting for Enter.", reinstall: "prepare.sh"})});
     out.push({name: P + "uninstall.sh", mode: 0o100755, text: engine.buildUninstallSh(s, "prepare.sh")});
-    for (const k of ["prepare.sh", "demo.sh", "uninstall.sh", "BUILD-INFO.txt", "support/", ...(files["internals-ca/README.md"] ? ["internals-ca/", "prep-pki/"] : [])]) dirs[k] = DIRS[lang][k];
+    for (const k of ["prepare.sh", "demo.sh", "uninstall.sh", "BUILD-INFO.txt", "support/", ...(files["internals-ca/README.md"] ? ["internals-ca/", "prep-pki/"] : []), ...(sops ? [".sops.yaml"] : [])]) dirs[k] = DIRS[lang][k];
   } else {
     const at = raw.findIndex(x => x.id === "1-6");     // diagnosis of the access, after the portal check
     if (at >= 0) raw.splice(at + 1, 0, accessStep(s, lang));
@@ -123,6 +126,8 @@ export function generate(form, lang){
     runbook = i < 0 ? runbook + "\n" + resourcesMd(form, lang) : runbook.slice(0, i + 1) + resourcesMd(form, lang) + "\n" + runbook.slice(i + 1); }
   runbook = runbook.replace(/^(# .*\n)/, m => m + "\n" + disclaimerMd(lang));   // scope disclaimer (#5)
   runbook = supportRunbook(runbook, s, steps, webinar, lang);
+  if (sops) { const i = runbook.indexOf("\n#### 1-2 ·");   // what SOPS does in step 1-1, who can decrypt (src/sops.js)
+    if (i >= 0) runbook = runbook.slice(0, i + 1) + sopsRunbookNote(sopsKeys, lang) + "\n" + runbook.slice(i + 1); }
   out.unshift({name: P + "RUNBOOK.md", text: runbook});
   for (const e of out) e.text = renameText(e.text);   // install.sh, demo.sh, uninstall.sh and RUNBOOK.md
   for (const [p, f] of Object.entries(files)) out.push({name: P + p, text: f.text, mode: f.mode});
@@ -135,6 +140,10 @@ export function generate(form, lang){
     out.splice(0, out.length, ...applyRegistry(form, out));
     out[0] = {...out[0], text: out[0].text.replace(/^(> (?:⚠️|🔐)[^\n]*\n)/m, `$1\n${(REGISTRY_NOTE[lang] || REGISTRY_NOTE.en).replace("REG", form.REGISTRY.trim())}\n`)};
     for (const e of out) if (files[e.name.slice(P.length)]) files[e.name.slice(P.length)] = {...files[e.name.slice(P.length)], text: e.text};
+  }
+  if (webinar) for (const e of out) {   // Harbor password at the prompt (demo.sh), SOPS in BUILD-INFO.txt (src/sops.js)
+    if (e.name === P + "demo.sh") e.text = harborPromptDemo(e.text, sops);
+    if (e.name === P + "BUILD-INFO.txt" && sops) e.text = e.text.replace(/^(extras {12}: .*)$/m, `$1\nsops              : age · ${sopsKeys.length} public key${sopsKeys.length > 1 ? "s" : ""} (${sopsKeys.map(k => k.name || k.key.slice(0, 12) + "…").join(", ")}) · ${SOPS_FILES.join(", ")} (encrypted by prepare.sh)`);
   }
   for (const e of out) {   // retries of downloads in the scripts, and the collector fix (src/retry.js)
     if (/\/(install|prepare|demo)\.sh$/.test(e.name)) e.text = retryScript(e.text, {helm: s.helm});
