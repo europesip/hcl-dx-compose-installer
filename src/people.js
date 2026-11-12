@@ -23,6 +23,9 @@ export function peopleLdif(text){
     const uid = (block.match(/^dn: uid=([^,]+),ou=users,/) || [])[1], p = uid && PEOPLE[uid];
     if (!p) return block;
     const v = {cn: `${p.givenName} ${p.sn}`, givenName: p.givenName, sn: p.sn, mail: p.mail};
-    return block.replace(/^(cn|givenName|sn|mail)::? .*$/gm, (m, k) => attr(k, v[k]));
+    let out = block.replace(/^(cn|givenName|sn|mail)::? .*$/gm, (m, k) => attr(k, v[k]));
+    // displayName (#19): HCL People Service shows it (displayName=displayName in its LDAP mapping)
+    if (!/^displayName::? /m.test(out)) out = out.replace(/^(cn::? .*)$/m, (m) => `${m}\n${attr("displayName", v.cn)}`);
+    return out;
   }).join("\n");
 }
