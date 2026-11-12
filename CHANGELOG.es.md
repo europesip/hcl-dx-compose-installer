@@ -7,6 +7,11 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## Sin publicar (#19) · displayName para HCL People Service
+
+- Los usuarios LDAP de demo tienen **`displayName`** ("<nombre> <apellidos>", por ejemplo Macarena Cortés): HCL People
+  Service lo muestra (su mapeo LDAP es `displayName=displayName`); antes, el directorio salía sin nombre visible.
+
 ## 2.7.1 · 2026-11-10 · Nombre nuevo: DX Installer Wizard, de EuropeSIP
 
 - **El instalador pasa a llamarse «DX Installer Wizard»** (de EuropeSIP), en la página web, el README, los ficheros

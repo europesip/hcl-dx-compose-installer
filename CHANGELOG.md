@@ -7,6 +7,11 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## Unreleased (#19) · displayName for HCL People Service
+
+- The demo LDAP users get **`displayName`** ("<name> <surname>", for example Macarena Cortés): HCL People Service
+  shows it (its LDAP mapping is `displayName=displayName`); before, the directory listed people without a display name.
+
 ## 2.7.1 · 2026-11-10 · New name: DX Installer Wizard, by EuropeSIP
 
 - **The installer is now called "DX Installer Wizard"** (by EuropeSIP), in the web page, the README, the generated
