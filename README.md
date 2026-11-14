@@ -90,6 +90,7 @@ More questions: **[FAQ](docs/faq.md)**. Something fails: **[Frequent errors](doc
 
 | | |
 |---|---|
+| [Requirements](docs/requirements.md) | What you need to run the installer and the installation it generates: cluster, storage, sizing, tools, accounts |
 | [Docker and Helm](docs/deploy.md) | Every option to run the installer, authentication, what to do with the download |
 | [AWS environments](docs/aws.md) | What each AWS option creates, its price, how to delete it, ROSA and your Red Hat account |
 | [Advanced CI/CD: OpenBao](docs/openbao.md) | OpenBao secrets manager, Argo CD and the Script Application operator: unsealing, and why a DX password change needs a helm upgrade |

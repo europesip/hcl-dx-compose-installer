@@ -1,6 +1,6 @@
 # CI/CD avanzado: OpenBao, Argo CD y el operador de Script Applications
 
-[English](openbao.md) · **Español** · [README](../README.es.md)
+[English](openbao.md) · **Español** · [README](https://github.com/europesip/hcl-dx-compose-installer/blob/main/README.es.md)
 
 En el despliegue **Personalizado**, la sección *CI/CD avanzado* añade tres herramientas opcionales. Vienen
 desactivadas y **aún no están disponibles en OpenShift**, porque no se han probado lo suficiente allí. No forman

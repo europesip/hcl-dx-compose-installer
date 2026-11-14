@@ -1,6 +1,6 @@
 # Desplegar el instalador: Docker y Helm
 
-[English](deploy.md) · **Español** · [README](../README.es.md)
+[English](deploy.md) · **Español** · [README](https://github.com/europesip/hcl-dx-compose-installer/blob/main/README.es.md)
 
 > ⚠️ **¿Accesible desde fuera? Activa la autenticación.** Si despliegas el instalador en una máquina o clúster accesible
 > desde Internet o desde otras redes, activa su usuario y contraseña (`auth.enabled=true` en el chart de Helm, o

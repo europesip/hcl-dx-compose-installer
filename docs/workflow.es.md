@@ -61,7 +61,7 @@ estado actual, la evolución del trabajo y la carga por release.
 El formulario del issue ya es una especificación corta (qué, por qué, criterios de aceptación, plan de pruebas). Para
 los cambios con un esfuerzo de 5 o más, la especificación vive también en el repositorio, junto al código que describe:
 
-- `docs/specs/<número>-<nombre-corto>.md`, a partir de [docs/specs/TEMPLATE.md](specs/TEMPLATE.md): resumen,
+- `docs/specs/<número>-<nombre-corto>.md`, a partir de [docs/specs/TEMPLATE.md](https://github.com/europesip/hcl-dx-compose-installer/blob/main/docs/specs/TEMPLATE.md): resumen,
   comportamiento actual, especificación, criterios de aceptación, plan y tareas.
 - Se revisa y se fusiona (estado *Approved*) **antes** de la implementación, y el pull request que cierra el issue la
   actualiza a *Implemented*.

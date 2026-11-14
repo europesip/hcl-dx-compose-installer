@@ -42,6 +42,11 @@ es la misma que en la 2.0.x.
 - `schema()` / `dx-installer schema`: JSON Schema de las respuestas. Ejemplos en `docs/headless-examples/`.
   Documentación: [docs/headless.es.md](docs/headless.es.md). La página web y la carpeta generada no cambian.
 
+- **TechDocs para Backstage** (#28): `mkdocs.yml`, una página de introducción para el catálogo, una página de
+  **requisitos** (instalador e instalación generada) y la del modo headless, en inglés y español; `catalog-info.yaml`
+  lleva `backstage.io/techdocs-ref`, así el portal interno del desarrollador de EUROPESIP muestra la documentación. Los
+  enlaces a ficheros fuera de `docs/` son ahora enlaces absolutos a GitHub.
+
 ## 2.7.1 · 2026-11-10 · Nombre nuevo: DX Installer Wizard, de EuropeSIP
 
 - **El instalador pasa a llamarse «DX Installer Wizard»** (de EuropeSIP), en la página web, el README, los ficheros

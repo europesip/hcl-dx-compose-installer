@@ -1,6 +1,6 @@
 # Cómo funciona
 
-[English](how-it-works.md) · **Español** · [README](../README.es.md)
+[English](how-it-works.md) · **Español** · [README](https://github.com/europesip/hcl-dx-compose-installer/blob/main/README.es.md)
 
 ## Tus datos
 

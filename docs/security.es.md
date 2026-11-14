@@ -1,10 +1,10 @@
 # Seguridad del instalador
 
-[English](security.md) · **Español** · [README](../README.es.md)
+[English](security.md) · **Español** · [README](https://github.com/europesip/hcl-dx-compose-installer/blob/main/README.es.md)
 
 Introducir credenciales de acceso a la nube o a otros sistemas (el registro de HCL, OpenRouter, Red Hat, AWS…) es
 **siempre un riesgo de seguridad**, y más en un producto de terceros como este asistente. En EUROPESIP somos conscientes
-de ello. Por eso el código del instalador es **público y gratuito** ([MIT](../LICENSE)): cualquiera puede comprobar qué
+de ello. Por eso el código del instalador es **público y gratuito** ([MIT](https://github.com/europesip/hcl-dx-compose-installer/blob/main/LICENSE)): cualquiera puede comprobar qué
 hace con cada valor, y que nada se envía ni se guarda donde no debe.
 
 ## Adónde va cada valor
@@ -19,8 +19,8 @@ Puedes comprobarlo tú mismo:
 - La página se sirve con una Content-Security-Policy con `connect-src 'self'`: el navegador bloquea cualquier petición a
   un servidor que no sea el propio instalador. Las herramientas de desarrollo de tu navegador (pestaña Red) muestran
   cada petición.
-- El servidor es un único fichero, [`server/index.mjs`](../server/index.mjs), y los scripts de AWS están en
-  [`server/aws`](../server/aws).
+- El servidor es un único fichero, [`server/index.mjs`](https://github.com/europesip/hcl-dx-compose-installer/blob/main/server/index.mjs), y los scripts de AWS están en
+  [`server/aws`](https://github.com/europesip/hcl-dx-compose-installer/tree/main/server/aws).
 
 ## Ejecutarlo con la salida a Internet limitada
 

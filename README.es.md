@@ -92,6 +92,7 @@ Más preguntas: **[Preguntas frecuentes](docs/faq.es.md)**. Si algo falla: **[Er
 
 | | |
 |---|---|
+| [Requisitos](docs/requirements.es.md) | Qué necesitas para ejecutar el instalador y la instalación que genera: clúster, almacenamiento, tamaño, herramientas, cuentas |
 | [Docker y Helm](docs/deploy.es.md) | Todas las opciones para ejecutar el instalador, la autenticación, qué hacer con la descarga |
 | [Entornos de AWS](docs/aws.es.md) | Qué crea cada opción de AWS, su precio, cómo borrarla, ROSA y tu cuenta de Red Hat |
 | [CI/CD avanzado: OpenBao](docs/openbao.es.md) | Gestor de secretos OpenBao, Argo CD y el operador de Script Applications: desbloqueo, y por qué cambiar una contraseña de DX necesita un helm upgrade |

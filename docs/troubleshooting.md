@@ -1,6 +1,6 @@
 # DX Installer Wizard · Frequent errors
 
-**English** · [Español](troubleshooting.es.md) · [FAQ](faq.md) · [README](../README.md)
+**English** · [Español](troubleshooting.es.md) · [FAQ](faq.md) · [README](https://github.com/europesip/hcl-dx-compose-installer#readme)
 
 Problems that users have reported, with their cause and fix. To ask for help, see [the end of this page](#asking-for-help).
 
