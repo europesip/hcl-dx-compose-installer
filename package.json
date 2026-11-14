@@ -5,6 +5,13 @@
   "description": "Web installer for HCL DX Compose: guides you from the environment (your cluster, a local PC or AWS) to a ready-to-run installation (scripts, RUNBOOK.md and, for the webinar, a Word script)",
   "license": "MIT",
   "type": "module",
+  "exports": {
+    "./headless": "./src/headless.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "dx-installer": "bin/dx-installer.mjs"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

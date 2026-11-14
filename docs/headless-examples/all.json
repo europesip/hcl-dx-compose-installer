@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "preset": "all",
+  "platform": "kubernetes",
+  "DX_HOST": "dx.example.com",
+  "INGRESS_KIND": "nginx",
+  "SC_RWO": "longhorn",
+  "SC_RWX": "longhorn",
+  "HCL_HARBOR_USER": "you@example.com",
+  "dxcLicense": true,
+  "DX_NS": "dx-pre",
+  "SHARED_NS": "dx-pre-shared"
+}

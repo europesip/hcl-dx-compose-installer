@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "preset": "custom",
+  "platform": "poc",
+  "HCL_HARBOR_USER": "you@example.com",
+  "lab3": false,
+  "lab4": false
+}

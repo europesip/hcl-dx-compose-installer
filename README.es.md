@@ -98,6 +98,7 @@ Más preguntas: **[Preguntas frecuentes](docs/faq.es.md)**. Si algo falla: **[Er
 | [Software de terceros](docs/third-party.es.md) | OpenLDAP, PostgreSQL, LiteLLM, MCP, OpenBao, Argo CD y Keycloak: las peculiaridades y trucos encontrados en el laboratorio |
 | [Seguridad](docs/security.es.md) | Adónde va cada credencial, salida a Internet limitada, la imagen original, buenas prácticas |
 | [Cómo funciona](docs/how-it-works.es.md) | Tus datos, el código, desarrollo y CI |
+| [Modo headless](docs/headless.es.md) | El motor como librería de Node y herramienta de línea de comandos, sin la página web: para una plantilla de Backstage, un job de CI o un script |
 | [Cómo trabajamos](docs/workflow.es.md) | Issues, el tablero del proyecto, pull requests y especificaciones |
 | [Laboratorios de HCL DX Compose](https://github.com/europesip/hcl-dx-compose-labs) | Las guías para aprender cada paso a mano |
 | [Showroom de HCL DX Compose](https://github.com/europesip/hcl-dx-compose-showroom) | Los ficheros, la presentación y el vídeo del webinar «Deploy HCL DX Compose in Minutes» (12/11/2026), generados por este instalador |
