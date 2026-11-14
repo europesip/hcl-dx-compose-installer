@@ -7,7 +7,13 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
-## Sin publicar · El zip del webinar como en el webinar del 2026-11-12 (#17)
+## Sin publicar
+
+- `catalog-info.yaml` (comentado) para que el portal del desarrollador de EUROPESIP (Backstage) muestre el asistente en su
+  catálogo (#21). Solo metadatos: no cambia el asistente, su imagen ni su chart.
+
+- Los usuarios LDAP de demo tienen **`displayName`** ("<nombre> <apellidos>", por ejemplo Macarena Cortés): HCL People
+  Service lo muestra (su mapeo LDAP es `displayName=displayName`); antes, el directorio salía sin nombre visible.
 
 - **SOPS (age) para los secretos de la base del webinar**, opcional y desactivado por defecto (*Tus datos › SOPS:
   secretos cifrados*): una o varias claves **públicas** de age, cada una con un nombre opcional; una clave privada se

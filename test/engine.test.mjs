@@ -281,6 +281,11 @@ test("demo LDAP users carry the real EUROPESIP names and e-mails (uid, groups an
   assert.match(ldif, /^cn:: /m);                                  // non-ASCII names go base64 (RFC 2849)
   assert.match(ldif, /^uid: macarena$/m);
   assert.ok(!/@dxdemo\.com/.test(ldif));
+  // displayName (#19), for HCL People Service: "<givenName> <sn>", base64 when not ASCII, once per demo user
+  assert.match(ldif, /^displayName: Macarena Cort|^displayName:: /m);
+  assert.match(ldif, /^displayName: Eduardo Barranca$/m);
+  assert.ok(ldif.includes(`displayName:: ${Buffer.from("Andrés Gorostidi").toString("base64")}`));
+  assert.equal((ldif.match(/^displayName::? /gm) || []).length, 8);
 });
 
 test("corporate CA: OpenLDAP and PostgreSQL over SSL, DX signs in by e-mail and trusts the CA", () => {

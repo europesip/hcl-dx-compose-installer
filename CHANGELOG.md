@@ -7,7 +7,13 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
-## Unreleased · The webinar zip as in the webinar of 2026-11-12 (#17)
+## Unreleased
+
+- `catalog-info.yaml` (commented) so that the EUROPESIP developer portal (Backstage) shows the wizard in its catalog
+  (#21). Metadata only: no change to the wizard, its image or its chart.
+
+- The demo LDAP users get **`displayName`** ("<name> <surname>", for example Macarena Cortés): HCL People Service
+  shows it (its LDAP mapping is `displayName=displayName`); before, the directory listed people without a display name.
 
 - **SOPS (age) for the base secrets of the webinar**, optional and off by default (*Your details › SOPS: encrypted
   secrets*): one or more age **public** keys, each with an optional name; a private key is refused. The zip gets
