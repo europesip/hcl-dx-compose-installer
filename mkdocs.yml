@@ -1,0 +1,43 @@
+# TechDocs of the DX Installer Wizard: the docs/ folder, shown in the EUROPESIP Internal Developer Portal (Backstage)
+# through the annotation backstage.io/techdocs-ref of catalog-info.yaml. Build locally (same as Backstage):
+#   pip install mkdocs-techdocs-core==1.7.1 && mkdocs serve
+site_name: DX Installer Wizard, by EuropeSIP
+site_description: Web wizard that generates a ready-to-run installation of HCL DX Compose (not an HCL product)
+repo_url: https://github.com/europesip/hcl-dx-compose-installer
+edit_uri: edit/main/docs/
+docs_dir: docs
+
+plugins:
+  - techdocs-core
+
+# docs/specs/ (one spec per issue) is kept in the repository but left out of the site
+exclude_docs: |
+  specs/
+  headless-examples/
+
+nav:
+  - Overview: index.md
+  - Requirements: requirements.md
+  - Docker and Helm: deploy.md
+  - Headless mode: headless.md
+  - How it works: how-it-works.md
+  - AWS environments: aws.md
+  - "Advanced CI/CD: OpenBao": openbao.md
+  - Third-party software: third-party.md
+  - Security: security.md
+  - FAQ: faq.md
+  - Frequent errors: troubleshooting.md
+  - How we work: workflow.md
+  - Español:
+      - Introducción: index.es.md
+      - Requisitos: requirements.es.md
+      - Docker y Helm: deploy.es.md
+      - Modo headless: headless.es.md
+      - Cómo funciona: how-it-works.es.md
+      - Entornos en AWS: aws.es.md
+      - "CI/CD avanzado: OpenBao": openbao.es.md
+      - Software de terceros: third-party.es.md
+      - Seguridad: security.es.md
+      - Preguntas frecuentes: faq.es.md
+      - Errores frecuentes: troubleshooting.es.md
+      - Cómo trabajamos: workflow.es.md

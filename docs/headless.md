@@ -1,6 +1,6 @@
 # Headless mode: the installer without its web page
 
-**English** · [Español](headless.es.md) · [README](../README.md)
+**English** · [Español](headless.es.md) · [README](https://github.com/europesip/hcl-dx-compose-installer#readme)
 
 The engine of the DX Installer Wizard can run **without its web page**, in Node: a library and a small command line
 tool take the answers of the wizard in a JSON file and return the same `dx-install/` folder that the page downloads.
@@ -46,7 +46,7 @@ r.check.warn;   // warnings, as on the page
 
 The answers are the options of the web page, with the same names (`src/state.js`, `DEFAULTS`). Only `preset` is
 required; every key that is left out takes its default. Unknown keys are an error, so a typo does not go unnoticed.
-Examples: [`docs/headless-examples/`](headless-examples) (`poc.json`, `webinar.json`, `all.json`).
+Examples: [`docs/headless-examples/`](https://github.com/europesip/hcl-dx-compose-installer/tree/main/docs/headless-examples) (`poc.json`, `webinar.json`, `all.json`).
 
 | Key | Values |
 |---|---|

@@ -27,6 +27,8 @@ metadata:
     github.com/project-slug: europesip/hcl-dx-compose-installer
     # where the source lives (the "View source" button)
     backstage.io/source-location: url:https://github.com/europesip/hcl-dx-compose-installer/tree/main/
+    # TechDocs: Backstage builds the docs/ folder with mkdocs.yml (this same repository) and shows it in the Docs tab
+    backstage.io/techdocs-ref: dir:.
   links:                              # buttons in the "Links" card of the entity page
     - { url: 'https://github.com/europesip/hcl-dx-compose-installer#readme', title: README, icon: docs }
     - { url: 'https://github.com/europesip/hcl-dx-compose-installer/tree/main/docs', title: Documentation, icon: docs }

@@ -1,6 +1,6 @@
 # Third-party software: what the installer does and why
 
-**English** · [Español](third-party.es.md) · [README](../README.md)
+**English** · [Español](third-party.es.md) · [README](https://github.com/europesip/hcl-dx-compose-installer#readme)
 
 HCL DX Compose needs, or works better with, software that HCL does not supply. The installer deploys it for a PoC. This
 page collects the **peculiarities and tricks** we needed to make each piece work with DX **without breaking anything

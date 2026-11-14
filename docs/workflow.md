@@ -59,7 +59,7 @@ the work over time and the load per release.
 The issue form already is a short spec (what, why, acceptance criteria, test plan). For changes with an effort of
 5 or more, the spec also lives in the repository, next to the code it describes:
 
-- `docs/specs/<number>-<short-name>.md`, from [docs/specs/TEMPLATE.md](specs/TEMPLATE.md): summary, current
+- `docs/specs/<number>-<short-name>.md`, from [docs/specs/TEMPLATE.md](https://github.com/europesip/hcl-dx-compose-installer/blob/main/docs/specs/TEMPLATE.md): summary, current
   behaviour, specification, acceptance criteria, plan and tasks.
 - It is reviewed and merged (status *Approved*) **before** the implementation, then updated to *Implemented* by
   the pull request that closes the issue.

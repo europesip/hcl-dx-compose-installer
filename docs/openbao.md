@@ -1,6 +1,6 @@
 # Advanced CI/CD: OpenBao, Argo CD and the Script Application operator
 
-**English** · [Español](openbao.es.md) · [README](../README.md)
+**English** · [Español](openbao.es.md) · [README](https://github.com/europesip/hcl-dx-compose-installer#readme)
 
 In the **Custom** deployment, the *Advanced CI/CD* section adds three optional tools. They are off by default and
 are **not available on OpenShift yet**, because they have not been tested enough there. They are not part of the
@@ -10,7 +10,7 @@ DX installation itself.
 |---|---|
 | **OpenBao** (secrets manager) + External Secrets Operator | Keeps the passwords and keys of the installation; nobody writes them in files |
 | **Argo CD** (GitOps) | Keeps the cluster equal to a Git repository, with history and rollback |
-| **Keycloak** (single sign-on) | DX users sign in on the Keycloak page with their OpenLDAP account (SSO, two-factor if you enable it); independent of OpenBao. Its peculiarities: [Third-party software](third-party.md#keycloak-2682-official-operator--stage-0-extra-dx-layer-from-stage-2) |
+| **Keycloak** (single sign-on) | DX users sign in on the Keycloak page with their OpenLDAP account (SSO, two-factor if you enable it); independent of OpenBao. Its peculiarities: [Third-party software](third-party.md) |
 | **Script Application operator** (EUROPESIP, optional) | Deploys Script Applications, pages, DAM files and databases from Kubernetes resources and keeps them in DX ([repository](https://github.com/europesip/hcl-dx-scriptapp-operator)) |
 
 All three go in the same namespace as the other shared tools (OpenLDAP, PostgreSQL…), `dx-shared` by default.

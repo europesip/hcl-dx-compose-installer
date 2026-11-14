@@ -1,6 +1,6 @@
 # DX Installer Wizard · FAQ
 
-**English** · [Español](faq.es.md) · [Frequent errors](troubleshooting.md) · [README](../README.md)
+**English** · [Español](faq.es.md) · [Frequent errors](troubleshooting.md) · [README](https://github.com/europesip/hcl-dx-compose-installer#readme)
 
 **What is it?**
 A guided web installer for **HCL DX Compose** by EUROPESIP. It helps you get a Kubernetes environment ready, choose
@@ -11,7 +11,7 @@ No. It is meant for **proofs of concept, development and test environments**. Fo
 are needed; EUROPESIP and HCL partners offer that as a service.
 
 **Is it free?**
-Yes, open source under the [MIT licence](../LICENSE). HCL DX Compose itself is an HCL product: you need your own HCL
+Yes, open source under the [MIT licence](https://github.com/europesip/hcl-dx-compose-installer/blob/main/LICENSE). HCL DX Compose itself is an HCL product: you need your own HCL
 account to download its images and charts from hclcr.io.
 
 **What do I need?**

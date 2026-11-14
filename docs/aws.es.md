@@ -1,10 +1,10 @@
 # Entornos de AWS
 
-[English](aws.md) · **Español** · [README](../README.es.md)
+[English](aws.md) · **Español** · [README](https://github.com/europesip/hcl-dx-compose-installer/blob/main/README.es.md)
 
 ## Entornos de AWS desde tu propia máquina
 
-Los scripts que ejecuta la página están en [`server/aws`](../server/aws). Puedes ejecutarlos tú con el AWS CLI
+Los scripts que ejecuta la página están en [`server/aws`](https://github.com/europesip/hcl-dx-compose-installer/tree/main/server/aws). Puedes ejecutarlos tú con el AWS CLI
 (y eksctl para EKS, rosa y oc para ROSA):
 
 ```bash
