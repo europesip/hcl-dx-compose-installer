@@ -1,6 +1,6 @@
 // The views of the installer, one per screen
 import {useEffect, useMemo, useState} from "react";
-import {Modal, Nav, Card, Title, H2, Choice, Button, Field, Input, Secret, Select, Check, Toggle, Segmented, Callout, Code, Badge, cx,
+import {Modal, Nav, Card, Title, H2, Choice, Button, Field, Input, Textarea, Secret, Select, Check, Toggle, Segmented, Callout, Code, Badge, cx,
         IconServer, IconPlus, IconLaptop, IconLinux, IconCloud, IconLayers, IconSliders, IconPresent, IconDownload, IconDoc, IconZip, IconSpark, IconCheck, Spinner} from "./ui.jsx";
 import {applyPreset, gates, NAME_KEYS, depsOf} from "./state.js";
 import {ownChecks, wslCmds, linuxCmds, LAB0_GUIDE} from "./guides.js";
@@ -8,6 +8,7 @@ import {generate, zipBytes, download, ZIP_NAME, ZIP_NAME_WEBINAR, WORD_NAME_EN, 
 import {stageLabel} from "./engine/stages.js";
 import {SecurityNote} from "./security.jsx";
 import {kcHost} from "./cicd.js";
+import {parseSopsKeys} from "./sops.js";
 import {resources, fmt} from "./resources.js";
 import {DISCLAIMER, LICENSE_URL} from "./disclaimer.js";
 
@@ -499,6 +500,19 @@ export function Details({t, lang, form, set, go, back}){
             {F("ORACLE_CA_FILE", t.oraCa, {mono: true})}
           </Card>
         )}
+        {form.preset === "webinar" && <Card className="space-y-4">
+          <H2>{t.sopsTitle}</H2>
+          <Check checked={!!form.sops} onChange={v => set({sops: v})}>{t.sopsUse}</Check>
+          {form.sops && <>
+            <Field label={t.sopsKeys} hint={t.sopsHint}>
+              <Textarea mono className="min-h-24" value={form.SOPS_KEYS || ""} onChange={e => set({SOPS_KEYS: e.target.value})}
+                placeholder={"andres  age1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs3h0lx\ngerman  age1…"} />
+            </Field>
+            {(() => { const k = parseSopsKeys(form.SOPS_KEYS); return k.privateKey ? <Callout tone="error">{t.sopsPrivate}</Callout>
+              : k.keys.length ? <p className="text-xs text-emerald-700 dark:text-emerald-300">{t.sopsCount(k.keys.length)}</p> : null; })()}
+            <p className="text-xs text-slate-500">{t.sopsInfo}</p>
+          </>}
+        </Card>}
       </div>
       {(form.lab1b || form.lab5 || (form.cicdOperator && form.platform !== "openshift" && form.preset !== "webinar")) && <Card className="mt-5"><Check checked={form.dxcLicense} onChange={v => set({dxcLicense: v})}>{t.dxcLicense}</Check></Card>}
       <div className="mt-5">
