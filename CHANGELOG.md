@@ -12,6 +12,9 @@ installation is the same as in 2.0.x.
 - `catalog-info.yaml` (commented) so that the EUROPESIP developer portal (Backstage) shows the wizard in its catalog
   (#21). Metadata only: no change to the wizard, its image or its chart.
 
+- The demo LDAP users get **`displayName`** ("<name> <surname>", for example Macarena Cortés): HCL People Service
+  shows it (its LDAP mapping is `displayName=displayName`); before, the directory listed people without a display name.
+
 ## 2.7.1 · 2026-11-10 · New name: DX Installer Wizard, by EuropeSIP
 
 - **The installer is now called "DX Installer Wizard"** (by EuropeSIP), in the web page, the README, the generated
