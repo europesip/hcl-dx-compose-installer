@@ -7,7 +7,10 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
-## Unreleased (#19) · displayName for HCL People Service
+## Unreleased
+
+- `catalog-info.yaml` (commented) so that the EUROPESIP developer portal (Backstage) shows the wizard in its catalog
+  (#21). Metadata only: no change to the wizard, its image or its chart.
 
 - The demo LDAP users get **`displayName`** ("<name> <surname>", for example Macarena Cortés): HCL People Service
   shows it (its LDAP mapping is `displayName=displayName`); before, the directory listed people without a display name.
