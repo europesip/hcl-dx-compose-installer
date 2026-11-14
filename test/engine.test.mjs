@@ -76,12 +76,12 @@ test("webinar: two phases, no LiteLLM in the preparation, stages 0 to 5, no extr
   assert.ok(g.files["lab-base/namespace-dx.yaml"] && g.files["lab-base/namespace-dx.openshift.yaml"] && !g.files["lab-base/namespaces.yaml"]);
   assert.ok(g.files["lab-ldap/secrets.openldap.yaml"] && !/dx-ldap-bind/.test(g.files["lab-ldap/secrets.openldap.yaml"].text));
   assert.ok(g.demo.find(s => s.stage === 2).cmd.startsWith("kubectl apply -f lab-ldap/secrets.yaml"));
-  // one step per OpenSearch certificate; the IQ deployment key from its Secret, with --set
+  // one step per OpenSearch certificate; the IQ deployment key in the IQ values, no --set (#17)
   assert.equal(g.demo.filter(s => s.stage === 5 && /openssl/.test(s.cmd)).length, 4);
   assert.ok(!g.demo.some(s => /for n in/.test(s.cmd)));
-  assert.match(g.demo.find(s => s.origId === "3-4").cmd, /--set configuration\.licensing\.deploymentKey="\$IQ_DEPLOYMENT_KEY"/);
-  assert.doesNotMatch(g.files["lab-iq/custom-iq-values.yaml"].text, /^\s*deploymentKey:/m);
-  assert.match(g.files["lab-iq/secrets.yaml"].text, /name: iq-deployment-key/);
+  assert.doesNotMatch(g.demo.find(s => s.origId === "3-4").cmd, /--set configuration\.licensing\.deploymentKey/);
+  assert.match(g.files["lab-iq/custom-iq-values.yaml"].text, /^\s*deploymentKey:/m);
+  assert.doesNotMatch(g.files["lab-iq/secrets.yaml"].text, /name: iq-deployment-key/);
   assert.match(g.runbook, /GitOps/);
   assert.deepEqual([...new Set(g.demo.map(s => s.stage))], [0, 1, 2, 3, 4, 5]);
   // LiteLLM opens stage 4, with IQ (HCL feedback), before the IQ install
@@ -281,6 +281,11 @@ test("demo LDAP users carry the real EUROPESIP names and e-mails (uid, groups an
   assert.match(ldif, /^cn:: /m);                                  // non-ASCII names go base64 (RFC 2849)
   assert.match(ldif, /^uid: macarena$/m);
   assert.ok(!/@dxdemo\.com/.test(ldif));
+  // displayName (#19), for HCL People Service: "<givenName> <sn>", base64 when not ASCII, once per demo user
+  assert.match(ldif, /^displayName: Macarena Cort|^displayName:: /m);
+  assert.match(ldif, /^displayName: Eduardo Barranca$/m);
+  assert.ok(ldif.includes(`displayName:: ${Buffer.from("Andrés Gorostidi").toString("base64")}`));
+  assert.equal((ldif.match(/^displayName::? /gm) || []).length, 8);
 });
 
 test("corporate CA: OpenLDAP and PostgreSQL over SSL, DX signs in by e-mail and trusts the CA", () => {

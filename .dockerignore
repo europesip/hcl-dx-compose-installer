@@ -4,3 +4,4 @@ dist
 chart
 test
 *.md
+catalog-info.yaml
