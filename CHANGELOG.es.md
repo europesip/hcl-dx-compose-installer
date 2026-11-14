@@ -31,6 +31,17 @@ es la misma que en la 2.0.x.
   si el clúster no tiene metrics-server.
 - Webinar: sin menciones a Keycloak/ÓRBITA en los comentarios del clúster de PostgreSQL y de la capa LDAP.
 
+- **Modo headless**: el motor funciona sin la página web, en Node. `import {generateInstall, schema} from
+  "hcl-dx-compose-installer/headless"` y la CLI `dx-installer generate --answers answers.json --out dir` toman las
+  respuestas del asistente (las mismas claves que la página) y devuelven la misma carpeta `dx-install/`. Para
+  automatizar, por ejemplo una plantilla de Backstage «Nuevo entorno de HCL DX»; la carpeta la sigue instalando una
+  persona con `helm` de verdad.
+- **Sin secretos por defecto**: las credenciales se rechazan en las respuestas; las contraseñas que necesita la
+  instalación se generan al azar en `secrets.env`, que leen los scripts; `secretFiles` enumera los ficheros que no deben
+  ir a Git. Con `secrets: "include"` la carpeta es la misma que descarga la página.
+- `schema()` / `dx-installer schema`: JSON Schema de las respuestas. Ejemplos en `docs/headless-examples/`.
+  Documentación: [docs/headless.es.md](docs/headless.es.md). La página web y la carpeta generada no cambian.
+
 ## 2.7.1 · 2026-11-10 · Nombre nuevo: DX Installer Wizard, de EuropeSIP
 
 - **El instalador pasa a llamarse «DX Installer Wizard»** (de EuropeSIP), en la página web, el README, los ficheros

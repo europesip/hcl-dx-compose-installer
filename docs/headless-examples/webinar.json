@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "preset": "webinar",
+  "DX_HOST": "dx.example.com",
+  "HCL_HARBOR_USER": "you@example.com",
+  "DX_NS": "dx-demo",
+  "SHARED_NS": "dx-shared"
+}

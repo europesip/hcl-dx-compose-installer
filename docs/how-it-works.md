@@ -21,6 +21,7 @@
 | `src/engine/core.js` | Generation engine: lab files, steps, `install.sh` |
 | `src/engine/stages.js` | Stages 0-5 and extras, the two phases of the webinar, `RUNBOOK.md` |
 | `src/bundle.js`, `src/zip.js` | The zip, credential masking, the key values of each YAML file |
+| `src/headless.js`, `bin/dx-installer.mjs` | Headless mode: the same folder without the web page, as a Node library and a CLI ([Headless mode](headless.md)) |
 | `src/word.js` | Word script of the webinar |
 | `src/aws.js`, `server/aws/*.sh` | AWS sizes and price estimates; the scripts that create and delete the environments |
 | `server/index.mjs` | Server: the page, and the API that runs the AWS scripts and streams their output |
