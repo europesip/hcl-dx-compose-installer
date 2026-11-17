@@ -17,7 +17,7 @@ Portal (IDP), a CI job, or a script.
 Node 20.19 or later. Until it is published as a package, install it from a release tag:
 
 ```bash
-npm install github:europesip/hcl-dx-compose-installer#v2.9.0
+npm install github:europesip/hcl-dx-compose-installer#v2.8.0
 ```
 
 ```js
@@ -77,6 +77,46 @@ they are refused. The folder is split so that the part meant for Git has no secr
 **`secrets: "include"`.** The answers may carry the credentials, as on the web page, and the folder is byte for byte
 the one the page downloads (except the generation date and the random salts of the LDIF). `secretFiles` still tells
 which files hold them.
+
+## Preset `basic`: a simple test portal, installed by a Job
+
+`preset: "basic"` (headless only) generates **Lab 1**: DX Compose with Derby, no directory, no external database, no
+IQ, no Search. It is meant to run **unattended inside the same cluster**: for example, the HCL DX plugin of Backstage
+uses it for its button *Install a new portal › Basic*. On top of the usual answers it takes:
+
+| Key | What it does |
+|---|---|
+| `IMAGE_PULL_SECRET` | Name of a `kubernetes.io/dockerconfigjson` Secret that **already exists** in `DX_NS`, for example made by an ExternalSecret. No `regcred` and no personal HCL token: the images use it, and `helm pull` reads its credentials (`--registry-config`) to pull the chart |
+| `altRegistry` + `REGISTRY` | Where the images and the chart come from, usually a **Harbor proxy cache of hclcr.io** (e.g. `harbor.example.com/hclcr-proxy`) |
+| `BASIC_DAM` | `true` (default): Lab 1 complete, with DAM, Content Composer, the image processor and the persistence of DAM (about 4.8 CPU and 10.5 GiB requested). `false`: the lightest portal, Web Engine with Derby, HAProxy and the Ring API (about 2.6 CPU and 5 GiB) |
+| `TLS_ISSUER` | A cert-manager `ClusterIssuer`: the Ingress gets a public certificate (Secret `dx-tls-public`); HAProxy keeps its self-signed one behind it |
+
+What changes in the folder:
+- only the namespace `DX_NS` is created;
+- `install.sh --cleanup` and `uninstall.sh` touch nothing else (no namespace of third-party tools);
+- `install.sh --yes` runs without a prompt. Every step prints `━━━ [n/m] <stage> · <id> · <title>`, which is easy to
+  follow from a log;
+- `install.sh` needs `kubectl`, `helm`, `openssl` and `curl`. The image of the installer has them all, and the CLI
+  too.
+
+Example: a Job with the installer image, the answers mounted from a Secret, and `secrets: "include"` so that the
+wpsadmin password is the one chosen.
+
+```bash
+node /app/bin/dx-installer.mjs generate --answers /answers/answers.json --secrets include --out /work/dx-install
+/work/dx-install/install.sh --yes
+```
+
+```json
+{"schemaVersion": 1, "preset": "basic", "platform": "kubernetes", "DX_NS": "dx-basic-1", "DX_HOST": "dx-basic-1.example.com",
+ "INGRESS_KIND": "nginx", "SC_RWO": "longhorn", "SC_RWX": "longhorn", "altRegistry": true,
+ "REGISTRY": "harbor.example.com/hclcr-proxy", "IMAGE_PULL_SECRET": "harbor-hclcr-pull", "TLS_ISSUER": "letsencrypt-prod",
+ "LAB_PASSWORD": "<the wpsadmin password: only in a Secret>"}
+```
+
+The Job installs with real `helm` (never Argo CD), so its ServiceAccount needs wide rights in the cluster: create
+namespaces, and everything the HCL chart creates in them (Roles, RoleBindings, StatefulSets, PVCs...). See the
+documentation of the HCL DX plugin of Backstage for the ServiceAccount it uses.
 
 ## Command line
 

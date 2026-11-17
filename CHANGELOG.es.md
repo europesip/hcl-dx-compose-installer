@@ -7,7 +7,16 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
-## Sin publicar
+## 2.8.0 · 2026-11-18
+
+- **Preset headless `basic`** (#32): un portal de pruebas sencillo (Lab 1: DX Compose con Derby) para un Job sin
+  intervención en el mismo clúster, como el botón *Install a new portal › Basic* del plugin HCL DX de Backstage. Solo
+  se crea y se limpia el namespace de DX. `IMAGE_PULL_SECRET` usa un pull secret que ya existe (sin token personal de
+  HCL; `helm pull` también lo lee), y `TLS_ISSUER` da al Ingress un certificado de cert-manager. `BASIC_DAM` (por defecto true: Lab 1
+  completo con DAM y Content Composer; false: solo Web Engine, la mitad de recursos). Desactivado por
+  defecto: los demás presets generan la misma carpeta.
+- **Imagen:** el CLI headless (`node bin/dx-installer.mjs`) y `openssl`, para que un Job con la imagen del instalador
+  genere la carpeta y ejecute `install.sh`.
 
 - `catalog-info.yaml` (comentado) para que el portal del desarrollador de EUROPESIP (Backstage) muestre el asistente en su
   catálogo (#21). Solo metadatos: no cambia el asistente, su imagen ni su chart.
