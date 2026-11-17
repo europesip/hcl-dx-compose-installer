@@ -19,7 +19,9 @@ already exists and a Harbor proxy of hclcr.io, so no personal HCL token is neede
     `.dockerconfigjson` into a temporary file, and every `helm pull oci://` gets `--registry-config`.
   - `TLS_ISSUER`: the Ingress gets the `cert-manager.io/cluster-issuer` annotation and TLS Secret `dx-tls-public`.
     HAProxy keeps `dx-tls-cert`, which is self-signed.
-- `IMAGE_PULL_SECRET` and `TLS_ISSUER` are refused for the other presets.
+- `BASIC_DAM` false (default): `persistence`, `digitalAssetManagement`, `imageProcessor` and `contentComposer` off
+  (Web Engine, HAProxy, Ring API, runtime controller); true: Lab 1 complete.
+- `IMAGE_PULL_SECRET`, `TLS_ISSUER` and `BASIC_DAM` are refused for the other presets.
 - Image: `src/`, `bin/` and `openssl`, so a Job with the installer image runs `node bin/dx-installer.mjs generate`
   and then `install.sh --yes`.
 

@@ -9,6 +9,9 @@
 //   ExternalSecret). No regcred with a personal HCL token: the images use that Secret, and "helm pull" reads its
 //   credentials (--registry-config) to pull the charts from the same registry (usually REGISTRY = a Harbor proxy
 //   cache of hclcr.io, altRegistry);
+// - BASIC_DAM false (default): the lightest portal, Web Engine with Derby, HAProxy and the Ring API (about 2.6 CPU and
+//   5 GiB requested); true: Lab 1 complete with DAM, Content Composer, the image processor and the persistence of DAM
+//   (about 4.8 CPU and 10.5 GiB, measured on the EUROPESIP cluster);
 // - TLS_ISSUER: the Ingress gets a certificate from that cert-manager ClusterIssuer (Secret dx-tls-public); HAProxy
 //   keeps its own self-signed certificate behind it.
 
@@ -46,6 +49,10 @@ export function applyBasic(f, s, entries){
           .replace(/^(.*\bhelm pull oci:\/\/(?:(?!--registry-config).)*?)\s*$/gm, `$1 --registry-config "$RC"`);
       }
     }
+    if (!f.BASIC_DAM && e.name.endsWith("lab-base/custom-values.yaml"))   // the lightest portal: no DAM and what serves it
+      t = t.replace(/^(\s*)persistence: true(\s*#.*)?$/m, (m, sp) =>
+        `${sp}# basic preset, light (BASIC_DAM false): Web Engine with Derby, HAProxy and the Ring API only\n` +
+        `${sp}persistence: false\n${sp}digitalAssetManagement: false\n${sp}imageProcessor: false\n${sp}contentComposer: false`);
     if (issuer && e.name.endsWith("lab-base/ingress-dx.yaml"))
       t = t.replace(/^(\s*)annotations:\n/m, `$1annotations:\n$1  cert-manager.io/cluster-issuer: "${issuer}"   # public certificate (Secret dx-tls-public)\n`)
         .replace(/(\n\s*tls:\n(?:.*\n)*?\s*secretName:\s*)dx-tls-cert/, "$1dx-tls-public")

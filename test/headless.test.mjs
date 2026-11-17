@@ -154,3 +154,12 @@ test("basic: the chosen wpsadmin password with secrets include, and the options 
   assert.equal(a.files["install.sh"].text.replace(/\d{4}-\d\d-\d\d \d\d:\d\d/g, ""), b.files["install.sh"].text.replace(/\d{4}-\d\d-\d\d \d\d:\d\d/g, ""));
   assert.match(a.files["lab-base/namespaces.yaml"].text, /dx-shared/);
 });
+
+test("basic: light by default (no DAM), Lab 1 complete with BASIC_DAM", () => {
+  const light = generateInstall({answers: BASIC}).files["lab-base/custom-values.yaml"].text;
+  assert.match(light, /digitalAssetManagement: false/);
+  assert.match(light, /persistence: false/);
+  const full = generateInstall({answers: {...BASIC, BASIC_DAM: true}}).files["lab-base/custom-values.yaml"].text;
+  assert.doesNotMatch(full, /digitalAssetManagement: false/);
+  assert.match(full, /persistence: true/);
+});
