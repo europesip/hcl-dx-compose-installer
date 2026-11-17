@@ -31,12 +31,14 @@ export const SCHEMA_VERSION = 1;
 const UI_ONLY = ["envConfirmed"];   // state of the pages, not an answer
 const ENUMS = {
   envSource: ["", "own", "wsl", "linux", "aws"], awsKind: ["ec2", "eks", "rosa"], platform: ["kubernetes", "openshift", "poc"],
-  INGRESS_KIND: ["traefik", "nginx", "other"], helm: ["3", "4"], preset: ["all", "custom", "webinar"],
+  INGRESS_KIND: ["traefik", "nginx", "other"], helm: ["3", "4"], preset: ["all", "custom", "webinar", "basic"],
   dir: ["openldap", "ad", "none"], db: ["postgres", "oracle", "none"], IQ_LLM: ["claude", "qwen"],
   LLM_PROVIDER: ["openrouter", "bedrock", "anthropic"], openbaoMode: ["install", "existing"],
 };
 const DESCRIPTIONS = {
-  preset: "all: every stage and extra · webinar: stages 0-5 as in the webinar (prepare.sh + demo.sh) · custom: what you choose",
+  preset: "all: every stage and extra · webinar: stages 0-5 as in the webinar (prepare.sh + demo.sh) · custom: what you choose · basic: a simple test portal as Lab 1 (Derby), only the DX namespace, for an unattended Job",
+  IMAGE_PULL_SECRET: "basic: name of a kubernetes.io/dockerconfigjson Secret that already exists in DX_NS (no regcred, no personal HCL token); helm pull uses it too",
+  TLS_ISSUER: "basic: cert-manager ClusterIssuer of the public certificate of the Ingress (Secret dx-tls-public)",
   platform: "kubernetes (your cluster), openshift, or poc (k3s on one machine)",
   DX_HOST: "Host name of the portal (e.g. dx.example.com); poc defaults to dx-demo.127.0.0.1.nip.io",
   DX_NS: "Namespace of HCL DX", SHARED_NS: "Namespace of the third-party tools (OpenLDAP, PostgreSQL, LiteLLM...)",
@@ -71,7 +73,8 @@ export function validateAnswers(answers, {secrets = "omit"} = {}){
     if (p.enum && !p.enum.includes(v)) errs.push(`${k} must be one of: ${p.enum.filter(Boolean).join(", ")}`);
     if (secrets === "omit" && SECRET_KEYS.includes(k) && v) errs.push(`${k} is a secret: leave it out (it is asked for when the folder runs) or call with secrets: "include"`);
   }
-  if (!answers.preset) errs.push("preset is required (all, webinar or custom)");
+  if (!answers.preset) errs.push("preset is required (all, webinar, custom or basic)");
+  if (answers.preset !== "basic" && (answers.IMAGE_PULL_SECRET || answers.TLS_ISSUER)) errs.push("IMAGE_PULL_SECRET and TLS_ISSUER are only for the basic preset");
   return errs;
 }
 

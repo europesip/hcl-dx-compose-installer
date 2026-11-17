@@ -1,5 +1,5 @@
 # DX Installer Wizard: the React page and a small Node server, with the tools that create the
-# AWS environments (aws, eksctl, rosa, oc, kubectl, helm, ssh).
+# AWS environments (aws, eksctl, rosa, oc, kubectl, helm, ssh), and the headless CLI (bin/dx-installer.mjs).
 FROM node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -24,7 +24,7 @@ LABEL org.opencontainers.image.title="DX Installer Wizard" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${VERSION}"
 RUN set -eux; \
-    apt-get update; apt-get install -y --no-install-recommends ca-certificates curl unzip openssh-client python3 libnss-wrapper; \
+    apt-get update; apt-get install -y --no-install-recommends ca-certificates curl unzip openssh-client python3 libnss-wrapper openssl; \
     ln -s "$(find /usr/lib -name libnss_wrapper.so | head -1)" /usr/local/lib/libnss_wrapper.so; \
     a=$([ "$TARGETARCH" = arm64 ] && echo aarch64 || echo x86_64); g=$([ "$TARGETARCH" = arm64 ] && echo arm64 || echo amd64); \
     cd /tmp; \
@@ -39,7 +39,10 @@ RUN set -eux; \
     aws --version; eksctl version; rosa version; oc version --client; kubectl version --client; helm version --short
 WORKDIR /app
 COPY package.json ./
-COPY src/zip.js ./src/zip.js
+# the engine and the headless CLI (#23, #32): "node bin/dx-installer.mjs generate ...", e.g. in a Job that installs a
+# basic test portal (the image also has kubectl, helm, curl and openssl to run the generated install.sh)
+COPY src ./src
+COPY bin ./bin
 COPY server ./server
 COPY --from=build /app/dist ./dist
 ENV NODE_ENV=production PORT=8080 HOME=/tmp USER=installer WORK_DIR=/tmp/dx-installer APP_VERSION=${VERSION}

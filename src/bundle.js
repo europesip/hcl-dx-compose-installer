@@ -12,6 +12,7 @@ import {retryScript, fixCollector} from "./retry.js";
 import {buildInfo, stampOf, accessStep, environmentInfoSh, collectorExtras} from "./support.js";
 import {resourcesMd} from "./resources.js";
 import {altRegistryOn, registryForm, applyRegistry, REGISTRY_NOTE} from "./registry.js";
+import {basicOn, applyBasic, BASIC_NOTE} from "./basic.js";
 import {sopsOn, parseSopsKeys, sopsErrors, baseSecretFiles, harborPromptDemo, sopsRunbookNote, SOPS_FILES} from "./sops.js";
 import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, CICD_DIR} from "./cicd.js";
 export {zipBytes} from "./zip.js";
@@ -139,6 +140,11 @@ export function generate(form, lang){
   if (altRegistryOn(form)) {
     out.splice(0, out.length, ...applyRegistry(form, out));
     out[0] = {...out[0], text: out[0].text.replace(/^(> (?:⚠️|🔐)[^\n]*\n)/m, `$1\n${(REGISTRY_NOTE[lang] || REGISTRY_NOTE.en).replace("REG", form.REGISTRY.trim())}\n`)};
+    for (const e of out) if (files[e.name.slice(P.length)]) files[e.name.slice(P.length)] = {...files[e.name.slice(P.length)], text: e.text};
+  }
+  if (basicOn(form)) {   // preset basic (src/basic.js): only the DX namespace, existing pull secret, cert-manager issuer
+    out.splice(0, out.length, ...applyBasic(form, s, out));
+    out[0] = {...out[0], text: out[0].text.replace(/^(> (?:⚠️|🔐)[^\n]*\n)/m, `$1\n${(BASIC_NOTE[lang] || BASIC_NOTE.en).replace("NS", s.DX_NS)}\n`)};
     for (const e of out) if (files[e.name.slice(P.length)]) files[e.name.slice(P.length)] = {...files[e.name.slice(P.length)], text: e.text};
   }
   if (webinar) for (const e of out) {   // Harbor password at the prompt (demo.sh), SOPS in BUILD-INFO.txt (src/sops.js)

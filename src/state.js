@@ -32,6 +32,8 @@ export const DEFAULTS = {
   LLM_PROVIDER: "openrouter", BEDROCK_API_KEY: "", BEDROCK_REGION: "us-east-1", ANTHROPIC_API_KEY: "",   // the AI: OpenRouter (recommended), AWS Bedrock or Claude directly (Anthropic API)   // password of the demo users of the LDAP (by default, the same as wpsadmin)
   AD_HOST: "", AD_PORT: "389", AD_BASE_DN: "", AD_BIND_USER: "", AD_BIND_PASSWORD: "", AD_CA_FILE: "",
   ORACLE_JDBC_URL: "", ORACLE_DX_USER: "wpsuser", ORACLE_DX_PASSWORD: "", ORACLE_CA_FILE: "",
+  // Basic preset (headless, #32): an existing pull secret in DX_NS instead of regcred, and a cert-manager ClusterIssuer
+  IMAGE_PULL_SECRET: "", TLS_ISSUER: "",
   // Names
   DX_NS: "dx-demo", SHARED_NS: "dx-shared", DX_RELEASE: "dx-deployment", IQ_RELEASE: "dx-iq",
   SEARCH_RELEASE: "dx-search", LDAP_RELEASE: "openldap", LITELLM_RELEASE: "litellm", PG_CLUSTER: "dx-pg",
@@ -48,6 +50,8 @@ export const PRESETS = {
   all: {lab1b: true, dir: "openldap", db: "postgres", lab3: true, lab3b: true, iqdb: true, iqrag: true, lab4: true, lab5: true},
   // Webinar / showroom (HCL feedback): stages 0 to 5, no extras
   webinar: {lab1b: false, dir: "openldap", db: "postgres", lab3: true, lab3b: false, iqdb: false, iqrag: false, lab4: true, lab5: false, IQ_LLM: "claude"},
+  // Basic (headless only, #32): a simple test portal as Lab 1 (DX Compose with Derby), for an unattended Job (src/basic.js)
+  basic: {lab1b: false, dir: "none", db: "none", lab3: false, lab3b: false, iqdb: false, iqrag: false, lab4: false, lab5: false},
 };
 export function applyPreset(f, preset){
   return normalise({...f, preset, ...(PRESETS[preset] || {})});
@@ -61,6 +65,7 @@ export function gates(f){
 export function normalise(f){
   const n = {...f};
   if (n.preset === "webinar") Object.assign(n, PRESETS.webinar);
+  if (n.preset === "basic") Object.assign(n, PRESETS.basic, {cicdOpenbao: false, cicdArgo: false, cicdOperator: false, keycloak: false, sops: false});
   if (!n.lab3) { n.lab3b = false; n.iqdb = false; }
   if ((n.LLM_PROVIDER || "openrouter") !== "openrouter") { n.IQ_LLM = "claude"; n.iqrag = false; }   // Bedrock / Anthropic: only Claude, and no BGE-M3 for the RAG
   if (!n.iqdb) n.iqrag = false;

@@ -117,3 +117,40 @@ test("CLI: generate to a folder or a zip, schema, version and exit codes", () =>
   assert.equal(run("--version").stdout.trim(), VERSION);
   fs.rmSync(dir, {recursive: true, force: true});
 });
+
+// Preset basic (#32): a simple test portal in the same cluster, installed by a Job
+const BASIC = {schemaVersion: 1, preset: "basic", platform: "kubernetes", DX_HOST: "dx-basic-1.example.com", DX_NS: "dx-basic-1",
+  INGRESS_KIND: "nginx", SC_RWO: "longhorn", SC_RWX: "longhorn", altRegistry: true, REGISTRY: "harbor.example.com/hclcr-proxy",
+  IMAGE_PULL_SECRET: "harbor-hclcr-pull", TLS_ISSUER: "letsencrypt-prod"};
+
+test("basic: only the DX namespace, existing pull secret, cert-manager issuer, no personal HCL token", () => {
+  const r = generateInstall({answers: BASIC});
+  assert.ok(r.ok, r.check.err.join("\n"));
+  const all = {...r.files, ...r.secretFiles}, txt = p => all[p].text;
+  assert.match(txt("lab-base/namespaces.yaml"), /name: dx-basic-1/);
+  assert.doesNotMatch(txt("lab-base/namespaces.yaml"), /dx-shared/);
+  assert.doesNotMatch(txt("lab-base/secrets.yaml"), /regcred|PUT-YOUR/);
+  assert.match(txt("lab-base/custom-values.yaml"), /- name: harbor-hclcr-pull/);
+  assert.match(txt("lab-base/custom-values.yaml"), /repository: "harbor\.example\.com\/hclcr-proxy"/);
+  assert.match(txt("lab-base/ingress-dx.yaml"), /cert-manager\.io\/cluster-issuer: "letsencrypt-prod"/);
+  assert.match(txt("lab-base/ingress-dx.yaml"), /secretName: dx-tls-public/);
+  const sh = txt("install.sh");
+  assert.match(sh, /get secret harbor-hclcr-pull -o jsonpath/);
+  assert.match(sh, /helm pull oci:\/\/harbor\.example\.com\/hclcr-proxy\/dx-compose\/hcl-dx-deployment .*--registry-config "\$RC"/);
+  assert.doesNotMatch(sh, /helm registry login|-n dx-shared|delete namespace dx-basic-1 dx-shared/);
+  assert.doesNotMatch(sh, /lab-ldap|lab-iq|lab-search|openldap/i);
+  assert.match(txt("uninstall.sh"), /the namespace dx-basic-1\./);
+  assert.match(r.runbook, /Basic preset/);
+  for (const p of ["install.sh", "uninstall.sh"]) assert.equal(spawnSync("bash", ["-n"], {input: txt(p)}).status, 0, p);
+});
+
+test("basic: the chosen wpsadmin password with secrets include, and the options only for basic", () => {
+  const r = generateInstall({answers: {...BASIC, LAB_PASSWORD: "MyPassw0rd!x"}, secrets: "include"});
+  assert.ok(r.ok, r.check.err.join("\n"));
+  assert.match(r.secretFiles["lab-base/secrets.yaml"].text, /password: 'MyPassw0rd!x'/);
+  assert.ok(validateAnswers({preset: "all", IMAGE_PULL_SECRET: "x"}).some(e => /only for the basic preset/.test(e)));
+  // the other presets keep the same folder: the basic options are off
+  const a = generateInstall({answers: {preset: "all", DX_HOST: "dx.example.com"}}), b = generateInstall({answers: {preset: "all", DX_HOST: "dx.example.com"}});
+  assert.equal(a.files["install.sh"].text.replace(/\d{4}-\d\d-\d\d \d\d:\d\d/g, ""), b.files["install.sh"].text.replace(/\d{4}-\d\d-\d\d \d\d:\d\d/g, ""));
+  assert.match(a.files["lab-base/namespaces.yaml"].text, /dx-shared/);
+});

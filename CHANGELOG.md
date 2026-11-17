@@ -7,7 +7,15 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
-## Unreleased
+## 2.8.0 · 2026-11-18
+
+- **Headless preset `basic`** (#32): a simple test portal (Lab 1: DX Compose with Derby) for an unattended Job in
+  the same cluster, such as the *Install a new portal › Basic* button of the HCL DX plugin of Backstage. Only the DX
+  namespace is created and cleaned up. `IMAGE_PULL_SECRET` uses a pull secret that already exists (no personal HCL
+  token; `helm pull` reads it too), and `TLS_ISSUER` gives the Ingress a cert-manager certificate. Off by default:
+  the other presets produce the same folder.
+- **Image:** the headless CLI (`node bin/dx-installer.mjs`) and `openssl`, so a Job with the installer image can
+  generate the folder and run `install.sh`.
 
 - `catalog-info.yaml` (commented) so that the EUROPESIP developer portal (Backstage) shows the wizard in its catalog
   (#21). Metadata only: no change to the wizard, its image or its chart.

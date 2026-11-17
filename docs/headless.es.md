@@ -17,7 +17,7 @@ DX»** en un portal interno del desarrollador (IDP), un job de CI o un script.
 Node 20.19 o posterior. Hasta que se publique como paquete, se instala desde una etiqueta de release:
 
 ```bash
-npm install github:europesip/hcl-dx-compose-installer#v2.9.0
+npm install github:europesip/hcl-dx-compose-installer#v2.8.0
 ```
 
 ```js
@@ -79,6 +79,46 @@ API, contraseñas): se rechazan. La carpeta se divide para que la parte que va a
 **`secrets: "include"`.** Las respuestas pueden llevar las credenciales, como en la página web, y la carpeta es byte a
 byte la que descarga la página (salvo la fecha de generación y las sales aleatorias del LDIF). `secretFiles` sigue
 diciendo qué ficheros las tienen.
+
+## Preset `basic`: un portal de pruebas sencillo, instalado por un Job
+
+`preset: "basic"` (solo headless) genera el **Lab 1**: DX Compose con Derby, sin directorio, sin base de datos
+externa, sin IQ y sin Search. Está pensado para ejecutarse **sin intervención dentro del mismo clúster**: por ejemplo,
+lo usa el plugin HCL DX de Backstage en su botón *Install a new portal › Basic*. Además de las respuestas habituales
+admite:
+
+| Clave | Qué hace |
+|---|---|
+| `IMAGE_PULL_SECRET` | Nombre de un Secret `kubernetes.io/dockerconfigjson` que **ya existe** en `DX_NS`, por ejemplo creado por un ExternalSecret. Ni `regcred` ni token personal de HCL: lo usan las imágenes, y `helm pull` lee sus credenciales (`--registry-config`) para bajar el chart |
+| `altRegistry` + `REGISTRY` | De dónde vienen las imágenes y el chart, normalmente un **proxy caché de hclcr.io en Harbor** (p. ej. `harbor.example.com/hclcr-proxy`) |
+| `TLS_ISSUER` | Un `ClusterIssuer` de cert-manager: el Ingress recibe un certificado público (Secret `dx-tls-public`); HAProxy mantiene detrás su certificado autofirmado |
+
+Qué cambia en la carpeta:
+- solo se crea el namespace `DX_NS`;
+- `install.sh --cleanup` y `uninstall.sh` no tocan nada más (ningún namespace de herramientas de terceros);
+- `install.sh --yes` se ejecuta sin preguntar. Cada paso escribe `━━━ [n/m] <etapa> · <id> · <título>`, fácil de
+  seguir desde un log;
+- `install.sh` necesita `kubectl`, `helm`, `openssl` y `curl`. La imagen del instalador los trae todos, y también el
+  CLI.
+
+Ejemplo: un Job con la imagen del instalador, las respuestas montadas desde un Secret y `secrets: "include"`, para que
+la contraseña de wpsadmin sea la elegida.
+
+```bash
+node /app/bin/dx-installer.mjs generate --answers /answers/answers.json --secrets include --out /work/dx-install
+/work/dx-install/install.sh --yes
+```
+
+```json
+{"schemaVersion": 1, "preset": "basic", "platform": "kubernetes", "DX_NS": "dx-basic-1", "DX_HOST": "dx-basic-1.example.com",
+ "INGRESS_KIND": "nginx", "SC_RWO": "longhorn", "SC_RWX": "longhorn", "altRegistry": true,
+ "REGISTRY": "harbor.example.com/hclcr-proxy", "IMAGE_PULL_SECRET": "harbor-hclcr-pull", "TLS_ISSUER": "letsencrypt-prod",
+ "LAB_PASSWORD": "<la contraseña de wpsadmin: solo en un Secret>"}
+```
+
+El Job instala con `helm` real (nunca con Argo CD), así que su ServiceAccount necesita permisos amplios en el clúster:
+crear namespaces y todo lo que el chart de HCL crea dentro (Roles, RoleBindings, StatefulSets, PVCs...). La
+documentación del plugin HCL DX de Backstage explica la ServiceAccount que usa.
 
 ## Línea de comandos
 
