@@ -33,7 +33,7 @@ export const DEFAULTS = {
   AD_HOST: "", AD_PORT: "389", AD_BASE_DN: "", AD_BIND_USER: "", AD_BIND_PASSWORD: "", AD_CA_FILE: "",
   ORACLE_JDBC_URL: "", ORACLE_DX_USER: "wpsuser", ORACLE_DX_PASSWORD: "", ORACLE_CA_FILE: "",
   // Basic preset (headless, #32): an existing pull secret in DX_NS instead of regcred, and a cert-manager ClusterIssuer
-  IMAGE_PULL_SECRET: "", TLS_ISSUER: "", BASIC_DAM: false,
+  IMAGE_PULL_SECRET: "", TLS_ISSUER: "", BASIC_DAM: true,
   // Names
   DX_NS: "dx-demo", SHARED_NS: "dx-shared", DX_RELEASE: "dx-deployment", IQ_RELEASE: "dx-iq",
   SEARCH_RELEASE: "dx-search", LDAP_RELEASE: "openldap", LITELLM_RELEASE: "litellm", PG_CLUSTER: "dx-pg",

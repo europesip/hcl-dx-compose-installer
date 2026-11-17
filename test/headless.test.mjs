@@ -155,11 +155,11 @@ test("basic: the chosen wpsadmin password with secrets include, and the options 
   assert.match(a.files["lab-base/namespaces.yaml"].text, /dx-shared/);
 });
 
-test("basic: light by default (no DAM), Lab 1 complete with BASIC_DAM", () => {
-  const light = generateInstall({answers: BASIC}).files["lab-base/custom-values.yaml"].text;
+test("basic: Lab 1 complete by default (with DAM), the light portal with BASIC_DAM false", () => {
+  const light = generateInstall({answers: {...BASIC, BASIC_DAM: false}}).files["lab-base/custom-values.yaml"].text;
   assert.match(light, /digitalAssetManagement: false/);
   assert.match(light, /persistence: false/);
-  const full = generateInstall({answers: {...BASIC, BASIC_DAM: true}}).files["lab-base/custom-values.yaml"].text;
+  const full = generateInstall({answers: BASIC}).files["lab-base/custom-values.yaml"].text;
   assert.doesNotMatch(full, /digitalAssetManagement: false/);
   assert.match(full, /persistence: true/);
 });

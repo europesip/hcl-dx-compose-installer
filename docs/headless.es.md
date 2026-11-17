@@ -91,7 +91,7 @@ admite:
 |---|---|
 | `IMAGE_PULL_SECRET` | Nombre de un Secret `kubernetes.io/dockerconfigjson` que **ya existe** en `DX_NS`, por ejemplo creado por un ExternalSecret. Ni `regcred` ni token personal de HCL: lo usan las imágenes, y `helm pull` lee sus credenciales (`--registry-config`) para bajar el chart |
 | `altRegistry` + `REGISTRY` | De dónde vienen las imágenes y el chart, normalmente un **proxy caché de hclcr.io en Harbor** (p. ej. `harbor.example.com/hclcr-proxy`) |
-| `BASIC_DAM` | `false` (por defecto): el portal más ligero, Web Engine con Derby, HAProxy y Ring API (unos 2,6 CPU y 5 GiB solicitados). `true`: Lab 1 completo, con DAM, Content Composer, el procesador de imágenes y la persistencia de DAM (unos 4,8 CPU y 10,5 GiB) |
+| `BASIC_DAM` | `true` (por defecto): Lab 1 completo, con DAM, Content Composer, el procesador de imágenes y la persistencia de DAM (unos 4,8 CPU y 10,5 GiB solicitados). `false`: el portal más ligero, Web Engine con Derby, HAProxy y Ring API (unos 2,6 CPU y 5 GiB) |
 | `TLS_ISSUER` | Un `ClusterIssuer` de cert-manager: el Ingress recibe un certificado público (Secret `dx-tls-public`); HAProxy mantiene detrás su certificado autofirmado |
 
 Qué cambia en la carpeta:

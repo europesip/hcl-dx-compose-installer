@@ -12,8 +12,8 @@ es la misma que en la 2.0.x.
 - **Preset headless `basic`** (#32): un portal de pruebas sencillo (Lab 1: DX Compose con Derby) para un Job sin
   intervención en el mismo clúster, como el botón *Install a new portal › Basic* del plugin HCL DX de Backstage. Solo
   se crea y se limpia el namespace de DX. `IMAGE_PULL_SECRET` usa un pull secret que ya existe (sin token personal de
-  HCL; `helm pull` también lo lee), y `TLS_ISSUER` da al Ingress un certificado de cert-manager. `BASIC_DAM` (por defecto false) añade
-  DAM y Content Composer (Lab 1 completo, el doble de recursos). Desactivado por
+  HCL; `helm pull` también lo lee), y `TLS_ISSUER` da al Ingress un certificado de cert-manager. `BASIC_DAM` (por defecto true: Lab 1
+  completo con DAM y Content Composer; false: solo Web Engine, la mitad de recursos). Desactivado por
   defecto: los demás presets generan la misma carpeta.
 - **Imagen:** el CLI headless (`node bin/dx-installer.mjs`) y `openssl`, para que un Job con la imagen del instalador
   genere la carpeta y ejecute `install.sh`.
