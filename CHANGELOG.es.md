@@ -7,6 +7,13 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## 2.9.0 · 2026-11-18
+
+- **Preset `basic`: un LDAP que ya existe** (#35): `BASIC_LDAP_HOST`, `BASIC_LDAP_PORT`, `BASIC_LDAP_SUFFIX` y
+  `BASIC_LDAP_SECRET` (un Secret con `bindUser`/`bindPassword` que ya está en el namespace de DX). DX se autentica
+  contra ese directorio como en el Lab 2A (wpsadmin sigue funcionando); no se instala nada en otro namespace.
+  Desactivado por defecto.
+
 ## 2.8.0 · 2026-11-18
 
 - **Preset headless `basic`** (#32): un portal de pruebas sencillo (Lab 1: DX Compose con Derby) para un Job sin

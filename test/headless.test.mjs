@@ -163,3 +163,16 @@ test("basic: Lab 1 complete by default (with DAM), the light portal with BASIC_D
   assert.doesNotMatch(full, /digitalAssetManagement: false/);
   assert.match(full, /persistence: true/);
 });
+
+test("basic: an LDAP that already exists (BASIC_LDAP_HOST), bind credentials in an existing Secret", () => {
+  const r = generateInstall({answers: {...BASIC, BASIC_LDAP_HOST: "openldap.identity.svc.cluster.local", BASIC_LDAP_SUFFIX: "dc=europesip,dc=com"}});
+  assert.ok(r.ok, r.check.err.join("\n"));
+  const v = r.files["lab-base/custom-values.yaml"].text;
+  assert.match(v, /configuration:\n  # basic preset: an LDAP that already exists[\s\S]*host: "openldap\.identity\.svc\.cluster\.local"[\s\S]*suffix: "dc=europesip,dc=com"[\s\S]*customLdapSecret: "dx-ldap-bind"/);
+  assert.match(v, /wplc-add-property/);
+  assert.match(v, /containerTimezone/);   // the rest of configuration is kept
+  assert.doesNotMatch(r.files["install.sh"].text, /openldap-stack-ha|lab-ldap|-n dx-shared/);
+  assert.doesNotMatch(generateInstall({answers: BASIC}).files["lab-base/custom-values.yaml"].text, /ldap:/);
+  assert.ok(validateAnswers({...BASIC, BASIC_LDAP_HOST: "ldap.example.com"}).some(e => /BASIC_LDAP_SUFFIX is required/.test(e)));
+  assert.ok(validateAnswers({preset: "all", BASIC_LDAP_HOST: "x"}).some(e => /only for the basic preset/.test(e)));
+});

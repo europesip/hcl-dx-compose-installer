@@ -13,7 +13,11 @@
 //   DAM (about 4.8 CPU and 10.5 GiB requested, measured on the EUROPESIP cluster); false: the lightest portal, Web
 //   Engine with Derby, HAProxy and the Ring API (about 2.6 CPU and 5 GiB);
 // - TLS_ISSUER: the Ingress gets a certificate from that cert-manager ClusterIssuer (Secret dx-tls-public); HAProxy
-//   keeps its own self-signed certificate behind it.
+//   keeps its own self-signed certificate behind it;
+// - BASIC_LDAP_HOST (#35): DX authenticates against a directory that already exists (no OpenLDAP is installed), as
+//   Lab 2A: the native LDAP block of the chart (type other) with the bind credentials of BASIC_LDAP_SECRET, a Secret
+//   that already exists in the DX namespace (bindUser, bindPassword), and the preferredLanguage property. wpsadmin
+//   (basic registry) still works.
 
 export const basicOn = f => f.preset === "basic";
 
@@ -53,6 +57,8 @@ export function applyBasic(f, s, entries){
       t = t.replace(/^(\s*)persistence: true(\s*#.*)?$/m, (m, sp) =>
         `${sp}# basic preset, light (BASIC_DAM false): Web Engine with Derby, HAProxy and the Ring API only\n` +
         `${sp}persistence: false\n${sp}digitalAssetManagement: false\n${sp}imageProcessor: false\n${sp}contentComposer: false`);
+    if (f.BASIC_LDAP_HOST && e.name.endsWith("lab-base/custom-values.yaml"))   // the existing directory
+      t = t.replace(/^configuration:\n/m, "configuration:\n" + ldapBlock(f));
     if (issuer && e.name.endsWith("lab-base/ingress-dx.yaml"))
       t = t.replace(/^(\s*)annotations:\n/m, `$1annotations:\n$1  cert-manager.io/cluster-issuer: "${issuer}"   # public certificate (Secret dx-tls-public)\n`)
         .replace(/(\n\s*tls:\n(?:.*\n)*?\s*secretName:\s*)dx-tls-cert/, "$1dx-tls-public")
@@ -60,6 +66,27 @@ export function applyBasic(f, s, entries){
     return t === e.text ? e : {...e, text: t};
   });
 }
+
+// configuration.webEngine of an existing directory (basic preset, BASIC_LDAP_HOST)
+const ldapBlock = f => `  # basic preset: an LDAP that already exists (BASIC_LDAP_HOST); wpsadmin (basic registry) still works
+  webEngine:
+    ldap:
+      type: "other"
+      host: "${f.BASIC_LDAP_HOST}"
+      port: ${Number(f.BASIC_LDAP_PORT || 389)}
+      sslEnabled: false
+      suffix: "${f.BASIC_LDAP_SUFFIX}"
+      serverType: "Custom"
+      id: "dx_ldap"
+      customLdapSecret: "${f.BASIC_LDAP_SECRET || "dx-ldap-bind"}"   # bindUser / bindPassword, already in the namespace
+    configOverrideFiles:
+      preferred-language.xml: |
+        <server description="DX Web Engine - preferredLanguage of the users">
+          <wplc-add-property>
+            <resource propertyName="preferredLanguage" dataType="String" entityTypes="PersonAccount" multiValued="false"/>
+          </wplc-add-property>
+        </server>
+`;
 
 export const BASIC_NOTE = {
   en: "> 🧪 **Basic preset:** a simple test portal (DX Compose with Derby, as Lab 1), for tests only. Only the namespace NS is created and deleted. For production-like installations use the full wizard.",
