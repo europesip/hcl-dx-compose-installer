@@ -7,6 +7,14 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## 2.10.0 · 2026-11-18
+
+- **Preset `basic`: su propio PostgreSQL** (#35, `BASIC_PG`): un Cluster de CloudNativePG en el namespace de DX (el
+  namespace compartido de los labs es el de DX), creado con el operador CNPG que ya está en el clúster (se quitan su
+  instalación y su borrado; la instalación se para si falta el operador), y después la transferencia desde Derby
+  (~15 min más), como el Lab 2B. Copia `setup-postgres-dx.sql` en `lab-bbdd/` antes de `install.sh`. Desactivado por
+  defecto.
+
 ## 2.9.0 · 2026-11-18
 
 - **Preset `basic`: un LDAP que ya existe** (#35): `BASIC_LDAP_HOST`, `BASIC_LDAP_PORT`, `BASIC_LDAP_SUFFIX` y

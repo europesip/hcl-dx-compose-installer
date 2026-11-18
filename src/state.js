@@ -34,6 +34,7 @@ export const DEFAULTS = {
   ORACLE_JDBC_URL: "", ORACLE_DX_USER: "wpsuser", ORACLE_DX_PASSWORD: "", ORACLE_CA_FILE: "",
   // Basic preset (headless, #32): an existing pull secret in DX_NS instead of regcred, and a cert-manager ClusterIssuer
   IMAGE_PULL_SECRET: "", TLS_ISSUER: "", BASIC_DAM: true,
+  BASIC_PG: false,
   BASIC_LDAP_HOST: "", BASIC_LDAP_PORT: "389", BASIC_LDAP_SUFFIX: "", BASIC_LDAP_SECRET: "dx-ldap-bind",
   // Names
   DX_NS: "dx-demo", SHARED_NS: "dx-shared", DX_RELEASE: "dx-deployment", IQ_RELEASE: "dx-iq",
@@ -66,7 +67,12 @@ export function gates(f){
 export function normalise(f){
   const n = {...f};
   if (n.preset === "webinar") Object.assign(n, PRESETS.webinar);
-  if (n.preset === "basic") Object.assign(n, PRESETS.basic, {cicdOpenbao: false, cicdArgo: false, cicdOperator: false, keycloak: false, sops: false});
+  if (n.preset === "basic") {
+    Object.assign(n, PRESETS.basic, {cicdOpenbao: false, cicdArgo: false, cicdOperator: false, keycloak: false, sops: false});
+    // BASIC_PG (#35): its own PostgreSQL, a CloudNativePG Cluster in the DX namespace (the labs' shared namespace IS the
+    // DX namespace), made with the CNPG operator that is already in the cluster (src/basic.js removes its install)
+    if (n.BASIC_PG) Object.assign(n, {db: "postgres", SHARED_NS: n.DX_NS});
+  }
   if (!n.lab3) { n.lab3b = false; n.iqdb = false; }
   if ((n.LLM_PROVIDER || "openrouter") !== "openrouter") { n.IQ_LLM = "claude"; n.iqrag = false; }   // Bedrock / Anthropic: only Claude, and no BGE-M3 for the RAG
   if (!n.iqdb) n.iqrag = false;

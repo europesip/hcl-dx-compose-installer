@@ -40,6 +40,7 @@ const DESCRIPTIONS = {
   IMAGE_PULL_SECRET: "basic: name of a kubernetes.io/dockerconfigjson Secret that already exists in DX_NS (no regcred, no personal HCL token); helm pull uses it too",
   TLS_ISSUER: "basic: cert-manager ClusterIssuer of the public certificate of the Ingress (Secret dx-tls-public)",
   BASIC_DAM: "basic: true (default) = Lab 1 complete (DAM, Content Composer, image processor and the persistence of DAM); false = the lightest portal, Web Engine with Derby, HAProxy and the Ring API only (about half the resources)",
+  BASIC_PG: "basic: true = its own PostgreSQL (a CloudNativePG Cluster in DX_NS, made with the CNPG operator already in the cluster; never installs one) and the transfer from Derby (~15 min more); the setup SQL must be copied into lab-bbdd/ before install.sh, as in Lab 2B; false (default) = Derby",
   BASIC_LDAP_HOST: "basic: host of a directory that already exists (e.g. openldap.identity.svc.cluster.local); empty = no LDAP, only wpsadmin",
   BASIC_LDAP_PORT: "basic: port of that directory (389, no TLS)",
   BASIC_LDAP_SUFFIX: "basic: base DN of the searches (e.g. dc=example,dc=com)",
@@ -79,7 +80,7 @@ export function validateAnswers(answers, {secrets = "omit"} = {}){
     if (secrets === "omit" && SECRET_KEYS.includes(k) && v) errs.push(`${k} is a secret: leave it out (it is asked for when the folder runs) or call with secrets: "include"`);
   }
   if (!answers.preset) errs.push("preset is required (all, webinar, custom or basic)");
-  if (answers.preset !== "basic" && (answers.IMAGE_PULL_SECRET || answers.TLS_ISSUER || answers.BASIC_DAM !== undefined || answers.BASIC_LDAP_HOST)) errs.push("IMAGE_PULL_SECRET, TLS_ISSUER, BASIC_DAM and BASIC_LDAP_* are only for the basic preset");
+  if (answers.preset !== "basic" && (answers.IMAGE_PULL_SECRET || answers.TLS_ISSUER || answers.BASIC_DAM !== undefined || answers.BASIC_LDAP_HOST || answers.BASIC_PG)) errs.push("IMAGE_PULL_SECRET, TLS_ISSUER, BASIC_DAM, BASIC_PG and BASIC_LDAP_* are only for the basic preset");
   if (answers.BASIC_LDAP_HOST) {
     if (!/^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$/i.test(answers.BASIC_LDAP_HOST)) errs.push("BASIC_LDAP_HOST must be a host name");
     if (!/^[0-9]{2,5}$/.test(answers.BASIC_LDAP_PORT ?? "389")) errs.push("BASIC_LDAP_PORT must be a port number");
