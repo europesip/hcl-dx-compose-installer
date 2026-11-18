@@ -7,6 +7,12 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## 2.9.0 · 2026-11-18
+
+- **Preset `basic`: an LDAP that already exists** (#35): `BASIC_LDAP_HOST`, `BASIC_LDAP_PORT`, `BASIC_LDAP_SUFFIX` and
+  `BASIC_LDAP_SECRET` (a Secret with `bindUser`/`bindPassword` already in the DX namespace). DX authenticates against
+  that directory as in Lab 2A (wpsadmin still works); nothing is installed in another namespace. Off by default.
+
 ## 2.8.0 · 2026-11-18
 
 - **Headless preset `basic`** (#32): a simple test portal (Lab 1: DX Compose with Derby) for an unattended Job in

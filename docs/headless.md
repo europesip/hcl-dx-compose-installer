@@ -17,7 +17,7 @@ Portal (IDP), a CI job, or a script.
 Node 20.19 or later. Until it is published as a package, install it from a release tag:
 
 ```bash
-npm install github:europesip/hcl-dx-compose-installer#v2.8.0
+npm install github:europesip/hcl-dx-compose-installer#v2.9.0
 ```
 
 ```js
@@ -89,6 +89,7 @@ uses it for its button *Install a new portal › Basic*. On top of the usual ans
 | `IMAGE_PULL_SECRET` | Name of a `kubernetes.io/dockerconfigjson` Secret that **already exists** in `DX_NS`, for example made by an ExternalSecret. No `regcred` and no personal HCL token: the images use it, and `helm pull` reads its credentials (`--registry-config`) to pull the chart |
 | `altRegistry` + `REGISTRY` | Where the images and the chart come from, usually a **Harbor proxy cache of hclcr.io** (e.g. `harbor.example.com/hclcr-proxy`) |
 | `BASIC_DAM` | `true` (default): Lab 1 complete, with DAM, Content Composer, the image processor and the persistence of DAM (about 4.8 CPU and 10.5 GiB requested). `false`: the lightest portal, Web Engine with Derby, HAProxy and the Ring API (about 2.6 CPU and 5 GiB) |
+| `BASIC_LDAP_HOST`, `BASIC_LDAP_PORT`, `BASIC_LDAP_SUFFIX`, `BASIC_LDAP_SECRET` | A directory that **already exists** (no OpenLDAP is installed): host, port (389), base DN, and a Secret that already exists in `DX_NS` with `bindUser` and `bindPassword` (default `dx-ldap-bind`, e.g. made by an ExternalSecret). DX gets the native LDAP block (type other) and the `preferredLanguage` property, as Lab 2A; wpsadmin still works. Empty host: no LDAP |
 | `TLS_ISSUER` | A cert-manager `ClusterIssuer`: the Ingress gets a public certificate (Secret `dx-tls-public`); HAProxy keeps its self-signed one behind it |
 
 What changes in the folder:

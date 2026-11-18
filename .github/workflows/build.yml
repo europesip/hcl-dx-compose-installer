@@ -19,7 +19,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # Playwright has no Chromium for ubuntu 26.04 (latest) yet
     steps:
       - uses: actions/checkout@v7
       - uses: actions/checkout@v7
@@ -42,7 +42,7 @@ jobs:
 
   image:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # Playwright: see the test job
     steps:
       - uses: actions/checkout@v7
       - uses: docker/setup-qemu-action@v4
