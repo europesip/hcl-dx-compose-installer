@@ -176,3 +176,18 @@ test("basic: an LDAP that already exists (BASIC_LDAP_HOST), bind credentials in 
   assert.ok(validateAnswers({...BASIC, BASIC_LDAP_HOST: "ldap.example.com"}).some(e => /BASIC_LDAP_SUFFIX is required/.test(e)));
   assert.ok(validateAnswers({preset: "all", BASIC_LDAP_HOST: "x"}).some(e => /only for the basic preset/.test(e)));
 });
+
+test("basic: its own PostgreSQL (BASIC_PG) in the DX namespace, with the CNPG operator already in the cluster", () => {
+  const r = generateInstall({answers: {...BASIC, BASIC_PG: true}});
+  assert.ok(r.ok, r.check.err.join("\n"));
+  const all = {...r.files, ...r.secretFiles}, sh = all["install.sh"].text;
+  assert.match(all["lab-bbdd/cluster-dx-pg.yaml"].text, /namespace: dx-basic-1/);
+  assert.match(sh, /kubectl -n dx-basic-1 create configmap dx-pg-setup-sql/);
+  assert.match(sh, /Transfer Derby → PostgreSQL/);
+  assert.match(sh, /kubectl get crd clusters\.postgresql\.cnpg\.io >\/dev\/null \|\|/);
+  assert.doesNotMatch(sh, /helm repo add cnpg|upgrade --install cnpg|helm uninstall cnpg|dx-shared/);
+  assert.match(all["lab-base/namespaces.yaml"].text, /name: dx-basic-1/);
+  for (const p of ["install.sh", "uninstall.sh"]) assert.equal(spawnSync("bash", ["-n"], {input: all[p].text}).status, 0, p);
+  assert.doesNotMatch(generateInstall({answers: BASIC}).files["install.sh"].text, /cnpg|Transfer Derby/);
+  assert.ok(validateAnswers({preset: "all", BASIC_PG: true}).some(e => /only for the basic preset/.test(e)));
+});

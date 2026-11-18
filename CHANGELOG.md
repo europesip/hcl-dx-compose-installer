@@ -7,6 +7,13 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## 2.10.0 · 2026-11-18
+
+- **Preset `basic`: its own PostgreSQL** (#35, `BASIC_PG`): a CloudNativePG Cluster in the DX namespace (the shared
+  namespace of the labs is the DX namespace), made with the CNPG operator that is already in the cluster (its install
+  and removal are taken out; the install stops if the operator is missing), then the transfer from Derby (~15 min more),
+  as Lab 2B. Copy `setup-postgres-dx.sql` into `lab-bbdd/` before `install.sh`. Off by default.
+
 ## 2.9.0 · 2026-11-18
 
 - **Preset `basic`: an LDAP that already exists** (#35): `BASIC_LDAP_HOST`, `BASIC_LDAP_PORT`, `BASIC_LDAP_SUFFIX` and

@@ -17,7 +17,7 @@ DX»** en un portal interno del desarrollador (IDP), un job de CI o un script.
 Node 20.19 o posterior. Hasta que se publique como paquete, se instala desde una etiqueta de release:
 
 ```bash
-npm install github:europesip/hcl-dx-compose-installer#v2.9.0
+npm install github:europesip/hcl-dx-compose-installer#v2.10.0
 ```
 
 ```js
@@ -92,6 +92,7 @@ admite:
 | `IMAGE_PULL_SECRET` | Nombre de un Secret `kubernetes.io/dockerconfigjson` que **ya existe** en `DX_NS`, por ejemplo creado por un ExternalSecret. Ni `regcred` ni token personal de HCL: lo usan las imágenes, y `helm pull` lee sus credenciales (`--registry-config`) para bajar el chart |
 | `altRegistry` + `REGISTRY` | De dónde vienen las imágenes y el chart, normalmente un **proxy caché de hclcr.io en Harbor** (p. ej. `harbor.example.com/hclcr-proxy`) |
 | `BASIC_DAM` | `true` (por defecto): Lab 1 completo, con DAM, Content Composer, el procesador de imágenes y la persistencia de DAM (unos 4,8 CPU y 10,5 GiB solicitados). `false`: el portal más ligero, Web Engine con Derby, HAProxy y Ring API (unos 2,6 CPU y 5 GiB) |
+| `BASIC_PG` | `true`: su propio PostgreSQL, un Cluster de CloudNativePG en `DX_NS` creado con el operador CNPG que ya está en el clúster (nunca instala uno), y la transferencia desde Derby (~15 min más). Copia antes `setup-postgres-dx.sql` en `lab-bbdd/`. `false` (por defecto): Derby |
 | `BASIC_LDAP_HOST`, `BASIC_LDAP_PORT`, `BASIC_LDAP_SUFFIX`, `BASIC_LDAP_SECRET` | Un directorio que **ya existe** (no se instala OpenLDAP): host, puerto (389), DN base y un Secret que ya existe en `DX_NS` con `bindUser` y `bindPassword` (por defecto `dx-ldap-bind`, por ejemplo creado por un ExternalSecret). DX recibe el bloque LDAP nativo (tipo other) y la propiedad `preferredLanguage`, como el Lab 2A; wpsadmin sigue funcionando. Host vacío: sin LDAP |
 | `TLS_ISSUER` | Un `ClusterIssuer` de cert-manager: el Ingress recibe un certificado público (Secret `dx-tls-public`); HAProxy mantiene detrás su certificado autofirmado |
 
