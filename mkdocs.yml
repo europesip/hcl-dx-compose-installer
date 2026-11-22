@@ -21,6 +21,9 @@ nav:
   - Docker and Helm: deploy.md
   - Headless mode: headless.md
   - How it works: how-it-works.md
+  - DX Core vs Web Engine: core-vs-webengine.md
+  - External databases: databases.md
+  - DX Core phase 2: dx-core-phase2.md
   - AWS environments: aws.md
   - "Advanced CI/CD: OpenBao": openbao.md
   - Third-party software: third-party.md
@@ -34,6 +37,9 @@ nav:
       - Docker y Helm: deploy.es.md
       - Modo headless: headless.es.md
       - Cómo funciona: how-it-works.es.md
+      - DX Core frente al Web Engine: core-vs-webengine.es.md
+      - Bases de datos externas: databases.es.md
+      - DX Core, fase 2: dx-core-phase2.es.md
       - Entornos en AWS: aws.es.md
       - "CI/CD avanzado: OpenBao": openbao.es.md
       - Software de terceros: third-party.es.md

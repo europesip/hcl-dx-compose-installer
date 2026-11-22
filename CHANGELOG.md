@@ -7,6 +7,10 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## Unreleased
+
+- **Docs: DX Core vs Web Engine and external databases** (#41). [docs/core-vs-webengine.md](docs/core-vs-webengine.md): every difference found with #38 in one page — measured product versions (WebSphere ND 9.0.5.29 on IBM Java 8 vs Open Liberty 26.0.0.9 on Semeru 21, RHEL 8.10 vs 9.8), chart values and credentials, tools (ConfigEngine and Config Wizard only on Core, DXClient common, XMLAccess on both), LDAP, database (the Core transfer is only possible with ConfigEngine), import/export (DXConnect vs dxFileTransfer, WCM formats), login, URLs. [docs/databases.md](docs/databases.md): existing server vs test instance per database and runtime, editions and licences, HCL CF239 support, what the installer and the operator create (#40). No change to the generated installation.
+
 ## 2.11.0 · 2026-11-22
 
 - **The DX server: DX Compose or DX Core** (#38). *Choose what to install* → *DX server*: **DX Compose (Web Engine)**,
