@@ -7,7 +7,16 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
-## Sin publicar
+## 2.12.0 · 2026-11-22
+
+- **Operador de Script Applications 0.11.0** (antes 0.3.1; operador #44, #45, instalador #43). El extra de CI/CD
+  instala el operador 0.11.0 y aplica sus 11 CRD antes del `helm upgrade` (nuevos: DXWCMLibraryImport,
+  DXWCMLibraryExport, DXExport, DXXMLAccess, DXWCMAdminTask); las comprobaciones de salud de Argo CD y la limpieza
+  cubren los tipos nuevos. La DXConnection del ejemplo hello usa los nombres nuevos `portalCredentialsSecret` y
+  `tlsCASecret` (el operador sigue aceptando los antiguos `credentialsSecret` y `caSecret`, con un aviso
+  `DeprecatedField`) e indica `runtime: compose`. El operador pide ahora 500m de CPU / 512 MiB (estimador de recursos
+  actualizado). Instalaciones existentes: aplicar los CRD de la 0.11.0 y `helm upgrade dxop … --version 0.11.0` (el
+  paso OP-1 del RUNBOOK hace las dos cosas); sus recursos siguen funcionando.
 
 - **Documentación: DX Core frente al Web Engine y bases de datos externas** (#41). [docs/core-vs-webengine.es.md](docs/core-vs-webengine.es.md): todas las diferencias encontradas con #38 en una página — versiones medidas del producto (WebSphere ND 9.0.5.29 sobre IBM Java 8 frente a Open Liberty 26.0.0.9 sobre Semeru 21, RHEL 8.10 frente a 9.8), valores del chart y credenciales, herramientas (ConfigEngine y Config Wizard solo en Core, DXClient común, XMLAccess en los dos), LDAP, base de datos (en Core la transferencia solo se puede hacer con ConfigEngine), importar y exportar (DXConnect frente a dxFileTransfer, formatos WCM), login y URLs. [docs/databases.es.md](docs/databases.es.md): servidor existente o instancia de pruebas por base de datos y servidor, ediciones y licencias, soporte de HCL CF239 y qué crean el instalador y el operador (#40). Sin cambios en la instalación generada.
 

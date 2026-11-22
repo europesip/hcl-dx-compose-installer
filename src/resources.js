@@ -8,7 +8,7 @@ import {cicdOn, keycloakOn} from "./cicd.js";
 const C = {   // [CPU, GiB]
   dx: [4.8, 10.5], iq: [0.4, 0.75], search: [2.5, 4.75],
   ldap: [0.05, 0.15], pg: [0.25, 1.0], litellm: [0.1, 0.5], mcp: [0.05, 0.15],
-  orbita: [0.1, 0.4], scriptapp: [0.05, 0.1], openbao: [0.2, 0.35], argocd: [0.25, 0.5], operator: [0.05, 0.2], keycloak: [0.5, 1.2],
+  orbita: [0.1, 0.4], scriptapp: [0.05, 0.1], openbao: [0.2, 0.35], argocd: [0.25, 0.5], operator: [0.5, 0.5] /* 0.11.0 requests 500m / 512Mi */, keycloak: [0.5, 1.2],
 };
 
 export function resources(f){
