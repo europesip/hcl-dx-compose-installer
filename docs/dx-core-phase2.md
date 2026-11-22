@@ -55,6 +55,19 @@ does today on the Web Engine and what to check on Core:
 | Pod and service names: `<release>-web-engine-0`, `…-web-engine:9080` (`InternalURL`) | `<release>-core-0`, service `<release>-core` (ports 10039/10041 in the container) |
 | DXConnection: no field for the server kind | add `runtime` (`compose` / `core`) and `contextRoot`, defaulted from the namespace label `dx.europesip.com/runtime` |
 
+### Measured on a traditional DX 9.5 on a VM (CF230, build 20250923)
+
+A traditional DX 9.5 CF230 on AWS (the **production** public website europesip.com: only read-only operations —
+exports, lists, dry runs — unless Andrés authorises an import into a specific test virtual portal or library),
+reachable from the cluster at `https://<host>:10042` (self-signed certificate):
+
+- **empty context root**: XMLAccess at `https://<host>:10042/config` (Basic → 200 with the XMLAccess answer), WCM REST
+  at `/mycontenthandler/wcmrest/…`, form login at `/j_security_check` (gives an `LtpaToken2` cookie);
+- WCM REST with Basic answers 302 to the login: it needs the form / LTPA session;
+- no Ring API;
+- for the operator tests: a DXConnection-style Secret with the administrator in the namespace `dxop-core-sergio`
+  (labelled `dx.europesip.com/runtime=core`).
+
 ## Phase 1 test results
 
 See the comments of issue #38 (Derby with and without DAM on the EUROPESIP cluster).

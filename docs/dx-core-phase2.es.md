@@ -55,6 +55,19 @@ hace hoy el operador sobre el Web Engine y qué hay que comprobar en Core:
 | Nombres de pod y servicio: `<release>-web-engine-0`, `…-web-engine:9080` (`InternalURL`) | `<release>-core-0`, servicio `<release>-core` (puertos 10039/10041 en el contenedor) |
 | DXConnection: sin campo para el tipo de servidor | añadir `runtime` (`compose` / `core`) y `contextRoot`, por defecto desde la etiqueta del namespace `dx.europesip.com/runtime` |
 
+### Medido en un DX 9.5 tradicional en una VM (CF230, build 20250923)
+
+Un DX 9.5 CF230 tradicional en AWS (la web pública de **producción** europesip.com: solo operaciones de lectura —
+exportaciones, listados, pruebas en seco — salvo que Andrés autorice una importación en un portal virtual o una librería
+de pruebas concretos), accesible desde el clúster en `https://<host>:10042` (certificado autofirmado):
+
+- **context root vacío**: XMLAccess en `https://<host>:10042/config` (Basic → 200 con la respuesta de XMLAccess), WCM
+  REST en `/mycontenthandler/wcmrest/…`, login por formulario en `/j_security_check` (da la cookie `LtpaToken2`);
+- WCM REST con Basic responde 302 al login: necesita la sesión de formulario / LTPA;
+- sin Ring API;
+- para las pruebas del operador: un Secret con el administrador en el namespace `dxop-core-sergio` (etiquetado
+  `dx.europesip.com/runtime=core`).
+
 ## Resultados de las pruebas de la fase 1
 
 Ver los comentarios del issue #38 (Derby con y sin DAM en el clúster de EUROPESIP).
