@@ -162,8 +162,8 @@ metadata:
   namespace: ${cns}
 spec:
   url: https://${s.DX_HOST}
-  credentialsSecret: { name: dxop-dx-admin }
-  caSecret: { name: dxop-dx-ca }
+  portalCredentialsSecret: { name: dxop-dx-admin }
+  tlsCASecret: { name: dxop-dx-ca }
   resyncInterval: 5m
 ---
 apiVersion: v1
