@@ -242,10 +242,6 @@ test("DX_RUNTIME core: phase 1 only (no LDAP, database, IQ, Search, presets all 
   assert.ok(!Object.keys(r.files).some(p => /^lab-(iq|search|bbdd|ldap)/.test(p)), Object.keys(r.files).join(" "));
 });
 
-test("DX_RUNTIME core + basic: an existing LDAP with the settings both servers share (configuration.core.ldap)", () => {
-  const r = generateInstall({answers: {...BASIC, DX_RUNTIME: "core", BASIC_LDAP_HOST: "openldap.identity.svc.cluster.local", BASIC_LDAP_SUFFIX: "dc=europesip,dc=com"}});
-  assert.ok(r.ok, r.check.err.join("\n"));
-  const v = r.files["lab-base/custom-values.yaml"].text;
-  assert.match(v, /configuration:\n  # basic preset: an LDAP[^\n]*\n  core:\n    ldap:\n      type: "other"\n      host: "openldap\.identity\.svc\.cluster\.local"\n      port: 389\n      suffix: "dc=europesip,dc=com"\n      serverType: "CUSTOM"\n      id: "dx_ldap"\n      customLdapSecret: "dx-ldap-bind"/);
-  assert.doesNotMatch(v, /sslEnabled|preferred-language|^  webEngine:\n/m);
+test("DX_RUNTIME core: no LDAP in phase 1 (the Core start-up skips the admin credentials with LDAP)", () => {
+  assert.match(validateAnswers({...BASIC, DX_RUNTIME: "core", BASIC_LDAP_HOST: "ldap.x", BASIC_LDAP_SUFFIX: "dc=x"}).join("\n"), /not available with DX_RUNTIME core/);
 });

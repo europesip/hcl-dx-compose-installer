@@ -45,7 +45,7 @@ const DESCRIPTIONS = {
   BASIC_LDAP_PORT: "basic: port of that directory (389, no TLS)",
   BASIC_LDAP_SUFFIX: "basic: base DN of the searches (e.g. dc=example,dc=com)",
   BASIC_LDAP_SECRET: "basic: Secret that already exists in DX_NS with bindUser and bindPassword (e.g. made by an ExternalSecret)",
-  DX_RUNTIME: "The DX server: compose (default) = DX Compose, the Web Engine on Open Liberty · core = DX Core, the traditional HCL DX 9.5 server on WebSphere Application Server (phase 1: base portal and DAM on Derby, and with the basic preset an existing LDAP (BASIC_LDAP_HOST, common settings, no SSL); only with the custom and basic presets; no external database, IQ, Search, Leap or CI/CD options yet)",
+  DX_RUNTIME: "The DX server: compose (default) = DX Compose, the Web Engine on Open Liberty · core = DX Core, the traditional HCL DX 9.5 server on WebSphere Application Server (phase 1: base portal and DAM on Derby; only with the custom and basic presets; no LDAP, external database, IQ, Search, Leap or CI/CD options yet)",
   platform: "kubernetes (your cluster), openshift, or poc (k3s on one machine)",
   DX_HOST: "Host name of the portal (e.g. dx.example.com); poc defaults to dx-demo.127.0.0.1.nip.io",
   DX_NS: "Namespace of HCL DX", SHARED_NS: "Namespace of the third-party tools (OpenLDAP, PostgreSQL, LiteLLM...)",
@@ -84,7 +84,7 @@ export function validateAnswers(answers, {secrets = "omit"} = {}){
   if (answers.preset !== "basic" && (answers.IMAGE_PULL_SECRET || answers.TLS_ISSUER || answers.BASIC_DAM !== undefined || answers.BASIC_LDAP_HOST || answers.BASIC_PG)) errs.push("IMAGE_PULL_SECRET, TLS_ISSUER, BASIC_DAM, BASIC_PG and BASIC_LDAP_* are only for the basic preset");
   if (answers.DX_RUNTIME === "core") {
     if (answers.preset === "all" || answers.preset === "webinar") errs.push("DX_RUNTIME core is only for the custom and basic presets (all and webinar need the Web Engine of DX Compose)");
-    if (answers.BASIC_PG) errs.push("BASIC_PG is not available with DX_RUNTIME core yet (phase 1: Derby)");
+    if (answers.BASIC_PG || answers.BASIC_LDAP_HOST) errs.push("BASIC_PG and BASIC_LDAP_* are not available with DX_RUNTIME core yet (phase 1: Derby, no LDAP)");
     const off = ["lab1b", "lab3", "lab3b", "iqdb", "iqrag", "lab4", "lab5", "cicdOpenbao", "cicdArgo", "cicdOperator", "keycloak"].filter(k => answers[k] === true);
     if (off.length) errs.push(`not available with DX_RUNTIME core yet: ${off.join(", ")}`);
     if (answers.dir && answers.dir !== "none") errs.push("dir must be none with DX_RUNTIME core (no LDAP yet)");

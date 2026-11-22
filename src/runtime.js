@@ -13,9 +13,9 @@
 // - the DX namespace gets the label dx.europesip.com/runtime=core (the basic preset of Backstage also labels
 //   compose namespaces, so the plugin can tell them apart); the titles of the scripts and the RUNBOOK say DX Core;
 // - support/collect-support-data.sh copies the WebSphere Portal logs of the Core pod instead of the Liberty ones.
-// With the basic preset, an existing LDAP (BASIC_LDAP_HOST) uses configuration.core.ldap with the settings both servers
-// share (src/basic.js). What it does not offer yet with Core (normalise() in state.js switches them off): the OpenLDAP
-// and Active Directory stage of the wizard, the external
+// What it does not offer yet with Core (normalise() in state.js switches them off): the directory (LDAP; tested with
+// configuration.core.ldap: the Core start-up then skips the update of the admin credentials, so wpsadmin and the
+// WebSphere administrator must be LDAP users, see docs/dx-core-phase2.md), the external
 // database, IQ, Search, HCL Leap, the Script Application extras and the CI/CD and Keycloak options.
 
 export const RUNTIMES = ["compose", "core"];
@@ -27,7 +27,7 @@ const SECRETS = ["dx-core-wps", "dx-core-was", "dx-core-configwizard"];
 
 // The options that need the Web Engine in phase 1 (state.js normalise() applies them)
 export const CORE_OFF = {lab1b: false, dir: "none", db: "none", lab3: false, lab3b: false, iqdb: false, iqrag: false, lab4: false, lab5: false,
-  cicdOpenbao: false, cicdArgo: false, cicdOperator: false, keycloak: false, BASIC_PG: false};
+  cicdOpenbao: false, cicdArgo: false, cicdOperator: false, keycloak: false, BASIC_PG: false, BASIC_LDAP_HOST: ""};
 
 // Applied to every text of the zip, after the own-registry and basic layers
 export function applyRuntime(f, s, entries){
