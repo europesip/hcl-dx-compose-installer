@@ -37,6 +37,24 @@ es candidato a la fase 2; nada de esto está hecho todavía.
 - **HCL Leap** (Lab 6).
 - Las opciones de CI/CD (OpenBao + External Secrets, Argo CD, el operador) y Keycloak.
 
+## El operador de Script Applications en Core
+
+Objetivo: adaptar el operador ([operator#44](https://github.com/europesip/hcl-dx-scriptapp-operator/issues/44)) al
+servidor tradicional: importación y exportación de librerías WCM, páginas, temas, XMLAccess, Script Applications. Lo que
+hace hoy el operador sobre el Web Engine y qué hay que comprobar en Core:
+
+| El operador hoy (DX Compose CF239) | En DX Core |
+|---|---|
+| Context root fijo: `/wps/config`, `/wps/mycontenthandler`, `/wps/wcm/myconnect`, `/wps/dxFileTransfer/dft`, `/wps/portal` (`client.go`, `wcmimport.go`, `theme.go`) | **hace falta un context root configurable**: el Core en contenedor del chart usa `wps` (`networking.core.contextRoot`, por defecto `wps`, home `portal`), pero un DX 9.5 tradicional en una VM (CF230, AWS) tiene el context root **vacío**: XMLAccess en `https://<host>:10042/config`, WCM REST en `/mycontenthandler/wcmrest/…` |
+| Puertos a través de HAProxy (443) | el Core del chart también va detrás de HAProxy; una instalación en VM usa los puertos de WebSphere (10039 HTTP, 10041/10042 HTTPS, 10202 SOAP para dxclient) |
+| Login: Ring API `POST /dx/api/core/v1/auth/login`, y si no, el login por formulario | la Ring API solo existe donde se despliega (el chart la despliega con Core; una VM no la tiene): login por formulario (`j_security_check`) / LTPA, Basic para `/config` y WebDAV |
+| Importación WCM: dxFileTransfer + data module de WCM (`?MOD=data&taskType=import`) | comprobar si `dxFileTransfer` existe en Core CF239; la forma clásica es la tarea de ConfigEngine *import-wcm-data* o el data module con los ficheros ya en el disco del servidor |
+| XMLAccess por HTTP (`/wps/config`) | mismo protocolo (`xmlaccess.sh` está en `<wp_profile>/PortalServer/bin`); otra ruta (context root) y el puerto SOAP de WebSphere para algunas tareas |
+| dxclient (`deploy-scriptapplication`, `deploy-theme`) con `dxConnect` | dxclient soporta DX 9.5 Core (se hizo para él): `dxConnectHostname/Port` 10202, `dxProfileName` wp_profile, SOAP; revisar los flags de cada comando |
+| Temas: WebDAV `…/mycontenthandler/dav/fs-type1/themes/` | el mismo WebDAV, bajo el context root de Core |
+| Nombres de pod y servicio: `<release>-web-engine-0`, `…-web-engine:9080` (`InternalURL`) | `<release>-core-0`, servicio `<release>-core` (puertos 10039/10041 en el contenedor) |
+| DXConnection: sin campo para el tipo de servidor | añadir `runtime` (`compose` / `core`) y `contextRoot`, por defecto desde la etiqueta del namespace `dx.europesip.com/runtime` |
+
 ## Resultados de las pruebas de la fase 1
 
 Ver los comentarios del issue #38 (Derby con y sin DAM en el clúster de EUROPESIP).
