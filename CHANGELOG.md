@@ -7,6 +7,20 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## 2.11.0 · 2026-11-22
+
+- **The DX server: DX Compose or DX Core** (#38). *Choose what to install* → *DX server*: **DX Compose (Web Engine)**,
+  preselected as always, or **DX Core**, the traditional HCL Digital Experience 9.5 server on WebSphere Application
+  Server, from the same chart. Headless: `DX_RUNTIME=compose|core` (default `compose`), also with the `basic` preset.
+  Phase 1 for Core: the base portal, with or without DAM, on Derby; the directory, the external database, IQ, Search,
+  HCL Leap, the Script Application extra and the CI/CD and Keycloak options are switched off with a note. Core values:
+  image `dx/core` (the chart default `dx-compose/core` does not exist in hclcr.io), the secrets `dx-core-wps`,
+  `dx-core-was` and `dx-core-configwizard`, `volumes.core` (profile, log, tranlog on `SC_RWO`), `networking.core.host`.
+  What Core configures differently, for phase 2: [docs/dx-core-phase2.md](docs/dx-core-phase2.md).
+- **Label `dx.europesip.com/runtime`** (`compose` | `core`) on the DX namespace: always with Core and with the `basic`
+  preset, so Backstage and the operator can tell the two apart. With DX Compose outside the `basic` preset the
+  generated folder is exactly the same as in 2.10.0.
+
 ## 2.10.0 · 2026-11-18
 
 - **Preset `basic`: its own PostgreSQL** (#35, `BASIC_PG`): a CloudNativePG Cluster in the DX namespace (the shared

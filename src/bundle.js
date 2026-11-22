@@ -13,6 +13,7 @@ import {buildInfo, stampOf, accessStep, environmentInfoSh, collectorExtras} from
 import {resourcesMd} from "./resources.js";
 import {altRegistryOn, registryForm, applyRegistry, REGISTRY_NOTE} from "./registry.js";
 import {basicOn, applyBasic, BASIC_NOTE} from "./basic.js";
+import {coreOn, applyRuntime, CORE_NOTE} from "./runtime.js";
 import {sopsOn, parseSopsKeys, sopsErrors, baseSecretFiles, harborPromptDemo, sopsRunbookNote, SOPS_FILES} from "./sops.js";
 import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, CICD_DIR} from "./cicd.js";
 export {zipBytes} from "./zip.js";
@@ -154,6 +155,11 @@ export function generate(form, lang){
   for (const e of out) {   // retries of downloads in the scripts, and the collector fix (src/retry.js)
     if (/\/(install|prepare|demo)\.sh$/.test(e.name)) e.text = retryScript(e.text, {helm: s.helm});
     if (/collect-support-data\.sh$/.test(e.name)) { e.text = collectorExtras(fixCollector(e.text)); if (files[e.name.slice(P.length)]) files[e.name.slice(P.length)] = {...files[e.name.slice(P.length)], text: e.text}; }
+  }
+  if (coreOn(form) || basicOn(form)) {   // the DX server (src/runtime.js): DX Core, and the runtime label of the basic preset
+    out.splice(0, out.length, ...applyRuntime(form, s, out));
+    if (coreOn(form)) out[0] = {...out[0], text: out[0].text.replace(/^(> (?:⚠️|🔐)[^\n]*\n)/m, `$1\n${CORE_NOTE[lang] || CORE_NOTE.en}\n`)};
+    for (const e of out) if (files[e.name.slice(P.length)]) files[e.name.slice(P.length)] = {...files[e.name.slice(P.length)], text: e.text};
   }
   runbook = out[0].text;
   if (vault) {   // nothing secret may be left in the zip

@@ -191,3 +191,61 @@ test("basic: its own PostgreSQL (BASIC_PG) in the DX namespace, with the CNPG op
   assert.doesNotMatch(generateInstall({answers: BASIC}).files["install.sh"].text, /cnpg|Transfer Derby/);
   assert.ok(validateAnswers({preset: "all", BASIC_PG: true}).some(e => /only for the basic preset/.test(e)));
 });
+
+// ---- The DX server (#38): DX Compose (default) or DX Core ----------------------------------------------------------
+const yamlDocs = t => t.split(/^---\s*$/m);
+test("DX_RUNTIME: compose is the default and leaves the folder of always (outside the basic preset)", () => {
+  const ans = {preset: "custom", DX_HOST: "dx.example.com", dir: "none", db: "none", lab3: false, lab4: false};
+  const a = generateInstall({answers: ans}), b = generateInstall({answers: {...ans, DX_RUNTIME: "compose"}});
+  for (const p of ["lab-base/custom-values.yaml", "lab-base/namespaces.yaml", "install.sh"])
+    assert.equal(a.files[p].text.replace(/\d{4}-\d\d-\d\d( \d\d:\d\d)?/g, "D"), b.files[p].text.replace(/\d{4}-\d\d-\d\d( \d\d:\d\d)?/g, "D"), p);
+  assert.doesNotMatch(a.files["lab-base/namespaces.yaml"].text, /dx\.europesip\.com\/runtime/);
+  assert.match(a.files["lab-base/custom-values.yaml"].text, /core: false\n\s*webEngine: true/);
+});
+
+test("DX_RUNTIME core: Core values, its three secrets, the runtime label, the titles", () => {
+  const r = generateInstall({answers: {...BASIC, DX_RUNTIME: "core", BASIC_DAM: false}});
+  assert.ok(r.ok, r.check.err.join("\n"));
+  const v = r.files["lab-base/custom-values.yaml"].text;
+  assert.match(v, /core: true\n\s*webEngine: false/);
+  assert.match(v, /names:\n\s*core: "dx\/core"/);
+  assert.match(v, /networking:\n  core:\n    host: /);
+  assert.match(v, /  core:\n    profile:[^\n]*\n      storageClassName: "longhorn"[\s\S]*tranlog:/);
+  assert.match(v, /customWpsSecret: "dx-core-wps"\n\s*customWasSecret: "dx-core-was"\n\s*customConfigWizardSecret: "dx-core-configwizard"/);
+  assert.doesNotMatch(v, /webEngine:\n/);
+  assert.doesNotMatch(v, /customWebEngineSecret/);
+  const sec = {...r.files, ...r.secretFiles}["lab-base/secrets.yaml"].text;
+  for (const n of ["dx-core-wps", "dx-core-was", "dx-core-configwizard"]) assert.match(sec, new RegExp(`name: ${n}\\b`));
+  assert.doesNotMatch(sec, /web-engine-secret/);
+  assert.equal(yamlDocs(sec).filter(d => /kind: Secret/.test(d)).length, 3);
+  assert.match(r.files["lab-base/namespaces.yaml"].text, /dx\.europesip\.com\/runtime: core/);
+  assert.match(r.files["install.sh"].text, /Install DX Core, traditional/);
+  assert.match(r.files["BUILD-INFO.txt"].text, /dx\.server\s*: DX Core/);
+  assert.match(r.files["support/collect-support-data.sh"].text, /-core-0"; LIB=\/opt\/HCL\/wp_profile/);
+});
+
+test("DX_RUNTIME core: the SC_RWO of the answers, and the basic preset labels Compose namespaces too", () => {
+  const v = generateInstall({answers: {...BASIC, DX_RUNTIME: "core", SC_RWO: "longhorn"}}).files["lab-base/custom-values.yaml"].text;
+  assert.match(v, /profile:[^\n]*\n      storageClassName: "longhorn"/);
+  assert.match(v, /digitalAssetManagement:\n    binaries:/);   // DAM stays with BASIC_DAM true
+  assert.match(generateInstall({answers: BASIC}).files["lab-base/namespaces.yaml"].text, /dx\.europesip\.com\/runtime: compose/);
+});
+
+test("DX_RUNTIME core: phase 1 only (no LDAP, database, IQ, Search, presets all and webinar)", () => {
+  assert.match(validateAnswers({...BASIC, DX_RUNTIME: "core", BASIC_PG: true}).join("\n"), /not available with DX_RUNTIME core/);
+  assert.match(validateAnswers({preset: "all", DX_RUNTIME: "core"}).join("\n"), /only for the custom and basic presets/);
+  assert.match(validateAnswers({preset: "custom", DX_RUNTIME: "core", lab3: true}).join("\n"), /lab3/);
+  assert.match(validateAnswers({preset: "custom", DX_RUNTIME: "core", db: "postgres"}).join("\n"), /db must be none/);
+  assert.match(validateAnswers({preset: "basic", DX_RUNTIME: "wls"}).join("\n"), /DX_RUNTIME must be one of: compose, core/);
+  const r = generateInstall({answers: {preset: "custom", DX_HOST: "dx.example.com", DX_RUNTIME: "core"}});   // custom: the rest is switched off
+  assert.ok(r.ok, r.check.err.join("\n"));
+  assert.ok(!Object.keys(r.files).some(p => /^lab-(iq|search|bbdd|ldap)/.test(p)), Object.keys(r.files).join(" "));
+});
+
+test("DX_RUNTIME core + basic: an existing LDAP with the settings both servers share (configuration.core.ldap)", () => {
+  const r = generateInstall({answers: {...BASIC, DX_RUNTIME: "core", BASIC_LDAP_HOST: "openldap.identity.svc.cluster.local", BASIC_LDAP_SUFFIX: "dc=europesip,dc=com"}});
+  assert.ok(r.ok, r.check.err.join("\n"));
+  const v = r.files["lab-base/custom-values.yaml"].text;
+  assert.match(v, /configuration:\n  # basic preset: an LDAP[^\n]*\n  core:\n    ldap:\n      type: "other"\n      host: "openldap\.identity\.svc\.cluster\.local"\n      port: 389\n      suffix: "dc=europesip,dc=com"\n      serverType: "CUSTOM"\n      id: "dx_ldap"\n      customLdapSecret: "dx-ldap-bind"/);
+  assert.doesNotMatch(v, /sslEnabled|preferred-language|^  webEngine:\n/m);
+});

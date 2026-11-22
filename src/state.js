@@ -1,3 +1,5 @@
+import {CORE_OFF} from "./runtime.js";
+
 // Form values of the installer and how they map to the state object of the engine (core.js).
 // The external dependencies (OpenLDAP, PostgreSQL, LiteLLM, EUROPESIP MCP) are not asked for: they
 // follow from the stages that are chosen.
@@ -36,6 +38,8 @@ export const DEFAULTS = {
   IMAGE_PULL_SECRET: "", TLS_ISSUER: "", BASIC_DAM: true,
   BASIC_PG: false,
   BASIC_LDAP_HOST: "", BASIC_LDAP_PORT: "389", BASIC_LDAP_SUFFIX: "", BASIC_LDAP_SECRET: "dx-ldap-bind",
+  // The DX server (#38): compose = DX Compose, the Web Engine (default) · core = DX Core, the traditional server on WebSphere
+  DX_RUNTIME: "compose",
   // Names
   DX_NS: "dx-demo", SHARED_NS: "dx-shared", DX_RELEASE: "dx-deployment", IQ_RELEASE: "dx-iq",
   SEARCH_RELEASE: "dx-search", LDAP_RELEASE: "openldap", LITELLM_RELEASE: "litellm", PG_CLUSTER: "dx-pg",
@@ -56,7 +60,9 @@ export const PRESETS = {
   basic: {lab1b: false, dir: "none", db: "none", lab3: false, lab3b: false, iqdb: false, iqrag: false, lab4: false, lab5: false},
 };
 export function applyPreset(f, preset){
-  return normalise({...f, preset, ...(PRESETS[preset] || {})});
+  // DX Core only with "custom" (and "basic", headless): "all" and the webinar need the Web Engine
+  const rt = preset === "all" || preset === "webinar" ? {DX_RUNTIME: "compose"} : {};
+  return normalise({...f, preset, ...(PRESETS[preset] || {}), ...rt});
 }
 
 // Dependencies between the options: an option without what it needs is switched off
@@ -67,12 +73,15 @@ export function gates(f){
 export function normalise(f){
   const n = {...f};
   if (n.preset === "webinar") Object.assign(n, PRESETS.webinar);
+  if (n.preset === "all" || n.preset === "webinar" || !n.DX_RUNTIME) n.DX_RUNTIME = "compose";
   if (n.preset === "basic") {
     Object.assign(n, PRESETS.basic, {cicdOpenbao: false, cicdArgo: false, cicdOperator: false, keycloak: false, sops: false});
     // BASIC_PG (#35): its own PostgreSQL, a CloudNativePG Cluster in the DX namespace (the labs' shared namespace IS the
     // DX namespace), made with the CNPG operator that is already in the cluster (src/basic.js removes its install)
     if (n.BASIC_PG) Object.assign(n, {db: "postgres", SHARED_NS: n.DX_NS});
   }
+  // DX Core, phase 1 (#38): the base portal (and DAM) on Derby; what needs the Web Engine is switched off (src/runtime.js)
+  if (n.DX_RUNTIME === "core") Object.assign(n, CORE_OFF);
   if (!n.lab3) { n.lab3b = false; n.iqdb = false; }
   if ((n.LLM_PROVIDER || "openrouter") !== "openrouter") { n.IQ_LLM = "claude"; n.iqrag = false; }   // Bedrock / Anthropic: only Claude, and no BGE-M3 for the RAG
   if (!n.iqdb) n.iqrag = false;

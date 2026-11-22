@@ -74,8 +74,20 @@ export function applyBasic(f, s, entries){
   });
 }
 
-// configuration.webEngine of an existing directory (basic preset, BASIC_LDAP_HOST)
-const ldapBlock = f => `  # basic preset: an LDAP that already exists (BASIC_LDAP_HOST); wpsadmin (basic registry) still works
+// configuration.webEngine of an existing directory (basic preset, BASIC_LDAP_HOST). DX Core (#38, src/runtime.js):
+// configuration.core.ldap with only what both servers share (type other, host, port, suffix, bind Secret, id,
+// serverType CUSTOM; the chart default attribute mappings); no SSL, e-mail login or preferredLanguage (phase 2)
+const ldapBlock = f => f.DX_RUNTIME === "core" ? `  # basic preset: an LDAP that already exists (BASIC_LDAP_HOST); wpsadmin still works. DX Core: the common settings only
+  core:
+    ldap:
+      type: "other"
+      host: "${f.BASIC_LDAP_HOST}"
+      port: ${Number(f.BASIC_LDAP_PORT || 389)}
+      suffix: "${f.BASIC_LDAP_SUFFIX}"
+      serverType: "CUSTOM"
+      id: "dx_ldap"
+      customLdapSecret: "${f.BASIC_LDAP_SECRET || "dx-ldap-bind"}"   # bindUser / bindPassword, already in the namespace
+` : `  # basic preset: an LDAP that already exists (BASIC_LDAP_HOST); wpsadmin (basic registry) still works
   webEngine:
     ldap:
       type: "other"

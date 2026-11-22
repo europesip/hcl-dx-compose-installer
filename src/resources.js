@@ -13,7 +13,8 @@ const C = {   // [CPU, GiB]
 
 export function resources(f){
   const d = depsOf(f), cicd = cicdOn(f);
-  const hcl = [["dx", "DX Compose"]];
+  // DX Core (#38) asks for the same as the Web Engine in the chart (2 CPU / 4 GiB for the server pod)
+  const hcl = [["dx", f.DX_RUNTIME === "core" ? "DX Core (traditional)" : "DX Compose"]];
   if (f.lab3) hcl.push(["iq", "HCL DX IQ"]);
   if (f.lab4) hcl.push(["search", "Search V2 (OpenSearch)"]);
   const pre = [];

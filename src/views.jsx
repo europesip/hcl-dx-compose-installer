@@ -2,7 +2,7 @@
 import {useEffect, useMemo, useState} from "react";
 import {Modal, Nav, Card, Title, H2, Choice, Button, Field, Input, Textarea, Secret, Select, Check, Toggle, Segmented, Callout, Code, Badge, cx,
         IconServer, IconPlus, IconLaptop, IconLinux, IconCloud, IconLayers, IconSliders, IconPresent, IconDownload, IconDoc, IconZip, IconSpark, IconCheck, Spinner} from "./ui.jsx";
-import {applyPreset, gates, NAME_KEYS, depsOf} from "./state.js";
+import {applyPreset, gates, normalise, NAME_KEYS, depsOf} from "./state.js";
 import {ownChecks, wslCmds, linuxCmds, LAB0_GUIDE} from "./guides.js";
 import {generate, zipBytes, download, ZIP_NAME, ZIP_NAME_WEBINAR, WORD_NAME_EN, WORD_NAME_ES} from "./bundle.js";
 import {stageLabel} from "./engine/stages.js";
@@ -282,12 +282,21 @@ function StageCard({n, t, on, onToggle, always, showOptions, children}){
 function McpText({t}){ return <>{t.mcpBody.map(x => <p key={x}>{x}</p>)}</>; }
 
 export function DeployCustom({t, lang, form, set, go, back}){
-  const g = gates(form);
+  const g = gates(form), core = form.DX_RUNTIME === "core";
   const [mcpAsk, setMcpAsk] = useState(false), [mcpRead, setMcpRead] = useState(false);
   return (
     <div>
       <Title sub={t.dCustomT}>{t.customTitle}</Title>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <Card className="mb-4 space-y-2">
+        <H2 className="mb-0">{t.rtTitle}</H2>
+        <Segmented value={form.DX_RUNTIME || "compose"} onChange={v => set(f => normalise({...f, DX_RUNTIME: v}))} options={[["compose", t.rtCompose], ["core", t.rtCore]]} />
+        <p className={cx("text-sm", core ? "text-amber-700 dark:text-amber-300" : "text-slate-600 dark:text-slate-400")}>{core ? t.rtCoreT : t.rtComposeT}</p>
+      </Card>
+      {core ? <div className="grid gap-4 lg:grid-cols-2">
+        <StageCard n={0} t={t} always />
+        <StageCard n={1} t={t} always />
+        {[2, 3, 4, 5, 6].map(n => <StageCard key={n} n={n} t={t} on={false} showOptions><p className="text-xs text-slate-500">{t.rtCoreOff}</p></StageCard>)}
+      </div> : <div className="grid gap-4 lg:grid-cols-2">
         <StageCard n={0} t={t} always />
         <StageCard n={1} t={t} always>
           <Check checked={form.lab1b} onChange={v => set({lab1b: v})}><Badge tone="amber">{t.extras}</Badge> {t.xScriptApp}</Check>
@@ -312,8 +321,8 @@ export function DeployCustom({t, lang, form, set, go, back}){
         </StageCard>
         <StageCard n={5} t={t} on={form.lab4} onToggle={v => set({lab4: v})} />
         <StageCard n={6} t={t} on={form.lab5} onToggle={v => set({lab5: v})} />
-      </div>
-      <CicdCard t={t} form={form} set={set} />
+      </div>}
+      {!core && <CicdCard t={t} form={form} set={set} />}
       <ResourceCard t={t} lang={lang} form={form} className="mt-5" />
       <Nav t={t} back={back} next={() => go("details")} />
       <Modal open={mcpAsk} title={t.mcpTitle} onClose={() => setMcpAsk(false)}
@@ -716,6 +725,7 @@ export function summaryRows(t, form, gen, lang){
   return [
     [t.sumEnv, (t.envNames[form.envSource] || "—") + (form.envSource === "aws" ? ` (${form.awsKind.toUpperCase()})` : "")],
     [t.sumDeploy, t.deployNames[form.preset] || "—"],
+    [t.rtTitle, form.DX_RUNTIME === "core" ? t.rtCore : t.rtCompose],
     [t.sumHost, `https://${s.DX_HOST || "—"}`],
     [t.sumPlatform, `${s.platform}${s.openshift ? "" : ` · Ingress ${s.INGRESS_CLASS}`} · ${s.SC_RWO} / ${s.SC_RWX}`],
     ...stages.map((x, i) => [i === 0 ? (lang === "es" ? "Etapas" : "Stages") : "", x]),
