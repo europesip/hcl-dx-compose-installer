@@ -33,7 +33,7 @@ const ENUMS = {
   envSource: ["", "own", "wsl", "linux", "aws"], awsKind: ["ec2", "eks", "rosa"], platform: ["kubernetes", "openshift", "poc"],
   INGRESS_KIND: ["traefik", "nginx", "other"], helm: ["3", "4"], preset: ["all", "custom", "webinar", "basic"],
   dir: ["openldap", "ad", "none"], db: ["postgres", "oracle", "none"], IQ_LLM: ["claude", "qwen"],
-  LLM_PROVIDER: ["openrouter", "bedrock", "anthropic"], openbaoMode: ["install", "existing"],
+  LLM_PROVIDER: ["openrouter", "bedrock", "anthropic"], openbaoMode: ["install", "existing"], DX_RUNTIME: ["compose", "core"],
 };
 const DESCRIPTIONS = {
   preset: "all: every stage and extra · webinar: stages 0-5 as in the webinar (prepare.sh + demo.sh) · custom: what you choose · basic: a simple test portal as Lab 1 (Derby), only the DX namespace, for an unattended Job",
@@ -45,6 +45,7 @@ const DESCRIPTIONS = {
   BASIC_LDAP_PORT: "basic: port of that directory (389, no TLS)",
   BASIC_LDAP_SUFFIX: "basic: base DN of the searches (e.g. dc=example,dc=com)",
   BASIC_LDAP_SECRET: "basic: Secret that already exists in DX_NS with bindUser and bindPassword (e.g. made by an ExternalSecret)",
+  DX_RUNTIME: "The DX server: compose (default) = DX Compose, the Web Engine on Open Liberty · core = DX Core, the traditional HCL DX 9.5 server on WebSphere Application Server (phase 1: base portal and DAM on Derby; only with the custom and basic presets; no LDAP, external database, IQ, Search, Leap or CI/CD options yet)",
   platform: "kubernetes (your cluster), openshift, or poc (k3s on one machine)",
   DX_HOST: "Host name of the portal (e.g. dx.example.com); poc defaults to dx-demo.127.0.0.1.nip.io",
   DX_NS: "Namespace of HCL DX", SHARED_NS: "Namespace of the third-party tools (OpenLDAP, PostgreSQL, LiteLLM...)",
@@ -81,6 +82,14 @@ export function validateAnswers(answers, {secrets = "omit"} = {}){
   }
   if (!answers.preset) errs.push("preset is required (all, webinar, custom or basic)");
   if (answers.preset !== "basic" && (answers.IMAGE_PULL_SECRET || answers.TLS_ISSUER || answers.BASIC_DAM !== undefined || answers.BASIC_LDAP_HOST || answers.BASIC_PG)) errs.push("IMAGE_PULL_SECRET, TLS_ISSUER, BASIC_DAM, BASIC_PG and BASIC_LDAP_* are only for the basic preset");
+  if (answers.DX_RUNTIME === "core") {
+    if (answers.preset === "all" || answers.preset === "webinar") errs.push("DX_RUNTIME core is only for the custom and basic presets (all and webinar need the Web Engine of DX Compose)");
+    if (answers.BASIC_PG || answers.BASIC_LDAP_HOST) errs.push("BASIC_PG and BASIC_LDAP_* are not available with DX_RUNTIME core yet (phase 1: Derby, no LDAP)");
+    const off = ["lab1b", "lab3", "lab3b", "iqdb", "iqrag", "lab4", "lab5", "cicdOpenbao", "cicdArgo", "cicdOperator", "keycloak"].filter(k => answers[k] === true);
+    if (off.length) errs.push(`not available with DX_RUNTIME core yet: ${off.join(", ")}`);
+    if (answers.dir && answers.dir !== "none") errs.push("dir must be none with DX_RUNTIME core (no LDAP yet)");
+    if (answers.db && answers.db !== "none") errs.push("db must be none with DX_RUNTIME core (Derby only for now)");
+  }
   if (answers.BASIC_LDAP_HOST) {
     if (!/^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$/i.test(answers.BASIC_LDAP_HOST)) errs.push("BASIC_LDAP_HOST must be a host name");
     if (!/^[0-9]{2,5}$/.test(answers.BASIC_LDAP_PORT ?? "389")) errs.push("BASIC_LDAP_PORT must be a port number");
