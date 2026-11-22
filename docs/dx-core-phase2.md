@@ -12,6 +12,9 @@ DX Compose (`DX_RUNTIME=core`, wizard → *Choose what to install* → *DX serve
 This page lists what Core configures differently from the Web Engine, found while building phase 1. Each item is a
 candidate for phase 2; nothing here is implemented yet.
 
+
+All the differences between DX Core and the Web Engine in one page, with the measured product versions (Java, WebSphere, Liberty): [DX Core vs Web Engine](core-vs-webengine.md). Database options for both: [External databases](databases.md).
+
 ## Found in the chart (hcl-dx-deployment 2.50.0)
 
 | Area | Web Engine (DX Compose) | DX Core | Phase 2 |

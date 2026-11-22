@@ -12,6 +12,9 @@ mismo chart (hcl-dx-deployment 2.50.0, CF239).
 Esta página recoge lo que Core configura de otra forma que el Web Engine, encontrado al hacer la fase 1. Cada punto
 es candidato a la fase 2; nada de esto está hecho todavía.
 
+
+Todas las diferencias entre DX Core y el Web Engine en una página, con las versiones medidas del producto (Java, WebSphere, Liberty): [DX Core frente al Web Engine](core-vs-webengine.es.md). Opciones de base de datos para los dos: [Bases de datos externas](databases.es.md).
+
 ## Encontrado en el chart (hcl-dx-deployment 2.50.0)
 
 | Área | Web Engine (DX Compose) | DX Core | Fase 2 |
