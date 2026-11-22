@@ -16,8 +16,9 @@
 import {SECRET_KEYS} from "./state.js";
 import {EUROPESIP_WHITE_PNG} from "./brand/europesip-white.js";
 
-export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.3.1", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
-const OP_CRDS = ["dxconnections", "dxscriptapplications", "dxpages", "dxdamcollections", "dxdatabases", "dxthemes"].map(k => `dx.europesip.com_${k}`);
+export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.11.0", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
+const OP_CRDS = ["dxconnections", "dxscriptapplications", "dxpages", "dxdamcollections", "dxdatabases", "dxthemes",
+  "dxwcmlibraryimports", "dxwcmlibraryexports", "dxexports", "dxxmlaccesses", "dxwcmadmintasks"].map(k => `dx.europesip.com_${k}`);
 const OP_CRD_URL = `https://raw.githubusercontent.com/europesip/hcl-dx-scriptapp-operator/v${VERSIONS.operator}/charts/hcl-dx-scriptapp-operator/crds/`;
 const DIR = "lab-cicd";
 const OB = "lab-cicd/openbao";                    // created by install.sh: init keys, operator password (mode 700)
@@ -138,7 +139,8 @@ if obj.status ~= nil and obj.status.conditions ~= nil then
   end
 end
 return hs`;
-  const kinds = ["DXScriptApplication", "DXPage", "DXDamCollection", "DXDatabase", "DXConnection", "DXTheme"];
+  const kinds = ["DXScriptApplication", "DXPage", "DXDamCollection", "DXDatabase", "DXConnection", "DXTheme",
+    "DXWCMLibraryImport", "DXWCMLibraryExport", "DXExport", "DXXMLAccess", "DXWCMAdminTask"];
   return `# Argo CD ${VERSIONS.argocdApp} (chart oci://ghcr.io/argoproj/argo-helm/argo-cd ${VERSIONS.argocd}): GitOps, it keeps the cluster equal to a Git repository.
 # The UI is reached with kubectl port-forward (see RUNBOOK.md); no Application is created: point it at your repository.
 dex:
@@ -162,6 +164,7 @@ metadata:
   namespace: ${cns}
 spec:
   url: https://${s.DX_HOST}
+  runtime: compose           # DX Compose (Web Engine); the installer does not offer the operator with DX Core yet
   portalCredentialsSecret: { name: dxop-dx-admin }
   tlsCASecret: { name: dxop-dx-ca }
   resyncInterval: 5m
@@ -844,7 +847,7 @@ export function cicdInstallSh(form, s, text){
   if (form.cicdOpenbao) t = t.replace("  set +e\n", `  set +e\n  for n in ${[...new Set([s.DX_NS, s.SHARED_NS, cns])].join(" ")}; do kubectl -n $n delete externalsecret --all --wait=true --timeout=2m 2>/dev/null; done\n`);
   // The resources of the Script Application operator too, while it runs (it removes their finalizers; deletionPolicy
   // Retain by default, so nothing is deleted in DX)
-  if (form.cicdOperator) t = t.replace("  set +e\n", `  set +e\n  kubectl -n ${cns} delete dxpages,dxthemes,dxscriptapplications,dxdamcollections,dxdatabases,dxconnections --all --wait=true --timeout=3m 2>/dev/null\n`);
+  if (form.cicdOperator) t = t.replace("  set +e\n", `  set +e\n  kubectl -n ${cns} delete dxpages,dxthemes,dxscriptapplications,dxdamcollections,dxdatabases,dxwcmlibraryimports,dxwcmlibraryexports,dxexports,dxxmlaccesses,dxwcmadmintasks,dxconnections --all --wait=true --timeout=3m 2>/dev/null\n`);
   if (vault) {
     t = t.replace('cd "$(dirname "$0")"\n', `cd "$(dirname "$0")"\nsource lab-cicd/openbao-lib.sh; OB_PATH=${s.DX_NS}   # obv <path> <key>: a value from OpenBao\n`);
     t = t.split(LAB).join(S("wpsadmin", "password")).replace(/'@@OB:([\w-]+):([\w.-]+)@@'/g, (_, p, k) => `"$(obv ${p} ${k} 2>/dev/null)"`);
