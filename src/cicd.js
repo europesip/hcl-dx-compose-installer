@@ -1,5 +1,5 @@
 // Advanced CI/CD (optional, off by default, not on OpenShift yet): OpenBao + External Secrets Operator (the
-// secrets manager), Argo CD (GitOps) and the HCL DX Script Application operator, installed in their own
+// secrets manager), Argo CD (GitOps) and the DX Delivery Operator, installed in their own
 // namespace (by default the shared one of the external dependencies).
 //
 // With "use the secrets manager" no credential is written in the zip: the engine (core.js, frozen: the golden
@@ -16,10 +16,10 @@
 import {SECRET_KEYS} from "./state.js";
 import {EUROPESIP_WHITE_PNG} from "./brand/europesip-white.js";
 
-export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.11.0", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
+export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.13.0", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
 const OP_CRDS = ["dxconnections", "dxscriptapplications", "dxpages", "dxdamcollections", "dxdatabases", "dxthemes",
   "dxwcmlibraryimports", "dxwcmlibraryexports", "dxexports", "dxxmlaccesses", "dxwcmadmintasks"].map(k => `dx.europesip.com_${k}`);
-const OP_CRD_URL = `https://raw.githubusercontent.com/europesip/hcl-dx-scriptapp-operator/v${VERSIONS.operator}/charts/hcl-dx-scriptapp-operator/crds/`;
+const OP_CRD_URL = `https://raw.githubusercontent.com/europesip/dx-delivery-operator/v${VERSIONS.operator}/charts/dx-delivery-operator/crds/`;
 const DIR = "lab-cicd";
 const OB = "lab-cicd/openbao";                    // created by install.sh: init keys, operator password (mode 700)
 
@@ -151,12 +151,12 @@ configs:
   params:
     server.insecure: false
   cm:
-    # Health of the resources of the HCL DX Script Application operator, from their Ready condition${op ? "" : " (harmless without it)"}
+    # Health of the resources of the DX Delivery Operator, from their Ready condition${op ? "" : " (harmless without it)"}
 ${kinds.map(k => `    resource.customizations.health.dx.europesip.com_${k}: |\n${health.split("\n").map(x => "      " + x).join("\n")}`).join("\n")}
 `;
 }
-const helloYaml = (s, cns) => `# HCL DX Script Application operator · the "hello" sample (samples/01-hello of
-# github.com/europesip/hcl-dx-scriptapp-operator): one HTML file in a ConfigMap, pushed to DX and put on a page.
+const helloYaml = (s, cns) => `# DX Delivery Operator · the "hello" sample (samples/01-hello of
+# github.com/europesip/dx-delivery-operator): one HTML file in a ConfigMap, pushed to DX and put on a page.
 apiVersion: dx.europesip.com/v1alpha1
 kind: DXConnection
 metadata:
@@ -189,7 +189,7 @@ data:
       <body>
         <div class="dxop-hello">
           <h2>\${GREETING}</h2>
-          <p>Deployed by the <b>HCL DX Script Application operator</b> from a ConfigMap · version \${VERSION}</p>
+          <p>Deployed by the <b>DX Delivery Operator</b> from a ConfigMap · version \${VERSION}</p>
         </div>
       </body>
     </html>
@@ -714,12 +714,12 @@ kubectl -n ${cns} rollout status deploy/argocd-server --timeout=300s`,
          `kubectl apply -f ${DIR}/dxop-secrets.yaml\n${waitEs(cns, ["dxop-dx-admin"])}`)
       : (add(`${DIR}/dxop-secrets.yaml`, `# Operator: the DX administrator it pushes with (in a real project, a technical user). Contains credentials in PLAIN TEXT: keep it private.\n---\napiVersion: v1\nkind: Secret\nmetadata:\n  name: dxop-dx-admin\n  namespace: ${cns}\ntype: Opaque\nstringData:\n  username: wpsadmin\n  password: ${ysq(form.LAB_PASSWORD || "EuropeS1P")}\n`, 0o100600),
          `kubectl apply -f ${DIR}/dxop-secrets.yaml`);
-    OP.push(mk("OP-1", T(lang, "HCL DX Script Application operator", "Operador de Script Applications de HCL DX"),
-      T(lang, "Deploys Script Applications, pages, DAM files and databases from Kubernetes resources and keeps them in DX (github.com/europesip/hcl-dx-scriptapp-operator). Its image includes HCL DXClient: you accepted its license in the installer.",
-              "Despliega Script Applications, páginas, ficheros del DAM y bases de datos desde recursos de Kubernetes y los mantiene en DX (github.com/europesip/hcl-dx-scriptapp-operator). Su imagen incluye HCL DXClient: aceptaste su licencia en el instalador."),
+    OP.push(mk("OP-1", T(lang, "DX Delivery Operator", "DX Delivery Operator"),
+      T(lang, "Deploys Script Applications, pages, DAM files and databases from Kubernetes resources and keeps them in DX (github.com/europesip/dx-delivery-operator). Its image includes HCL DXClient: you accepted its license in the installer.",
+              "Despliega Script Applications, páginas, ficheros del DAM y bases de datos desde recursos de Kubernetes y los mantiene en DX (github.com/europesip/dx-delivery-operator). Su imagen incluye HCL DXClient: aceptaste su licencia en el instalador."),
       `${form.cicdOpenbao || form.cicdArgo ? "" : newNs}# The CRDs of this version first: Helm only installs CRDs on the first install, not on upgrades
 kubectl apply --server-side --force-conflicts ${OP_CRDS.map(c => `-f ${OP_CRD_URL}${c}.yaml`).join(" ")}
-helm upgrade --install dxop oci://ghcr.io/europesip/charts/hcl-dx-scriptapp-operator --version ${VERSIONS.operator} -n ${cns} \\
+helm upgrade --install dxop oci://ghcr.io/europesip/charts/dx-delivery-operator --version ${VERSIONS.operator} -n ${cns} \\
   --set dxclient.acceptLicense=true ${W} --timeout 10m`));
     OP.push(mk("OP-2", T(lang, "Operator check: the hello sample on a page", "Comprobación del operador: el ejemplo hello en una página"),
       T(lang, "A DXConnection, one HTML file in a ConfigMap and its page. Delete it with: kubectl delete -f lab-cicd/dxop-hello.yaml", "Una DXConnection, un HTML en un ConfigMap y su página. Para borrarlo: kubectl delete -f lab-cicd/dxop-hello.yaml"),
@@ -845,7 +845,7 @@ export function cicdInstallSh(form, s, text){
   // ExternalSecrets first, while External Secrets Operator still runs: it removes their finalizers (otherwise the
   // deletion of the namespaces hangs once the operator is uninstalled)
   if (form.cicdOpenbao) t = t.replace("  set +e\n", `  set +e\n  for n in ${[...new Set([s.DX_NS, s.SHARED_NS, cns])].join(" ")}; do kubectl -n $n delete externalsecret --all --wait=true --timeout=2m 2>/dev/null; done\n`);
-  // The resources of the Script Application operator too, while it runs (it removes their finalizers; deletionPolicy
+  // The resources of the DX Delivery Operator too, while it runs (it removes their finalizers; deletionPolicy
   // Retain by default, so nothing is deleted in DX)
   if (form.cicdOperator) t = t.replace("  set +e\n", `  set +e\n  kubectl -n ${cns} delete dxpages,dxthemes,dxscriptapplications,dxdamcollections,dxdatabases,dxwcmlibraryimports,dxwcmlibraryexports,dxexports,dxxmlaccesses,dxwcmadmintasks,dxconnections --all --wait=true --timeout=3m 2>/dev/null\n`);
   if (vault) {
@@ -897,11 +897,11 @@ export function cicdRunbook(form, s, text, lang){
   if (keycloakOn(form)) rows.push(["Keycloak", es
     ? `https://${kcHost(form)}/admin · usuario \`admin\`, contraseña: \`kubectl -n ${s.SHARED_NS} get secret keycloak-admin -o jsonpath='{.data.password}' | base64 -d\`. Los usuarios del OpenLDAP entran en DX por Keycloak desde la etapa 2; wpsadmin, en \`/wps/portal/poc?uri=nm:oid:wps.Login\`. Certificado autofirmado: sustituye el Secret \`keycloak-tls\` por el tuyo.`
     : `https://${kcHost(form)}/admin · user \`admin\`, password: \`kubectl -n ${s.SHARED_NS} get secret keycloak-admin -o jsonpath='{.data.password}' | base64 -d\`. The OpenLDAP users sign in to DX through Keycloak from stage 2; wpsadmin at \`/wps/portal/poc?uri=nm:oid:wps.Login\`. Self-signed certificate: replace the \`keycloak-tls\` Secret with yours.`]);
-  if (form.cicdOperator) rows.push([es ? "Operador de Script Applications" : "Script Application operator", `\`kubectl -n ${cns} get dxscriptapplications,dxpages\` · github.com/europesip/hcl-dx-scriptapp-operator`]);
+  if (form.cicdOperator) rows.push([es ? "DX Delivery Operator" : "DX Delivery Operator", `\`kubectl -n ${cns} get dxscriptapplications,dxpages\` · github.com/europesip/dx-delivery-operator`]);
   const block = [`## ${es ? "CI/CD avanzado" : "Advanced CI/CD"} (${es ? "namespace" : "namespace"} \`${cns}\`)`, "", "| | |", "|---|---|", ...rows.map(([a, b]) => `| **${a}** | ${b} |`), ""].join("\n");
   const i = t.indexOf(es ? "\n## Ejecutarlo" : "\n## Run it");
   return i < 0 ? t + "\n" + block : t.slice(0, i + 1) + block + "\n" + t.slice(i + 1);
 }
 
-export const CICD_DIR = {en: "Advanced CI/CD: OpenBao, External Secrets, Argo CD and the Script Application operator", es: "CI/CD avanzado: OpenBao, External Secrets, Argo CD y el operador de Script Applications"};
+export const CICD_DIR = {en: "Advanced CI/CD: OpenBao, External Secrets, Argo CD and the DX Delivery Operator", es: "CI/CD avanzado: OpenBao, External Secrets, Argo CD y el DX Delivery Operator"};
 export {SECRET_KEYS};

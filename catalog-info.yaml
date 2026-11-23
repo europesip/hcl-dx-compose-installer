@@ -20,7 +20,7 @@ metadata:
   title: DX Installer Wizard, by EuropeSIP   # name shown in Backstage (never "HCL DX Compose Installer": not an HCL product)
   description: >-
     Web wizard by EuropeSIP that generates a ready-to-run installation of HCL DX Compose (k3s, OpenShift, AWS EKS/ROSA)
-    with its optional pieces: LDAP, Keycloak, OpenBao, Argo CD, the Script Application operator and the webinar labs.
+    with its optional pieces: LDAP, Keycloak, OpenBao, Argo CD, the DX Delivery Operator and the webinar labs.
   tags: [hcl-dx, dx-compose, installer, kubernetes, helm]    # free labels, used by the catalog search and filters
   annotations:
     # GitHub repository of this component: Backstage uses it for the links and the GitHub cards of the entity page

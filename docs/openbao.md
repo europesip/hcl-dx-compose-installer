@@ -1,4 +1,4 @@
-# Advanced CI/CD: OpenBao, Argo CD and the Script Application operator
+# Advanced CI/CD: OpenBao, Argo CD and the DX Delivery Operator
 
 **English** · [Español](openbao.es.md) · [README](https://github.com/europesip/hcl-dx-compose-installer#readme)
 
@@ -11,7 +11,7 @@ DX installation itself.
 | **OpenBao** (secrets manager) + External Secrets Operator | Keeps the passwords and keys of the installation; nobody writes them in files |
 | **Argo CD** (GitOps) | Keeps the cluster equal to a Git repository, with history and rollback |
 | **Keycloak** (single sign-on) | DX users sign in on the Keycloak page with their OpenLDAP account (SSO, two-factor if you enable it); independent of OpenBao. Its peculiarities: [Third-party software](third-party.md) |
-| **Script Application operator** (EUROPESIP, optional) | Deploys Script Applications, pages, DAM files and databases from Kubernetes resources and keeps them in DX ([repository](https://github.com/europesip/hcl-dx-scriptapp-operator)) |
+| **DX Delivery Operator** (EUROPESIP, optional) | Deploys Script Applications, pages, DAM files and databases from Kubernetes resources and keeps them in DX ([repository](https://github.com/europesip/dx-delivery-operator)) |
 
 All three go in the same namespace as the other shared tools (OpenLDAP, PostgreSQL…), `dx-shared` by default.
 You can choose another one. The zip puts them in `lab-cicd/`, and `install.sh` installs them as extra steps of
@@ -137,10 +137,10 @@ kubectl -n dx-shared port-forward svc/argocd-server 8080:443          # https://
 kubectl -n dx-shared get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d; echo
 ```
 
-## Script Application operator
+## DX Delivery Operator
 
-The operator (chart `oci://ghcr.io/europesip/charts/hcl-dx-scriptapp-operator` 0.1.1) is installed once DX is
+The operator (chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` 0.1.1) is installed once DX is
 running. To check it, `install.sh` also deploys the **hello** sample on a page ("DXOP Hello"):
 `lab-cicd/dxop-hello.yaml`. Its image includes HCL DXClient, so you must accept the DXClient licence on the
 credentials page. Its user guide and examples are in
-[its repository](https://github.com/europesip/hcl-dx-scriptapp-operator).
+[its repository](https://github.com/europesip/dx-delivery-operator).

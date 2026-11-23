@@ -49,7 +49,7 @@ const DESCRIPTIONS = {
   platform: "kubernetes (your cluster), openshift, or poc (k3s on one machine)",
   DX_HOST: "Host name of the portal (e.g. dx.example.com); poc defaults to dx-demo.127.0.0.1.nip.io",
   DX_NS: "Namespace of HCL DX", SHARED_NS: "Namespace of the third-party tools (OpenLDAP, PostgreSQL, LiteLLM...)",
-  dxcLicense: "true = you accept the HCL DXClient licence (needed by the Script Application operator)",
+  dxcLicense: "true = you accept the HCL DXClient licence (needed by the DX Delivery Operator)",
 };
 
 /** JSON Schema (draft 2020-12) of the answers: the keys of the wizard form, their types and allowed values. */

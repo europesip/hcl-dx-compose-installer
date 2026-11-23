@@ -22,7 +22,7 @@ export const DEFAULTS = {
   lab3: true, lab3b: false, iqdb: false, iqrag: false, IQ_LLM: "claude",
   lab4: true, lab5: false, dxcLicense: false,
   sops: false, SOPS_KEYS: "",        // webinar: encrypt the base secrets with SOPS (age); only PUBLIC keys, one per line (src/sops.js)
-  // Advanced CI/CD (not on OpenShift, not in the webinar): OpenBao + External Secrets, Argo CD, the Script Application operator
+  // Advanced CI/CD (not on OpenShift, not in the webinar): OpenBao + External Secrets, Argo CD, the DX Delivery Operator
   cicdOpenbao: false, openbaoMode: "install", cicdArgo: false, cicdOperator: false, cicdSameNs: true, CICD_NS: "dx-cicd",
   useVault: false,                   // credentials from OpenBao: only the Harbor user is asked
   keycloak: false, kcTheme: false, KC_HOST: "",      // Keycloak (SSO) with the OpenLDAP users; independent of OpenBao
