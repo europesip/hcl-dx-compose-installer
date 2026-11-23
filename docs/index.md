@@ -51,7 +51,7 @@ outside its scope.
 | 3 · External database | Web Engine transferred from Derby to PostgreSQL (or Oracle) |
 | 4 · AI Assistant | HCL DX IQ with LiteLLM (OpenRouter, AWS Bedrock or Anthropic), optional MCP server and RAG |
 | 5 · Search | Search V2 (OpenSearch) |
-| Extras | Hello DX Script Application, ÓRBITA, Keycloak (SSO), OpenBao + External Secrets, Argo CD, Script Application operator |
+| Extras | Hello DX Script Application, ÓRBITA, Keycloak (SSO), OpenBao + External Secrets, Argo CD, DX Delivery Operator |
 
 ### The pieces
 

@@ -56,7 +56,7 @@ Linux, macOS o Windows con WSL2. Los scripts comprueban las herramientas antes d
 | | |
 |---|---|
 | **HCL Harbor** (`hclcr.io`) | El correo de tu cuenta de HCL y su secreto CLI, para descargar los charts e imágenes de HCL. O tu propio registro con una copia |
-| **Licencia de HCL DXClient** | Se acepta en el asistente cuando se instalan el operador de Script Applications u ÓRBITA |
+| **Licencia de HCL DXClient** | Se acepta en el asistente cuando se instalan el DX Delivery Operator u ÓRBITA |
 | **`setup-postgres-dx.sql`** | El script de HCL para el Web Engine en PostgreSQL (etapa 3), copiado en `lab-bbdd/` |
 | **Proveedor de IA** (etapa 4) | Una clave de API de OpenRouter, AWS Bedrock (clave y región) o una clave de API de Anthropic, para LiteLLM |
 

@@ -71,7 +71,7 @@ export function generate(form, lang){
   const s = toEngineState(vault ? vaultForm(rf) : rf);   // with the secrets manager the engine gets sentinels, not secrets (src/cicd.js)
   const check = engine.validate(s);
   if (vault) check.warn = check.warn.filter(w => !/password|contraseña/i.test(w));
-  if (form.cicdOperator && cicd && !form.dxcLicense) check.err.push(lang === "es" ? "El operador de Script Applications incluye HCL DXClient: acepta su licencia." : "The Script Application operator includes HCL DXClient: accept its license.");
+  if (form.cicdOperator && cicd && !form.dxcLicense) check.err.push(lang === "es" ? "El DX Delivery Operator incluye HCL DXClient: acepta su licencia." : "The DX Delivery Operator includes HCL DXClient: accept its license.");
   if (form.altRegistry && !altRegistryOn(form)) check.err.push(lang === "es" ? "Indica la dirección de tu repositorio de imágenes." : "Enter the address of your image registry.");
   if (cicd && form.cicdSameNs === false && !/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test((form.CICD_NS || "").trim())) check.err.push(lang === "es" ? "Namespace de CI/CD no válido." : "Invalid CI/CD namespace.");
   engine.ensureLitellmKey();                 // the same key in every file of this page load

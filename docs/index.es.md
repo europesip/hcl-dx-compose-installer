@@ -40,7 +40,7 @@ réplicas, alta disponibilidad, bastionado) que quedan fuera de su alcance.
 > **Día 0 y día 1.** HCL DX se instala **de forma imperativa, con Helm**, nunca con Argo CD ni otro controlador
 > GitOps: sus charts guardan estado en la release de Helm (hooks, actualizaciones, transferencia de la base de datos).
 > Lo que corre *sobre* el portal después (Script Applications, temas, páginas) sí se puede gestionar con GitOps
-> mediante el operador de Script Applications de EuropeSIP, y se ve en Backstage con el plugin de HCL DX.
+> mediante el DX Delivery Operator de EUROPESIP, y se ve en Backstage con el plugin de HCL DX.
 
 ### Etapas y extras
 
@@ -52,7 +52,7 @@ réplicas, alta disponibilidad, bastionado) que quedan fuera de su alcance.
 | 3 · Base de datos externa | Web Engine transferido de Derby a PostgreSQL (u Oracle) |
 | 4 · Asistente de IA | HCL DX IQ con LiteLLM (OpenRouter, AWS Bedrock o Anthropic), servidor MCP y RAG opcionales |
 | 5 · Búsqueda | Search V2 (OpenSearch) |
-| Extras | Script Application Hello DX, ÓRBITA, Keycloak (SSO), OpenBao + External Secrets, Argo CD, operador de Script Applications |
+| Extras | Script Application Hello DX, ÓRBITA, Keycloak (SSO), OpenBao + External Secrets, Argo CD, DX Delivery Operator |
 
 ### Las piezas
 

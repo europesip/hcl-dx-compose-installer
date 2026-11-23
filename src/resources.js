@@ -27,7 +27,7 @@ export function resources(f){
   if (f.lab1b) ext.push(["scriptapp", "Hello DX"]);
   if (cicd && f.cicdOpenbao) ext.push(["openbao", "OpenBao + External Secrets"]);
   if (cicd && f.cicdArgo) ext.push(["argocd", "Argo CD"]);
-  if (cicd && f.cicdOperator) ext.push(["operator", "Script Application operator"]);
+  if (cicd && f.cicdOperator) ext.push(["operator", "DX Delivery Operator"]);
   if (keycloakOn(f)) ext.push(["keycloak", "Keycloak + operator"]);
   const sum = list => list.reduce((a, [k]) => [a[0] + C[k][0], a[1] + C[k][1]], [0, 0]);
   const g = {hcl: sum(hcl), pre: sum(pre), ext: sum(ext)};

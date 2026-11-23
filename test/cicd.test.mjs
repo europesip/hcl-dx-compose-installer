@@ -1,5 +1,5 @@
 // Unit tests (node --test) of the advanced CI/CD options (src/cicd.js): OpenBao + External Secrets, Argo CD and the
-// Script Application operator, and the secrets manager mode (no credential may end up in the zip).
+// DX Delivery Operator, and the secrets manager mode (no credential may end up in the zip).
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {DEFAULTS, applyPreset, normalise} from "../src/state.js";
@@ -139,5 +139,5 @@ test("the operator CRDs of its version are applied before helm (Helm skips CRDs 
   const sh = all(CICD).entries.find(e => e.name.endsWith("install.sh")).text;
   const crd = sh.indexOf("dx.europesip.com_dxthemes.yaml"), helmAt = sh.indexOf("upgrade --install dxop");
   assert.ok(crd > 0 && crd < helmAt, "CRDs before the operator chart");
-  assert.match(sh, /retry kubectl apply --server-side --force-conflicts -f https:\/\/raw\.githubusercontent\.com\/europesip\/hcl-dx-scriptapp-operator\/v0\.11\.0\//);
+  assert.match(sh, /retry kubectl apply --server-side --force-conflicts -f https:\/\/raw\.githubusercontent\.com\/europesip\/dx-delivery-operator\/v0\.13\.0\//);
 });

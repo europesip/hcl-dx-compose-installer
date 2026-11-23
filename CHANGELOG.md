@@ -7,6 +7,13 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## Unreleased
+
+- **DX Delivery Operator 0.13.0** (was the *Script Application operator* 0.11.0; operator #52): the CI/CD extra
+  installs the renamed operator, chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` and CRDs from
+  `europesip/dx-delivery-operator`; every text of the wizard, the RUNBOOK and the docs uses the new name. Includes the
+  operator 0.12.0 changes (artifact kinds `theme` and `app`). Merge only after operator v0.13.0 is published.
+
 ## 2.12.0 · 2026-11-22
 
 - **Script Application operator 0.11.0** (was 0.3.1; operator #44, #45, installer #43). The CI/CD extra installs operator

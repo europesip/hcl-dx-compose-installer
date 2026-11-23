@@ -35,14 +35,14 @@ Todas las diferencias entre DX Core y el Web Engine en una página, con las vers
 - **Search V2** (Lab 4): Core tiene su propia opción Remote Search en el chart (`applications.remoteSearch`).
 - **People Service**.
 - **Keycloak / OIDC** (el Web Engine usa la cookie de sesión `WAS_*` y OIDC de Liberty; Core usa TAI de WebSphere).
-- **ÓRBITA**, el extra de Script Application Hello DX y el **operador de Script Applications**
-  ([operator#44](https://github.com/europesip/hcl-dx-scriptapp-operator/issues/44)): dxclient, XMLAccess, WCM, temas.
+- **ÓRBITA**, el extra de Script Application Hello DX y el **DX Delivery Operator**
+  ([operator#44](https://github.com/europesip/dx-delivery-operator/issues/44)): dxclient, XMLAccess, WCM, temas.
 - **HCL Leap** (Lab 6).
 - Las opciones de CI/CD (OpenBao + External Secrets, Argo CD, el operador) y Keycloak.
 
-## El operador de Script Applications en Core
+## El DX Delivery Operator en Core
 
-Objetivo: adaptar el operador ([operator#44](https://github.com/europesip/hcl-dx-scriptapp-operator/issues/44)) al
+Objetivo: adaptar el operador ([operator#44](https://github.com/europesip/dx-delivery-operator/issues/44)) al
 servidor tradicional: importación y exportación de librerías WCM, páginas, temas, XMLAccess, Script Applications. Lo que
 hace hoy el operador sobre el Web Engine y qué hay que comprobar en Core:
 

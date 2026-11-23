@@ -7,6 +7,14 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## Sin publicar
+
+- **DX Delivery Operator 0.13.0** (antes *operador de Script Applications* 0.11.0; operador #52): el extra de CI/CD
+  instala el operador con su nombre nuevo, chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` y CRDs de
+  `europesip/dx-delivery-operator`; todos los textos del asistente, el RUNBOOK y la documentación usan el nombre nuevo.
+  Incluye los cambios de la 0.12.0 del operador (tipos de artefacto `theme` y `app`). Fusionar solo cuando esté
+  publicada la v0.13.0 del operador.
+
 ## 2.12.0 · 2026-11-22
 
 - **Operador de Script Applications 0.11.0** (antes 0.3.1; operador #44, #45, instalador #43). El extra de CI/CD

@@ -31,7 +31,7 @@ export function buildInfo(form, s, steps, {webinar, vault, cicd, lang, now}){
   const stages = [...new Set(steps.map(x => x.lab).filter(Boolean))];
   const extras = [yes(form.lab1b, "Script Application (Hello DX)"), yes(s.lab3b, "EUROPESIP MCP server"), yes(s.iqdb, "IQ sessions and memory in PostgreSQL"),
     yes(s.iqrag, "IQ RAG (pgvector)"), yes(form.keycloak, "Keycloak SSO"), yes(form.cicdOpenbao || vault, "OpenBao + External Secrets"),
-    yes(form.cicdArgo, "Argo CD"), yes(form.cicdOperator, "Script Application operator"), yes(form.altRegistry, `own image registry (${(form.REGISTRY || "").trim()})`)].filter(Boolean);
+    yes(form.cicdArgo, "Argo CD"), yes(form.cicdOperator, "DX Delivery Operator"), yes(form.altRegistry, `own image registry (${(form.REGISTRY || "").trim()})`)].filter(Boolean);
   const L = [
     "# BUILD-INFO.txt · what this folder was generated for, by the DX Installer Wizard.",
     "# It contains no passwords, keys or tokens. If something fails, send this file (./install.sh --collect includes it).",
