@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // AWS: estimate, credentials, create the environment (the installer server runs server/aws/*.sh and
 // streams their output), use it and delete it.
 import {useEffect, useRef, useState} from "react";

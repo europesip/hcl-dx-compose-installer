@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Unit tests (node --test) of the advanced CI/CD options (src/cicd.js): OpenBao + External Secrets, Argo CD and the
 // DX Delivery Operator, and the secrets manager mode (no credential may end up in the zip).
 import {test} from "node:test";

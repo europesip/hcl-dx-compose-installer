@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Corporate CAs (output layer; the engine stays as the frozen wizard). Whenever the installation includes the lab
 // OpenLDAP and/or PostgreSQL, they come with SSL, as a corporate directory and a corporate database would:
 //   - internals-ca/ holds the CA certificates "that corporate IT gave us": one root CA for the directory and another one

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 import {CORE_OFF} from "./runtime.js";
 
 // Form values of the installer and how they map to the state object of the engine (core.js).

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Robustness of the generated scripts (output layer, the engine stays as the golden test expects):
 //   - downloads are retried: GitHub releases, Helm repositories and registries sometimes answer 503/504 for a while
 //     (it happened on 2026-11-08). "retry" repeats a download command; "rhelm" repeats a helm upgrade only when it

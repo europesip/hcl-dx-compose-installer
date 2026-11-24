@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # Shared helpers of the AWS scripts of the DX Installer Wizard.
 # The scripts run in the installer pod (the web page starts them and shows their output) or on
 # your own machine with the AWS CLI. The credentials always come from the standard AWS variables

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # DX Installer Wizard: the React page and a small Node server, with the tools that create the
 # AWS environments (aws, eksctl, rosa, oc, kubectl, helm, ssh), and the headless CLI (bin/dx-installer.mjs).
 FROM node:24-alpine AS build

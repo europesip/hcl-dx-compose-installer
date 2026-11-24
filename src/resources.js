@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // How much CPU and memory the chosen installation asks the cluster for (Kubernetes requests), split into the HCL
 // software and the third-party prerequisites and extras. Measured on the lab cluster (DX Compose CF239, 2026-11-08):
 // requests of each pod; for pods without requests (PostgreSQL, Argo CD...), their real use plus a margin.

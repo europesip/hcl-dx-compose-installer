@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Preset "basic" (#32), headless only: a simple test portal in the same cluster, as Lab 1 (DX Compose with Derby, no
 // directory, no external database, no IQ, no Search), meant to be installed unattended by a Job (the HCL DX plugin of
 // Backstage). Output layer, like src/registry.js: the engine (core.js, frozen) is not touched, so the other presets

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // DX Installer Wizard: a guided flow in five phases (welcome, environment, deployment, details,
 // download), one view at a time, with a progress bar.
 // Version and build time, set by vite.config.js at build time

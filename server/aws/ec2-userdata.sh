@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # User data of the single EC2 instance: k3s (one node, its Traefik as the Ingress controller),
 # Helm, Longhorn and the two StorageClasses the labs expect (dx-deploy-rwo / dx-deploy-rwx).
 # Progress in /var/log/dx-installer-setup.log; /var/lib/dx-installer/ready when it is finished.

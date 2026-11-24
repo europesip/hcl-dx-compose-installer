@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Commands shown in the environment views (they are copied by the user, not run by the installer).
 export const K3S_VERSION = "v1.35.5+k3s1";
 

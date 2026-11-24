@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Advanced CI/CD (optional, off by default, not on OpenShift yet): OpenBao + External Secrets Operator (the
 // secrets manager), Argo CD (GitOps) and the DX Delivery Operator, installed in their own
 // namespace (by default the shared one of the external dependencies).

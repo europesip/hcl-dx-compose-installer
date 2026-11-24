@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // The views of the installer, one per screen
 import {useEffect, useMemo, useState} from "react";
 import {Modal, Nav, Card, Title, H2, Choice, Button, Field, Input, Textarea, Secret, Select, Check, Toggle, Segmented, Callout, Code, Badge, cx,

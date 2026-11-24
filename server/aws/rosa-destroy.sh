@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # EXPERIMENTAL. Deletes the ROSA HCP cluster NAME and what rosa-create.sh created for it: volumes,
 # EFS, the cluster, operator roles, OIDC configuration, the network stack and the account roles.
 #

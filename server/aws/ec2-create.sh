@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # Creates ONE EC2 instance with k3s, Longhorn and the StorageClasses dx-deploy-rwo / dx-deploy-rwx,
 # ready for the HCL DX Compose installation. Everything it creates carries the tag dx-installer=NAME,
 # so ec2-destroy.sh finds and deletes it.

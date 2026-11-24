@@ -110,4 +110,6 @@ Contributions are welcome: open an issue or a pull request.
 [MIT](LICENSE) · [NOTICE](NOTICE). HCL, HCL Digital Experience and HCL DX Compose are trademarks of HCL Technologies;
 this project is not an HCL product.
 
+**Attribution:** any copy or redistribution of this code, modified or not (also when it is reworked with AI tools), must keep the copyright notice (`Copyright (c) 2026 EUROPESIP`) and the MIT licence text.
+
 **EUROPESIP** · https://www.europesip.com · info@europesip.com

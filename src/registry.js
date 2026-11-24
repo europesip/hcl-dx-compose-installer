@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // "Use another image registry": the HCL images (and charts) come from the company's own registry (Harbor, Quay,
 // Artifactory, Nexus...) instead of hclcr.io, the HCL Harbor. Usual in air-gapped environments, where the security
 // team controls and scans every image. The registry must already hold a copy of the HCL images with the same names

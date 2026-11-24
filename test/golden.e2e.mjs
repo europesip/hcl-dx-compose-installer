@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Golden test against the configuration wizard of hcl-dx-compose-labs (docs/index.html, frozen since
 // installer 2.0.0): for the same state, the engine of the installer must still produce the same lab
 // files and the same command for every step (the installer renumbers the steps and writes its own

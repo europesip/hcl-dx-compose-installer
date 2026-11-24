@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // The base secrets of the webinar as in the webinar of 2026-11-12 (#17), output layer (the engine stays as the
 // golden test expects):
 //   - the pull secret in its own file, lab-base/secret-harbor.yaml, and wpsadmin in lab-base/secrets.yaml;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // The webinar script as a document model, rendered to Word (word.js) and PDF (pdf.js) with the same content.
 // Blocks: {t: "h1"|"h2"|"h3"|"p"|"bullets"|"code"|"table"|"callout"|"break"|"toc"|"slide"}, plus the cover.
 // Content: the purpose of the webinar (from its deck), who EUROPESIP is, the live session, security,

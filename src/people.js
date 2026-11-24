@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Demo LDAP users with the real EUROPESIP data (name, surname and e-mail), on purpose: whoever installs a demo can see
 // who to contact. The engine keeps its neutral users (andres@dxdemo.com...) because the golden test compares it with
 // the frozen labs wizard; this output layer rewrites the generated LDIF. uid, title, preferredLanguage, passwords and

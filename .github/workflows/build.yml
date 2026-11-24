@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 name: build
 # Tests, container image (amd64 + arm64) and Helm chart.
 #   push to main  -> image :main

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 {{- if and .Values.auth.enabled (not .Values.auth.existingSecret) }}
 {{- if or (not .Values.auth.username) (not .Values.auth.password) }}
 {{- fail "auth.enabled needs auth.existingSecret, or auth.username and auth.password" }}

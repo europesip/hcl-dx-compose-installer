@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // The scope disclaimer (issue #5): accepted every time the wizard starts, and repeated at the top of RUNBOOK.md and of the
 // webinar Word/PDF guide. Same content as slide 2 of the installer deck ("What this tool is, and what it is not").
 export const LICENSE_URL = "https://github.com/europesip/hcl-dx-compose-installer/blob/main/LICENSE";

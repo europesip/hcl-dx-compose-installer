@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // UI test: walks the flow in Spanish twice (your own cluster + Webinar, and a WSL PoC + Everything)
 // and downloads the zips, the Word script and RUNBOOK.md. Also checks the API of the server.
 //   node test/ui.e2e.mjs http://localhost:8080/ /tmp/out

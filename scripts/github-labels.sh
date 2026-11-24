@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # scripts/github-labels.sh · creates (or updates) the labels of the work model described in docs/workflow.md.
 # Usage: scripts/github-labels.sh [owner/repo]   (default: europesip/hcl-dx-compose-installer). Needs gh with repo scope.
 set -euo pipefail

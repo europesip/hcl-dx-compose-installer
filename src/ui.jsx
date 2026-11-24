@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Small building blocks of the interface (Tailwind)
 import {useState} from "react";
 

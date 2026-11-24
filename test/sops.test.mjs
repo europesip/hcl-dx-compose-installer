@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Unit tests (node --test) of #17: the webinar zip as in the webinar of 2026-11-12. SOPS (age) with one or more
 // public keys, the HCL Harbor password typed at the prompt, the IQ deployment key in the IQ values.
 import {test} from "node:test";
