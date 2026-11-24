@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # EXPERIMENTAL (not tested end to end: it needs a Red Hat account with ROSA enabled in your AWS
 # account). Creates a Red Hat OpenShift Service on AWS cluster with hosted control planes (ROSA HCP)
 # ready for HCL DX Compose:

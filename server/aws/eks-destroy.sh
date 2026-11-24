@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # Deletes the EKS cluster NAME and everything eks-create.sh created for it: the volumes of the
 # installation (EBS disks), the load balancer, the EFS file system, the node group, the VPC and the
 # NAT gateway. Nothing else in the account is touched.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // The webinar script in Word: renders the document model of script.js with docx.
 import {Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, ImageRun, ExternalHyperlink,
         ShadingType, BorderStyle, AlignmentType, PageBreak, Footer, Header, PageNumber, TableOfContents} from "docx";

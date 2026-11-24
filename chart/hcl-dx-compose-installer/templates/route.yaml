@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 {{- if .Values.route.enabled }}
 apiVersion: route.openshift.io/v1
 kind: Route

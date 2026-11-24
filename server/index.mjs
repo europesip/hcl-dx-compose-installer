@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // DX Installer Wizard · server: the web page (the build in dist/) and a small API that runs the
 // AWS scripts of server/aws (create or delete an environment) and streams their output to the page.
 //

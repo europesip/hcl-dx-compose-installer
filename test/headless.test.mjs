@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Unit tests of the headless mode (#23): the library (src/headless.js) and the CLI (bin/dx-installer.mjs).
 import {test} from "node:test";
 import assert from "node:assert/strict";

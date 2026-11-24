@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // The installation as stages, the numbering shown everywhere in the installer (HCL feedback for the
 // webinar of 12 November 2026): 0 Prerequisites · 1 Base DX installation · 2 LDAP configuration ·
 // 3 Transfer to an external database · 4 AI Assistant · 5 Search, plus the extras (Script

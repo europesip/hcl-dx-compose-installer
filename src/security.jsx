@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // A small "Is it safe?" note next to every place that asks for credentials (Harbor, OpenRouter, AWS, Red Hat)
 import {useState} from "react";
 import {cx} from "./ui.jsx";

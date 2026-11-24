@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // AWS options: sizes, approximate prices and the time each one takes to create.
 // Prices: on-demand, Linux, eu-west-1 (Ireland), USD, November 2026, without taxes or data transfer.
 // They are an orientation only: the real amount is the one AWS charges (calculator.aws).

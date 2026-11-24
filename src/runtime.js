@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // The DX server (#38): DX Compose (the Web Engine on Open Liberty, the default) or DX Core (the traditional HCL Digital
 // Experience 9.5 server on WebSphere Application Server). Both come from the same chart (hcl-dx-deployment 2.50.0,
 // CF239): applications.webEngine / applications.core. Output layer, like src/registry.js and src/basic.js: the engine

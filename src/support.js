@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Supportability of the generated folder (output layer: the engine stays as the golden test expects):
 //   - BUILD-INFO.txt: what the folder was generated for (installer version, platform, Ingress, Helm, options),
 //     without secrets, so that support only has to ask for this file;

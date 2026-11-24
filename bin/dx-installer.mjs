@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // DX Installer Wizard, headless (#23): the installation folder from a JSON file with the wizard answers, without the web UI.
 //
 //   dx-installer generate --answers answers.json [--lang en|es] [--secrets omit|include] (--out DIR | --zip FILE)

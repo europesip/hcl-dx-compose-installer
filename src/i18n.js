@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Texts of the interface, English and Spanish. The first language is the browser's.
 export function detectLang(){
   try { const s = localStorage.getItem("dxi-lang"); if (s === "en" || s === "es") return s; } catch { /* no storage */ }

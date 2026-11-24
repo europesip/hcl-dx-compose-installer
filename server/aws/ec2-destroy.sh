@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # Deletes everything ec2-create.sh created for NAME (tag dx-installer=NAME): the instance and its
 # disk, the security group, the key pair and the VPC if it was created for this environment (tag dx-installer=NAME).
 # Nothing else in the account is touched.

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 apiVersion: v2
 name: hcl-dx-compose-installer
 description: Web installer for HCL DX Compose by EUROPESIP. Guides you from the environment (your cluster, a PC or AWS) to a ready-to-run installation.

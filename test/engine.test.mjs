@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Unit tests (node --test): presets, dependencies, stages and numbering, the webinar phases, the zip,
 // masking, and the Word script of the webinar.
 import {test} from "node:test";

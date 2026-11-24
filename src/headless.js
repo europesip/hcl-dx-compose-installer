@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Headless mode (#23): the engine of the wizard without its web UI, for Node (a Backstage scaffolder action, a CI job,
 // a script). It takes the answers of the wizard (the same keys as the form, src/state.js DEFAULTS) and returns exactly
 // what the wizard downloads: the dx-install/ folder (install.sh or prepare.sh + demo.sh, RUNBOOK.md, values, secrets,

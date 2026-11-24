@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Minimal ZIP reader for the tests (stored and deflated entries), so no extra dependency is needed.
 import {inflateRawSync} from "node:zlib";
 

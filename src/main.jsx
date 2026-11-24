@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 import {StrictMode} from "react";
 import {createRoot} from "react-dom/client";
 import App from "./App.jsx";

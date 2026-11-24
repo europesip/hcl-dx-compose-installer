@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // Generation engine of the DX Installer Wizard: validation, the lab files filled in with the
 // user's values, the steps, RUNBOOK.md, install.sh and uninstall.sh. Everything runs in the browser.
 // It started as a copy of option C of the configuration wizard of hcl-dx-compose-labs (docs/index.html,

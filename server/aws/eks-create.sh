@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # Creates an Amazon EKS cluster ready for the HCL DX Compose installation:
 #   - managed node group (NODES x NODE_TYPE) in its own VPC (eksctl), one NAT gateway;
 #   - EBS CSI driver  -> StorageClass dx-deploy-rwo (gp3, ReadWriteOnce);

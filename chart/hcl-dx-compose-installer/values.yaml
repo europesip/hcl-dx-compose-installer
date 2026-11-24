@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 EUROPESIP
 # DX Installer Wizard: the web page and its server. The installation (scripts, RUNBOOK, Word
 # script) is generated in the browser; the server only runs the AWS scripts when someone creates or
 # deletes an AWS environment from the page.

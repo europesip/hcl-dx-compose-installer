@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
 // What the installer downloads, built on the engine (src/engine/core.js) and its stages:
 //   - All / Custom: the dx-install/ zip (install.sh, uninstall.sh, RUNBOOK.md and every file filled in);
 //   - Webinar: the same zip with prepare.sh (phase 1) and demo.sh (phase 2, stages 0-5), plus the
