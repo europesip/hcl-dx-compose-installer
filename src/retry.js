@@ -6,6 +6,9 @@
 //     failed because of a download error, never when the installation itself failed;
 //   - Helm 3 and 4: "rhelm" adapts the Helm 4 flags (--wait=legacy, --force-conflicts) when it finds Helm 3, so a
 //     folder generated for Helm 4 also runs with Helm 3 (a user reported "--wait=legacy" failing with Helm 3);
+//   - the cluster check works inside a Pod with only the in-cluster ServiceAccount (issue #34): "kubectl version" goes to
+//     localhost:8080 there with kubectl 1.35, while "kubectl get --raw /version" uses the in-cluster config like any
+//     other kubectl command; the summary shows "in-cluster (ServiceAccount)" when there is no kubeconfig context;
 //   - the support data collector no longer warns "could not copy the Liberty logs" when they were copied: tar exits 1
 //     when a live log changes while it is read.
 
@@ -37,11 +40,21 @@ export function retryScript(text, {helm = "4"} = {}){
   if (!/^set -Eeuo pipefail$/m.test(text) || !/\nstep_0\(\) \{/.test(text)) return text;
   let t = text.replace('cd "$(dirname "$0")"\n', 'cd "$(dirname "$0")"\n' + FUNCS)
     .replace(/^(kubectl version --request-timeout=10s .*\n)/m, m => HELM_NOTE(helm !== "3") + m);
+  t = inClusterCheck(t);
   t = t.replace(/^(\s*)helm (repo add|registry login|pull) /gm, "$1retry helm $2 ")
        .replace(/\|\| helm pull /g, "|| retry helm pull ")
        .replace(/^(\s*)helm upgrade --install /gm, "$1rhelm upgrade --install ")
        .replace(/^(\s*)kubectl apply (.*?)-f https:\/\//gm, "$1retry kubectl apply $2-f https://");
   return t;
+}
+
+// The cluster check and the context in the summary, with a kubeconfig or with the in-cluster ServiceAccount (#34)
+export function inClusterCheck(text){
+  return text
+    .replace(/^kubectl version --request-timeout=10s >\/dev\/null 2>&1 \|\| /m,
+      "kubectl get --raw /version --request-timeout=10s >/dev/null 2>&1 || ")
+    .replace(/\$\(kubectl config current-context 2>\/dev\/null\)/g,
+      "$(kubectl config current-context 2>/dev/null || echo 'in-cluster (ServiceAccount)')");
 }
 
 export function fixCollector(text){

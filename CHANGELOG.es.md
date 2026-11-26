@@ -9,6 +9,11 @@ es la misma que en la 2.0.x.
 
 ## Sin publicar
 
+- **`install.sh` dentro de un Pod** (#34): la comprobación del clúster usa `kubectl get --raw /version` en lugar de
+  `kubectl version`, que con kubectl 1.35 va a `localhost:8080` cuando solo hay la ServiceAccount del clúster y no hay
+  kubeconfig. El resumen muestra `in-cluster (ServiceAccount)` cuando no hay contexto de kubeconfig. Capa de salida
+  (`src/retry.js`): el motor y el test golden no cambian.
+
 - **DX Delivery Operator 0.13.0** (antes *operador de Script Applications* 0.11.0; operador #52): el extra de CI/CD
   instala el operador con su nombre nuevo, chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` y CRDs de
   `europesip/dx-delivery-operator`; todos los textos del asistente, el RUNBOOK y la documentación usan el nombre nuevo.
