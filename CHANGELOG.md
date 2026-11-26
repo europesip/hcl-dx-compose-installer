@@ -24,6 +24,13 @@ installation is the same as in 2.0.x.
   folder is `lab-directory/` (was `lab-ldap-ad/`), there is no `dx-ad-bind` Secret with the password in clear, and the
   `AD_*` keys are still read; the basic preset keeps `BASIC_LDAP_*` with the same values and also takes `DIR_*`.
   BUILD-INFO.txt names the directory (it said OpenLDAP without one). See [docs/directory.md](docs/directory.md).
+- **DX Delivery Operator 0.17.0** (was 0.13.0; #53). The CI/CD extra installs chart
+  `oci://ghcr.io/europesip/charts/dx-delivery-operator` 0.17.0 and applies its twelve CRDs first, the new
+  `DXJavaExtension` included (also deleted by `--cleanup` and with an Argo CD health check). The installer still sets
+  only `dxclient.acceptLicense=true`: the 0.15.0 security context defaults (no fixed UID, `runAsNonRoot`,
+  `RuntimeDefault` seccomp, works on OpenShift `restricted-v2`) and `javaExtensions.enabled: false` (no webhook, no
+  cert-manager) are kept as they come. The hello sample and the other CRDs are unchanged. A newer operator already in
+  the cluster is never downgraded (#2). Docs: docs/openbao.md.
 - **Older folders against a newer cluster** (#2). A generated folder records what it was generated with: bundle format
   2, the installer version and the pinned charts at the top of `install.sh` (also `prepare.sh` and `demo.sh`), in its
   header and in `BUILD-INFO.txt` (`bundle.format`, `operator`). The DX Delivery Operator, OpenBao, External Secrets
