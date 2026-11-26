@@ -57,6 +57,8 @@ una errata no pase desapercibida. Ejemplos: [`docs/headless-examples/`](https://
 | `DX_NS`, `SHARED_NS` | Namespaces de HCL DX y de las herramientas de terceros |
 | `INGRESS_KIND`, `SC_RWO`, `SC_RWX`, `helm` | Ingress, clases de almacenamiento, Helm 3 o 4 |
 | `lab1b`, `dir`, `db`, `lab3`, `lab3b`, `iqdb`, `iqrag`, `lab4`, `lab5`, `keycloak`, `cicd*`... | Las etapas y extras de la página |
+| `DX_TIMEZONE` | Zona horaria de todos los contenedores de DX (`configuration.containerTimezone`, también en Search): un nombre IANA, `Europe/Madrid` por defecto (`UTC`, `Europe/London`...). Un nombre no válido es un error. Con sindicación de WCM o DAM Staging, todos los entornos de DX deben usar la misma zona horaria |
+| `prereqsChecker` | `true` (por defecto, como el chart): el sidecar comprobador de requisitos de HCL en los pods con volúmenes, que los comprueba cada día a las 08:00 y escribe el resultado en su log. `false`: sin sidecar |
 
 La lista completa, con tipos y valores por defecto: `dx-installer schema`.
 
@@ -123,6 +125,9 @@ node /app/bin/dx-installer.mjs generate --answers /answers/answers.json --secret
 El Job instala con `helm` real (nunca con Argo CD), así que su ServiceAccount necesita permisos amplios en el clúster:
 crear namespaces y todo lo que el chart de HCL crea dentro (Roles, RoleBindings, StatefulSets, PVCs...). La
 documentación del plugin HCL DX de Backstage explica la ServiceAccount que usa.
+
+`install.sh` también funciona dentro de un Pod que solo tiene esa ServiceAccount del clúster, sin kubeconfig: comprueba
+el clúster con `kubectl get --raw /version` y el resumen muestra el contexto como `in-cluster (ServiceAccount)`.
 
 ## Línea de comandos
 

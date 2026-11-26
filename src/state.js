@@ -42,6 +42,9 @@ export const DEFAULTS = {
   BASIC_LDAP_HOST: "", BASIC_LDAP_PORT: "389", BASIC_LDAP_SUFFIX: "", BASIC_LDAP_SECRET: "dx-ldap-bind",
   // The DX server (#38): compose = DX Compose, the Web Engine (default) · core = DX Core, the traditional server on WebSphere
   DX_RUNTIME: "compose",
+  // DX settings (#3, src/dxconfig.js): time zone of the DX containers (IANA, configuration.containerTimezone, also in
+  // Search) and the HCL prerequisites checker sidecar (configuration.prereqsChecker.enabled, the chart default)
+  DX_TIMEZONE: "Europe/Madrid", prereqsChecker: true,
   // Names
   DX_NS: "dx-demo", SHARED_NS: "dx-shared", DX_RELEASE: "dx-deployment", IQ_RELEASE: "dx-iq",
   SEARCH_RELEASE: "dx-search", LDAP_RELEASE: "openldap", LITELLM_RELEASE: "litellm", PG_CLUSTER: "dx-pg",

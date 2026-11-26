@@ -18,6 +18,21 @@ es la misma que en la 2.0.x.
   clúster no sirve los tipos de la carpeta; el paso OP-2 los comprueba antes de aplicar el ejemplo hello. `--cleanup`
   borra uno a uno todos los tipos del operador que sirve el clúster. Sin CI/CD solo son nuevas las líneas de versiones.
   Ver [docs/troubleshooting.es.md](docs/troubleshooting.es.md).
+- **Ajustes de DX en la sección Avanzado: zona horaria y comprobador de requisitos de HCL** (#3). Dos opciones nuevas
+  en la página de detalles, cada una con su explicación (i): *Zona horaria de los contenedores de DX* (nombre IANA, por
+  defecto `Europe/Madrid`, con sugerencias; un nombre no válido se rechaza con un mensaje claro) y *Comprobador de
+  requisitos de HCL* (activado por defecto, como en el chart). Fijan `configuration.containerTimezone` (también en los
+  values de Search, para que DX y Search vayan en la misma zona) y `configuration.prereqsChecker.enabled` de
+  `lab-base/custom-values.yaml`. Se corrige el comentario del comprobador: es un sidecar en los pods con volúmenes que
+  los comprueba cada día a las 08:00 y solo escribe en su log; nunca bloquea un pod. RUNBOOK.md, el guion del webinar
+  en Word/PDF y BUILD-INFO.txt describen los dos ajustes, con el aviso de HCL: con sindicación de WCM o DAM Staging,
+  todos los entornos de DX deben usar la misma zona horaria. Respuestas headless: `DX_TIMEZONE`, `prereqsChecker`. Con
+  los valores por defecto los values son los mismos que antes (solo cambian los comentarios); el motor congelado no se
+  toca (capa de salida `src/dxconfig.js`).
+- **`install.sh` dentro de un Pod** (#34): la comprobación del clúster usa `kubectl get --raw /version` en lugar de
+  `kubectl version`, que con kubectl 1.35 va a `localhost:8080` cuando solo hay la ServiceAccount del clúster y no hay
+  kubeconfig. El resumen muestra `in-cluster (ServiceAccount)` cuando no hay contexto de kubeconfig. Capa de salida
+  (`src/retry.js`): el motor y el test golden no cambian.
 
 - **DX Delivery Operator 0.13.0** (antes *operador de Script Applications* 0.11.0; operador #52): el extra de CI/CD
   instala el operador con su nombre nuevo, chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` y CRDs de
