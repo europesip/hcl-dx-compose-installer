@@ -7,7 +7,9 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
-## Unreleased
+## 2.13.0 · 2026-11-26
+
+DX Delivery Operator 0.17.0, your own LDAP or Active Directory, your own registry for every image (air-gapped), time zone and HCL prerequisites checker, version pinning of older folders, and `install.sh` inside a Pod.
 
 - **Own registry for every image and chart, for air-gapped installations** (#51). *Use another image registry* gets a
   scope: *HCL images only* (default, the folder is the same as before) or **All images and charts**. With the second
@@ -67,11 +69,10 @@ installation is the same as in 2.0.x.
   `kubectl version`, which goes to `localhost:8080` with kubectl 1.35 when there is only the in-cluster ServiceAccount
   and no kubeconfig. The summary shows `in-cluster (ServiceAccount)` when there is no kubeconfig context. Output layer
   (`src/retry.js`): the engine and the golden test are unchanged.
-
 - **DX Delivery Operator 0.13.0** (was the *Script Application operator* 0.11.0; operator #52): the CI/CD extra
   installs the renamed operator, chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` and CRDs from
   `europesip/dx-delivery-operator`; every text of the wizard, the RUNBOOK and the docs uses the new name. Includes the
-  operator 0.12.0 changes (artifact kinds `theme` and `app`). Merge only after operator v0.13.0 is published.
+  operator 0.12.0 changes (artifact kinds `theme` and `app`).
 
 ## 2.12.0 · 2026-11-22
 

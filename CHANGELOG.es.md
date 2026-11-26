@@ -7,7 +7,9 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
-## Sin publicar
+## 2.13.0 · 2026-11-26
+
+DX Delivery Operator 0.17.0, tu propio LDAP o Active Directory, tu propio registro para todas las imágenes (air-gapped), zona horaria y comprobador de requisitos de HCL, fijación de versiones de las carpetas anteriores e `install.sh` dentro de un Pod.
 
 - **Registro propio para todas las imágenes y charts, para instalaciones air-gapped** (#51). *Usar otro repositorio de
   imágenes* tiene ahora un alcance: *Solo las imágenes de HCL* (por defecto, la carpeta es la misma que antes) o **Todas
@@ -70,12 +72,10 @@ es la misma que en la 2.0.x.
   `kubectl version`, que con kubectl 1.35 va a `localhost:8080` cuando solo hay la ServiceAccount del clúster y no hay
   kubeconfig. El resumen muestra `in-cluster (ServiceAccount)` cuando no hay contexto de kubeconfig. Capa de salida
   (`src/retry.js`): el motor y el test golden no cambian.
-
 - **DX Delivery Operator 0.13.0** (antes *operador de Script Applications* 0.11.0; operador #52): el extra de CI/CD
   instala el operador con su nombre nuevo, chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` y CRDs de
   `europesip/dx-delivery-operator`; todos los textos del asistente, el RUNBOOK y la documentación usan el nombre nuevo.
-  Incluye los cambios de la 0.12.0 del operador (tipos de artefacto `theme` y `app`). Fusionar solo cuando esté
-  publicada la v0.13.0 del operador.
+  Incluye los cambios de la 0.12.0 del operador (tipos de artefacto `theme` y `app`).
 
 ## 2.12.0 · 2026-11-22
 
