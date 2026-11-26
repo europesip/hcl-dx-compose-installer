@@ -150,12 +150,13 @@ export function EnvOwn({t, form, set, go, back}){
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t.ingress}>
                   <Select value={form.INGRESS_KIND} onChange={e => set({INGRESS_KIND: e.target.value})}>
-                    <option value="nginx">nginx (ingress-nginx)</option><option value="traefik">Traefik</option><option value="other">{t.ingressOther}</option>
+                    <option value="traefik">Traefik</option><option value="nginx">nginx (ingress-nginx)</option><option value="other">{t.ingressOther}</option>
                   </Select>
                 </Field>
                 {form.INGRESS_KIND === "other" && <Field label={t.ingressClass}><Input mono value={form.INGRESS_CLASS} onChange={e => set({INGRESS_CLASS: e.target.value})} /></Field>}
               </div>
             )}
+            {!oc && form.INGRESS_KIND === "traefik" && <Check checked={form.INGRESS_INSTALL !== false} onChange={v => set({INGRESS_INSTALL: v})} hint={t.ingressInstallHint}>{t.ingressInstall}</Check>}
             <Field label={t.dxHost} hint={t.dxHostHint}><Input mono placeholder="dx-demo.example.com" value={form.DX_HOST} onChange={e => set({DX_HOST: e.target.value})} /></Field>
             <HostsHelp t={t} host={form.DX_HOST} />
           </Card>

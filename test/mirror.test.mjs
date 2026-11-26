@@ -109,7 +109,7 @@ test("scope all: the scripts are valid bash, the pre-flight is the first step, t
 test("scope all: pull secrets in every namespace, CNPG and Keycloak, and nothing secret in mirror/", () => {
   const g = gen({...ALL, ...CICD, cicdSameNs: false, CICD_NS: "dx-cicd"}, "all");
   const st = g.steps.find(x => x.origId === "D-MR");
-  assert.match(st.cmd, /for ns in dx-demo dx-shared dx-cicd; do/);
+  assert.match(st.cmd, /for ns in dx-demo dx-shared dx-cicd( traefik)?; do/);
   assert.match(st.cmd, /create secret docker-registry regcred --docker-server=harbor\.example\.com --docker-username='robot'/);
   assert.match(st.cmd, /patch serviceaccount default/);
   assert.match(g.files["lab-bbdd/cluster-dx-pg.yaml"].text, /imagePullSecrets:[^\n]*\n\s*- name: regcred/);
@@ -179,4 +179,18 @@ test("scope hcl (default): the folder is the one of the HCL-only option, with no
     for (const [i, e] of a.entries.entries()) if (!/keycloak-secrets|BUILD-INFO/.test(e.name)) assert.equal(strip(b.entries[i].text), strip(e.text), `${preset}: ${e.name}`);
     assert.ok(!a.steps.some(x => /check-images/.test(x.cmd)), preset);
   }
+});
+
+test("scope hcl: DXClient of Hello DX and ÓRBITA from the registry, with its pull secret; the operator is left alone", () => {
+  const g = gen({...CICD}, "all");
+  const sh = g.entries.find(e => e.name === "dx-install/install.sh").text;
+  const img = `${REG}/dx-public/dxclient:v95_CF239_20261103-1404`;
+  assert.ok(sh.includes(`--set scriptapps.dxclient.image=${img} --set 'scriptapps.job.imagePullSecrets[0].name=regcred' --set scriptapps.dxclient.acceptLicense=true`));
+  assert.ok(sh.includes(`--set dxclient.image=${img} --set 'job.imagePullSecrets[0].name=regcred' --set dxclient.acceptLicense=true`), "Hello DX");
+  assert.match(sh, /kubectl -n dx-demo get secret regcred [^\n]*\| kubectl -n dx-shared create secret generic regcred --type=kubernetes\.io\/dockerconfigjson[^\n]*\n\s*rhelm upgrade --install orbita /);
+  assert.doesNotMatch(sh, /dx-delivery-operator --version [^\n]*\\\n[^\n]*dxclient\.image/, "the operator image brings DXClient");
+  assert.ok(!sh.includes("hclcr.io/dx-public"));
+  assert.ok(g.runbook.includes(`scriptapps.dxclient.image=${img}`), "RUNBOOK.md shows the same command");
+  const anon = gen({REGISTRY_USER: "", REGISTRY_PASSWORD: ""}, "all");
+  assert.doesNotMatch(anon.entries.find(e => e.name === "dx-install/install.sh").text, /imagePullSecrets\[0\]/);
 });

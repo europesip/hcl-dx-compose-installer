@@ -11,6 +11,7 @@
 
 import {directoryInfo} from "./directory.js";
 import {dxConfigInfo} from "./dxconfig.js";
+import {ingressOn, traefikNs, TRAEFIK_CHART} from "./ingress.js";
 
 /* global __APP_VERSION__, __BUILD_TIME__ */
 export const APP_VERSION = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "dev";
@@ -47,7 +48,7 @@ export function buildInfo(form, s, steps, {webinar, vault, cicd, lang, now}){
     `deployment        : ${webinar ? "webinar (prepare.sh + demo.sh)" : `installation (install.sh)${form.preset ? ` · preset ${form.preset}` : ""}`}`,
     `environment       : ${env}`,
     `platform          : ${PLATFORM[s.platform] || s.platform}`,
-    `ingress           : ${ingressOf(s)} · applied with ${exposeFile(s)}`,
+    `ingress           : ${ingressOf(s)} · applied with ${exposeFile(s)}${ingressOn(form, s) ? ` · controller installed if missing (traefik/traefik ${TRAEFIK_CHART}, namespace ${traefikNs(form)}, Service ${form.TRAEFIK_SERVICE || "LoadBalancer"})` : s.poc || s.openshift ? "" : " · controller: the one of the cluster"}`,
     `helm              : ${s.helm === "3" ? "3 (--wait)" : "4 (--wait=legacy, --force-conflicts)"} · the scripts adapt the flags to the Helm they find`,
     `dx.url            : https://${s.DX_HOST}/wps/portal`,
     dxConfigInfo(form),

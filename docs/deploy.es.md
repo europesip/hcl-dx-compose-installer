@@ -25,7 +25,7 @@ Autenticación básica (opcional): `-e AUTH_USER=admin -e AUTH_PASSWORD='S3cret!
 ```bash
 helm upgrade --install dx-installer oci://ghcr.io/europesip/charts/hcl-dx-compose-installer \
   --version 2.7.1 -n dx-installer --create-namespace \
-  --set ingress.enabled=true --set ingress.className=nginx --set ingress.host=installer.example.com \
+  --set ingress.enabled=true --set ingress.className=traefik --set ingress.host=installer.example.com \
   --set auth.enabled=true --set auth.username=admin --set auth.password='S3cret!'   # si es accesible desde fuera
 ```
 

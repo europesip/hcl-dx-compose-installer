@@ -156,3 +156,17 @@ test("operator 0.17.0 (#53): every CRD of the chart, DXJavaExtension health in A
   const argo = g.entries.find(e => e.name.endsWith("argocd-values.yaml")).text;
   assert.match(argo, /resource\.customizations\.health\.dx\.europesip\.com_DXJavaExtension: \|/);
 });
+
+test("openbao-secrets.sh without a terminal: a clear message, the demo users fall back to wpsadmin (#58)", () => {
+  const g = all(CICD);
+  const sh = g.entries.find(e => e.name.endsWith("lab-cicd/openbao-secrets.sh")).text;
+  assert.match(sh, /if ! \{ : <\/dev\/tty; \} 2>\/dev\/null; then/);
+  assert.match(sh, /No terminal to ask for it: export \$3 \(\$4\) and run this step again/);
+  assert.match(sh, /\[ "\$1" = demo-users \] \|\| \{ echo .*exit 1; \}\n {6}v=\$\(obv wpsadmin password\)/);
+});
+
+test("ÓRBITA: its Ingress takes the class of the cluster with Traefik, nginx keeps the chart default", () => {
+  const sh = g => g.entries.find(e => e.name.endsWith("install.sh")).text;
+  assert.match(sh(all({INGRESS_KIND: "traefik"})), /helm upgrade --install orbita [^\n]*\\\n {2}--set ingress\.className=traefik --set dx\.host=/);
+  assert.doesNotMatch(sh(all({INGRESS_KIND: "nginx"})), /ingress\.className=/);
+});

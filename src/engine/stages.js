@@ -123,7 +123,7 @@ export function renumber(steps, lang){
 // ---------------------------------------------------------------------------------------------
 // CPU and memory in use on each node, as in the webinar (#17); optional: some clusters (EKS) have no metrics-server
 const TOP_NODES = `kubectl top nodes 2>/dev/null || echo "kubectl top nodes: no metrics-server in this cluster (optional)"   # CPU and memory in use on each node`;
-const PREP_IDS = new Set(["0-1", "0-2", "D-1", "D-CA", "D-2", "D-3", "D-4"]);
+const PREP_IDS = new Set(["0-1", "0-2", "D-IN", "D-1", "D-CA", "D-2", "D-3", "D-4"]);
 
 // Webinar files (output layer; the engine stays as the frozen wizard): the namespace of the third-party tools
 // alone for the preparation, and the DX one shown and created live in the demo (generic and OpenShift versions);

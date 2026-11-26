@@ -7,6 +7,38 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## 2.14.0 · 2026-11-26
+
+Traefik es el controlador de Ingress que se instala por defecto, y dos correcciones encontradas en la prueba completa de
+la 2.13.0 en AWS.
+
+- **Traefik, instalado por defecto** (#60). La clase de Ingress ya era Traefik por defecto, pero la carpeta esperaba que
+  el controlador estuviera en el clúster: k3s trae uno, un clúster genérico sin él dejaba DX inaccesible. Ahora, en
+  Kubernetes, el primer paso de la etapa 0 instala Traefik con Helm (chart `traefik/traefik` 42.4.3, Traefik v3.7.20,
+  namespace `traefik`, Service `LoadBalancer`, IngressClass `traefik` que no es la clase por defecto, timeouts de lectura
+  de 10 minutos para las subidas a DAM, `lab-base/traefik-values.yaml`) **solo cuando el clúster no tiene la IngressClass
+  `traefik`**; si la tiene (k3s en la instancia EC2 o en la PoC, un Traefik instalado antes) no hace nada. Cada decisión
+  es un valor por defecto: la opción del asistente *Instalar Traefik si el clúster no tiene* y las respuestas headless
+  `INGRESS_INSTALL` (`true`), `TRAEFIK_NS` (`traefik`) y `TRAEFIK_SERVICE` (`LoadBalancer`, `NodePort`, `ClusterIP`).
+  ingress-nginx y las otras clases funcionan como antes (nunca se instalan), OpenShift mantiene sus Routes y el preset
+  basic nunca lo instala. Con tu propio registro para todas las imágenes (#51) el chart y la imagen de Traefik están en el
+  inventario y su namespace recibe el pull secret. `server/aws/eks-create.sh` pone Traefik tras el Network Load Balancer
+  por defecto (`INGRESS=nginx` mantiene ingress-nginx, cuyo proyecto está retirado); `eks-destroy.sh` borra cualquiera de
+  los dos. `uninstall.sh` deja el controlador (lo comparte el clúster): `helm uninstall traefik -n traefik` lo quita.
+- **Registro propio, *solo imágenes de HCL*: también DXClient.** Los Jobs de push de Hello DX y ÓRBITA ejecutan HCL
+  DXClient, un valor por defecto de los charts (`hclcr.io/dx-public/dxclient`) que la carpeta no escribía, así que seguía
+  descargándose de hclcr.io. Ahora viene de tu registro (`<registro>/dx-public/dxclient:…`), con el pull secret copiado al
+  namespace del release. El DX Delivery Operator no cambia (su imagen ya trae DXClient). Encontrado en la prueba en AWS de
+  la 2.14.0.
+
+- **ÓRBITA con Traefik.** El chart de ÓRBITA crea su Ingress con la clase `nginx` por defecto, que un Traefik no sirve
+  nunca: `/orbita-api` respondía 404 desde DX en el entorno EC2, en un k3s de PoC o en cualquier clúster con Traefik. El
+  paso indica ahora `ingress.className` con la clase del clúster (Traefik o la escrita en *Otro*); con ingress-nginx no
+  cambia nada. Instalaciones existentes: `helm upgrade orbita … --reuse-values --set ingress.className=traefik`.
+- **`install.sh --yes` sin terminal** (un job de CI, un Pod, una shell en segundo plano) con OpenBao:
+  `lab-cicd/openbao-secrets.sh` se paraba con `/dev/tty: No such device or address`. Ahora dice qué variable exportar
+  (`HCL_HARBOR_TOKEN`, `WPSADMIN_PASSWORD`...) y los usuarios de la demo toman la contraseña de wpsadmin, como al pulsar Intro.
+
 ## 2.13.0 · 2026-11-26
 
 DX Delivery Operator 0.17.0, tu propio LDAP o Active Directory, tu propio registro para todas las imágenes (air-gapped), zona horaria y comprobador de requisitos de HCL, fijación de versiones de las carpetas anteriores e `install.sh` dentro de un Pod.

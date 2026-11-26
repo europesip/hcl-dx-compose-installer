@@ -13,6 +13,9 @@
 // charts too, and with its "host" layout the HCL ones go to <registry>/hclcr.io (the same path scheme for every image).
 
 export const altRegistryOn = f => !!f.altRegistry && !!(f.REGISTRY || "").trim();
+// DXClient, the HCL image that the Script Application charts (Hello DX, ÓRBITA) run in their push Job: a chart default,
+// not written in the folder (src/mirror.js CHART_IMAGES lists it for the scope "all")
+export const DXCLIENT_IMAGE = "hclcr.io/dx-public/dxclient:v95_CF239_20261103-1404";
 const hostOf = r => r.replace(/^https?:\/\//, "").split("/")[0];
 
 export function registryForm(f){
@@ -41,8 +44,27 @@ export function applyRegistry(f, entries){
          .replace(/pull secret for hclcr\.io/g, `pull secret for ${host}`)
          .replace(/'HCL Harbor CLI secret'/g, `'password or token of ${host}'`).replace(/\(HCL Harbor CLI secret\)/g, `(password or token of ${host})`);
     if (!user) t = t.replace(new RegExp(`helm registry login ${host.replace(/\./g, "\\.")} [^\\n]*`, "g"), `true   # ${host}: anonymous access, no registry login`);
+    // Scope "HCL images only": DXClient of the push Jobs of Hello DX and ÓRBITA is a chart default (hclcr.io/dx-public),
+    // so it is set to the registry too, with the pull secret copied to the namespace of the release (found in the
+    // AWS test of 2.14.0 with our Harbor). The scope "all" does it through mirror/values (src/mirror.js).
+    if (f.REGISTRY_SCOPE !== "all" && /\/(install|prepare|demo)\.sh$|\/RUNBOOK\.md$/.test(e.name)) t = dxclientFromRegistry(t, reg, pullSecret(f), (f.DX_NS || "").trim());
     return t === e.text ? e : {...e, text: t};
   });
+}
+
+const pullSecret = f => f.preset === "basic" ? (f.IMAGE_PULL_SECRET || "").trim() : ((f.REGISTRY_USER || "").trim() ? "regcred" : "");
+export function dxclientFromRegistry(text, reg, ps, dxNs){
+  const img = DXCLIENT_IMAGE.replace(/^hclcr\.io\//, `${reg}/`);
+  let inChart = false;   // inside the helm command of Hello DX or ÓRBITA (the operator image already brings DXClient)
+  return text.split("\n").map(l => {
+    const m = l.match(/^(\s*)(?:rhelm|helm) upgrade --install (?:orbita|hello-dx) \S+ --version \S+ -n (\S+)/);
+    let out = l;
+    if (m) { inChart = true; if (ps && dxNs && m[2] !== dxNs) out = `${m[1]}kubectl -n ${dxNs} get secret ${ps} -o jsonpath='{.data.\\.dockerconfigjson}' | base64 -d | kubectl -n ${m[2]} create secret generic ${ps} --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson=/dev/stdin --dry-run=client -o yaml | kubectl apply -f -   # pull secret of your registry, for DXClient\n${l}`; }
+    if (inChart) out = out.replace(/--set ((?:scriptapps\.)?)dxclient\.acceptLicense=true/, (all, p) =>
+      `--set ${p}dxclient.image=${img}${ps ? ` --set '${p}job.imagePullSecrets[0].name=${ps}'` : ""} ${all}`);
+    if (inChart && !/\\\s*(#.*)?$/.test(l.replace(/\s+#.*$/, ""))) inChart = false;
+    return out;
+  }).join("\n");
 }
 
 export const REGISTRY_NOTE = {

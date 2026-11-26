@@ -352,7 +352,11 @@ ext(){   # ext <path> <key> <ENV> <label>
   ob_has "$1" "$2" && return 0
   local v="\${!3:-}"
   if [ -z "$v" ]; then
-    if [ "$1" = demo-users ]; then read -r -s -p "  $4: " v </dev/tty; echo; [ -n "$v" ] || v=$(obv wpsadmin password)
+    # No terminal (install.sh --yes in a CI job or a Pod): the value must come from its environment variable (#58)
+    if ! { : </dev/tty; } 2>/dev/null; then
+      [ "$1" = demo-users ] || { echo "No terminal to ask for it: export $3 ($4) and run this step again" >&2; exit 1; }
+      v=$(obv wpsadmin password)
+    elif [ "$1" = demo-users ]; then read -r -s -p "  $4: " v </dev/tty; echo; [ -n "$v" ] || v=$(obv wpsadmin password)
     else while [ -z "$v" ]; do read -r -s -p "  $4: " v </dev/tty; echo; done; fi
   fi
   printf '%s' "$v" | ob_put "$1" "$2"; echo "  $1/$2: stored"

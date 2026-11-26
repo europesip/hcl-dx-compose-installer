@@ -55,7 +55,8 @@ una errata no pase desapercibida. Ejemplos: [`docs/headless-examples/`](https://
 | `platform` | `kubernetes`, `openshift`, `poc` (k3s en una máquina) |
 | `DX_HOST` | Nombre del portal (PoC: `dx-demo.127.0.0.1.nip.io` por defecto) |
 | `DX_NS`, `SHARED_NS` | Namespaces de HCL DX y de las herramientas de terceros |
-| `INGRESS_KIND`, `SC_RWO`, `SC_RWX`, `helm` | Ingress, clases de almacenamiento, Helm 3 o 4 |
+| `INGRESS_KIND`, `SC_RWO`, `SC_RWX`, `helm` | Ingress (`traefik` por defecto, `nginx`, `other` con `INGRESS_CLASS`), clases de almacenamiento, Helm 3 o 4 |
+| `INGRESS_INSTALL`, `TRAEFIK_NS`, `TRAEFIK_SERVICE` | Con `traefik` en Kubernetes: `true` (por defecto) instala Traefik (chart `traefik/traefik`) cuando el clúster no tiene la IngressClass `traefik`, y no hace nada si la tiene (k3s); su namespace (`traefik`) y el tipo de su Service (`LoadBalancer`, `NodePort`, `ClusterIP`). `false`: nunca se instala. No para la PoC, OpenShift ni `basic` |
 | `lab1b`, `dir`, `db`, `lab3`, `lab3b`, `iqdb`, `iqrag`, `lab4`, `lab5`, `keycloak`, `cicd*`... | Las etapas y extras de la página |
 | `dir` | El directorio (#52): `openldap` (por defecto, se instala el OpenLDAP de demo), `ldap` (un LDAP que ya existe), `ad` (Active Directory), `none`. `ldap` / `ad` no valen con el webinar |
 | `DIR_HOST`, `DIR_PORT`, `DIR_SSL`, `DIR_CA_FILE` / `DIR_CA_SECRET`, `DIR_BASE_DN`, `DIR_USER_BASE`, `DIR_GROUP_BASE`, `DIR_BIND_DN` / `DIR_BIND_SECRET`, `DIR_LOGIN_ATTR`, `DIR_USER_CLASS`, `DIR_GROUP_CLASS`, `DIR_MEMBER_ATTR`, `DIR_ADMIN_GROUP`, `DIR_TEST_IMAGE`, `ORBITA_DEMO_PEOPLE` | Tu directorio, solo con `dir` `ldap` o `ad`; cada valor vacío toma el de por defecto del tipo. La contraseña de bind nunca es una respuesta: `install.sh` la pide o lee `DIR_BIND_PASSWORD`. Ver [Directorio](directory.es.md). `AD_HOST`, `AD_PORT`, `AD_BASE_DN`, `AD_BIND_USER` y `AD_CA_FILE` (anteriores a #52) se siguen leyendo si las `DIR_*` están vacías |

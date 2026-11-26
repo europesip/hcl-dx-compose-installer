@@ -54,7 +54,8 @@ Examples: [`docs/headless-examples/`](https://github.com/europesip/hcl-dx-compos
 | `platform` | `kubernetes`, `openshift`, `poc` (k3s on one machine) |
 | `DX_HOST` | Host name of the portal (PoC: `dx-demo.127.0.0.1.nip.io` by default) |
 | `DX_NS`, `SHARED_NS` | Namespaces of HCL DX and of the third-party tools |
-| `INGRESS_KIND`, `SC_RWO`, `SC_RWX`, `helm` | Ingress, storage classes, Helm 3 or 4 |
+| `INGRESS_KIND`, `SC_RWO`, `SC_RWX`, `helm` | Ingress (`traefik` by default, `nginx`, `other` with `INGRESS_CLASS`), storage classes, Helm 3 or 4 |
+| `INGRESS_INSTALL`, `TRAEFIK_NS`, `TRAEFIK_SERVICE` | With `traefik` on Kubernetes: `true` (default) installs Traefik (chart `traefik/traefik`) when the cluster has no IngressClass `traefik`, and does nothing when it has one (k3s); its namespace (`traefik`) and Service type (`LoadBalancer`, `NodePort`, `ClusterIP`). `false`: never installed. Not for the PoC, OpenShift or `basic` |
 | `lab1b`, `dir`, `db`, `lab3`, `lab3b`, `iqdb`, `iqrag`, `lab4`, `lab5`, `keycloak`, `cicd*`... | The stages and extras of the page |
 | `dir` | The directory (#52): `openldap` (default, the demo OpenLDAP is installed), `ldap` (an LDAP that already exists), `ad` (Active Directory), `none`. Not `ldap` / `ad` with the webinar |
 | `DIR_HOST`, `DIR_PORT`, `DIR_SSL`, `DIR_CA_FILE` / `DIR_CA_SECRET`, `DIR_BASE_DN`, `DIR_USER_BASE`, `DIR_GROUP_BASE`, `DIR_BIND_DN` / `DIR_BIND_SECRET`, `DIR_LOGIN_ATTR`, `DIR_USER_CLASS`, `DIR_GROUP_CLASS`, `DIR_MEMBER_ATTR`, `DIR_ADMIN_GROUP`, `DIR_TEST_IMAGE`, `ORBITA_DEMO_PEOPLE` | Your directory, only with `dir` `ldap` or `ad`; every empty value takes the default of the kind. The bind password is never an answer: `install.sh` asks for it or reads `DIR_BIND_PASSWORD`. See [Directory](directory.md). `AD_HOST`, `AD_PORT`, `AD_BASE_DN`, `AD_BIND_USER` and `AD_CA_FILE` (before #52) are still read when the `DIR_*` ones are empty |
