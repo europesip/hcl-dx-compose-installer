@@ -9,6 +9,7 @@
 //   - support/environment-info.sh: workstation, tools, cluster, Ingress and access, read-only; the support
 //     collector (install.sh --collect) includes it, with BUILD-INFO.txt.
 
+import {directoryInfo} from "./directory.js";
 import {dxConfigInfo} from "./dxconfig.js";
 
 /* global __APP_VERSION__, __BUILD_TIME__ */
@@ -54,7 +55,7 @@ export function buildInfo(form, s, steps, {webinar, vault, cicd, lang, now}){
     `namespaces        : ${s.DX_NS} (HCL) · ${s.SHARED_NS} (third party)`,
     `releases          : DX ${s.DX_RELEASE} · IQ ${s.IQ_RELEASE} · search ${s.SEARCH_RELEASE} · OpenLDAP ${s.LDAP_RELEASE} · LiteLLM ${s.LITELLM_RELEASE} · PostgreSQL ${s.PG_CLUSTER}`,
     `storage           : ${s.SC_RWO} (ReadWriteOnce) · ${s.SC_RWX} (ReadWriteMany)`,
-    `directory         : ${s.dir === "ad" ? "Active Directory" : "OpenLDAP (demo users)"}`,
+    `directory         : ${directoryInfo(s)}`,
     `database          : ${s.db === "postgres" ? "PostgreSQL (CloudNativePG)" : s.db === "oracle" ? "Oracle" : "Derby (built-in)"}`,
     `ai                : ${s.lab4 === false ? "no IQ" : `IQ · ${s.IQ_LLM} through LiteLLM (${s.LLM_PROVIDER})`}`,
     `extras            : ${extras.join(" · ") || "none"}`,

@@ -22,6 +22,7 @@ nav:
   - Headless mode: headless.md
   - How it works: how-it-works.md
   - DX Core vs Web Engine: core-vs-webengine.md
+  - "Directory: LDAP and Active Directory": directory.md
   - External databases: databases.md
   - DX Core phase 2: dx-core-phase2.md
   - AWS environments: aws.md
@@ -39,6 +40,7 @@ nav:
       - Modo headless: headless.es.md
       - Cómo funciona: how-it-works.es.md
       - DX Core frente al Web Engine: core-vs-webengine.es.md
+      - "Directorio: LDAP y Active Directory": directory.es.md
       - Bases de datos externas: databases.es.md
       - DX Core, fase 2: dx-core-phase2.es.md
       - Entornos en AWS: aws.es.md

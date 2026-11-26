@@ -14,6 +14,7 @@ import {parseSopsKeys} from "./sops.js";
 import {resources, fmt} from "./resources.js";
 import {DISCLAIMER, LICENSE_URL} from "./disclaimer.js";
 import {tzError, tzSuggestions, TZ_DEFAULT} from "./dxconfig.js";
+import {DIR_DEFAULTS, LOGIN_ATTRS, TEST_IMAGE} from "./directory.js";
 
 const C = t => ({copyLabel: t.copy, copiedLabel: t.copied});
 const Bullet = ({children}) => <li className="flex gap-2.5"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-blue" /><span>{children}</span></li>;
@@ -305,7 +306,8 @@ export function DeployCustom({t, lang, form, set, go, back}){
           <Check checked={form.lab1b} onChange={v => set({lab1b: v})}><Badge tone="amber">{t.extras}</Badge> {t.xScriptApp}</Check>
         </StageCard>
         <StageCard n={2} t={t} on={form.dir !== "none"} showOptions>
-          <Segmented value={form.dir} onChange={v => set({dir: v})} options={[["openldap", t.dirOpenldap], ["ad", t.dirAd], ["none", t.dirNone]]} />
+          <Segmented value={form.dir} onChange={v => set({dir: v})} options={[["openldap", t.dirOpenldap], ["ldap", t.dirLdap], ["ad", t.dirAd], ["none", t.dirNone]]} />
+          {(form.dir === "ldap" || form.dir === "ad") && <p className="text-xs text-slate-500">{t.dirExtNote}</p>}
         </StageCard>
         <StageCard n={3} t={t} on={form.db !== "none"} showOptions>
           <Segmented value={form.db} onChange={v => set({db: v})} options={[["postgres", t.dbPg], ["oracle", t.dbOra], ["none", t.dbNone]]} />
@@ -375,7 +377,7 @@ function Info({children}){
 function CicdCard({t, form, set}){
   const os = form.platform === "openshift";
   const any = form.cicdOpenbao || form.cicdArgo || form.cicdOperator;
-  const noLdap = form.dir !== "openldap";
+  const noLdap = !["openldap", "ldap", "ad"].includes(form.dir);
   return (
     <Card className="mt-5 border-dashed">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -423,6 +425,44 @@ function PgText({t}){
     <p className="pt-2 font-semibold text-slate-900 dark:text-white">{t.pgAltTitle}</p>
     <ul className="list-disc space-y-1 pl-5"><li>{t.pgAltDerby}</li><li>{t.pgAltOra}</li></ul>
   </>;
+}
+
+// An existing LDAP / Active Directory (#52, src/directory.js): empty values take the default of the kind (placeholders)
+function DirectoryCard({t, form, set, vault, F}){
+  const [more, setMore] = useState(false);
+  const D = DIR_DEFAULTS[form.dir], ad = form.dir === "ad", ssl = form.DIR_SSL !== false;
+  const login = form.DIR_LOGIN_ATTR || D.login;
+  return (
+    <Card className="space-y-4 lg:col-span-2">
+      <H2>{ad ? t.dirAdTitle : t.dirLdapTitle}</H2>
+      <div className="grid gap-4 sm:grid-cols-[1fr_7rem]">
+        {F("DIR_HOST", t.dirHost, {mono: true, placeholder: ad ? "dc01.example.com" : "ldap.example.com"})}
+        {F("DIR_PORT", t.dirPort, {mono: true, placeholder: ssl ? "636" : "389"})}
+      </div>
+      <Check checked={ssl} onChange={v => set({DIR_SSL: v})} hint={t.dirSslHint}>{t.dirSsl}</Check>
+      {ssl && F("DIR_CA_FILE", t.dirCa, {mono: true, placeholder: "/path/to/directory-ca.crt", hint: t.dirCaHint})}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {F("DIR_BASE_DN", t.dirBase, {mono: true, placeholder: ad ? "DC=example,DC=com" : "dc=example,dc=com"})}
+        {F("DIR_USER_BASE", t.dirUsers, {mono: true, placeholder: t.dirSameBase})}
+        {F("DIR_GROUP_BASE", t.dirGroups, {mono: true, placeholder: t.dirSameBase})}
+      </div>
+      {F("DIR_BIND_DN", t.dirBind, {mono: true, placeholder: ad ? "CN=svc-dx,OU=Service Accounts,DC=example,DC=com" : "cn=dx-bind,ou=services,dc=example,dc=com"})}
+      <Info>{vault ? t.dirBindVault : t.dirBindPw}</Info>
+      <Field label={t.dirLogin}><Segmented value={LOGIN_ATTRS.includes(login) ? login : ""} onChange={v => set({DIR_LOGIN_ATTR: v})} options={LOGIN_ATTRS.map(a => [a, a])} /></Field>
+      {F("DIR_ADMIN_GROUP", t.dirAdmin, {mono: true, placeholder: ad ? "CN=DX Admins,OU=Groups,DC=example,DC=com" : "cn=dxadmins,ou=groups,dc=example,dc=com", hint: t.dirAdminHint})}
+      <button type="button" onClick={() => setMore(!more)} className="text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">{more ? "▾" : "▸"} {t.dirMore}</button>
+      {more && <div className="grid gap-4 sm:grid-cols-3">
+        {F("DIR_USER_CLASS", t.dirUserClass, {mono: true, placeholder: D.userClass})}
+        {F("DIR_GROUP_CLASS", t.dirGroupClass, {mono: true, placeholder: D.groupClass})}
+        {F("DIR_MEMBER_ATTR", t.dirMember, {mono: true, placeholder: D.member})}
+        {F("DIR_LOGIN_ATTR", t.dirLoginOther, {mono: true, placeholder: D.login})}
+        {F("DIR_BIND_SECRET", t.dirBindSecret, {mono: true, placeholder: "dx-ldap-bind", hint: t.dirBindSecretHint})}
+        {F("DIR_CA_SECRET", t.dirCaSecret, {mono: true, hint: t.dirCaSecretHint})}
+        {F("DIR_TEST_IMAGE", t.dirImage, {mono: true, placeholder: TEST_IMAGE, className: "sm:col-span-2"})}
+        {form.lab5 && F("ORBITA_DEMO_PEOPLE", t.dirOrbita, {mono: true, placeholder: '{"ventas-1": {"uid": "jdoe"}}', hint: t.dirOrbitaHint})}
+      </div>}
+    </Card>
+  );
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -502,16 +542,7 @@ export function Details({t, lang, form, set, go, back}){
             </>}
           </Card>
         )}
-        {form.dir === "ad" && (
-          <Card className="space-y-4">
-            <H2>{t.ad}</H2>
-            <div className="grid gap-4 sm:grid-cols-[1fr_7rem]">{F("AD_HOST", t.adHost, {mono: true})}{F("AD_PORT", t.adPort, {mono: true})}</div>
-            {F("AD_BASE_DN", t.adBase, {mono: true, placeholder: "DC=company,DC=com"})}
-            {F("AD_BIND_USER", t.adBind, {mono: true})}
-            {!vault && F("AD_BIND_PASSWORD", t.adBindPw, {secret: true})}
-            {F("AD_CA_FILE", t.adCa, {mono: true})}
-          </Card>
-        )}
+        {(form.dir === "ldap" || form.dir === "ad") && <DirectoryCard t={t} form={form} set={set} vault={vault} F={F} />}
         {form.db === "oracle" && (
           <Card className="space-y-4">
             <H2>{t.oracle}</H2>
@@ -554,7 +585,7 @@ export function Details({t, lang, form, set, go, back}){
               </div>
             </div></div>
             <div><H2>{t.names}</H2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{NAME_KEYS.map(k => F(k, k, {mono: true}))}
-              {form.keycloak && form.dir === "openldap" && form.platform !== "openshift" && F("KC_HOST", t.kcHost, {mono: true, placeholder: kcHost(form), hint: t.kcHostHint})}</div></div>
+              {form.keycloak && form.dir !== "none" && form.platform !== "openshift" && F("KC_HOST", t.kcHost, {mono: true, placeholder: kcHost(form), hint: t.kcHostHint})}</div></div>
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label={t.helm}><Segmented value={form.helm} onChange={v => set({helm: v})} options={[["4", "Helm 4"], ["3", "Helm 3"]]} /></Field>
               {F("TLS_CERT", t.tlsCert, {mono: true, hint: t.tlsHint})}

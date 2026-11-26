@@ -51,7 +51,7 @@ se escribe nada secreto:
 | `wpsadmin` `password` | administrador de DX |
 | `demo-users` `password` | usuarios de demo del OpenLDAP (Enter = el mismo que wpsadmin) |
 | `ai` `key` | clave de OpenRouter, Bedrock o Anthropic |
-| `ad` `bindPassword` / `oracle` `password` | solo si usas Active Directory / Oracle |
+| `ad` `bindPassword` / `oracle` `password` | solo si usas tu propio LDAP o Active Directory (`DIR_BIND_PASSWORD`) / Oracle |
 
 **Los secretos internos** se generan al azar dentro de OpenBao:
 - el administrador del LDAP;
@@ -140,8 +140,11 @@ kubectl -n dx-shared get secret argocd-initial-admin-secret -o jsonpath='{.data.
 
 ## DX Delivery Operator
 
-El operador (chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` 0.1.1) se instala cuando DX ya
-funciona. Para comprobarlo, `install.sh` despliega además el ejemplo **hello** en una página («DXOP Hola»):
+El operador (chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` 0.17.0, con los CRDs de esa versión,
+`DXJavaExtension` incluido) se instala cuando DX ya funciona. El instalador solo fija `dxclient.acceptLicense=true`: lo
+demás son los valores por defecto del chart, así que el pod no tiene UID fijo (`runAsNonRoot`, seccomp
+`RuntimeDefault`; la imagen se ejecuta con el UID 1000) y las extensiones Java (`javaExtensions.enabled`) siguen
+desactivadas, sin webhook ni cert-manager. Si el clúster ya tiene un operador más nuevo, se mantiene y no baja de versión. Para comprobarlo, `install.sh` despliega además el ejemplo **hello** en una página («DXOP Hola»):
 `lab-cicd/dxop-hello.yaml`. Su imagen incluye HCL DXClient, así que hay que aceptar su licencia en la página de
 credenciales. Su manual y sus ejemplos están en
 [su repositorio](https://github.com/europesip/dx-delivery-operator).

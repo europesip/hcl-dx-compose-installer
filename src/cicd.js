@@ -18,16 +18,18 @@
 import {SECRET_KEYS} from "./state.js";
 import {EUROPESIP_WHITE_PNG} from "./brand/europesip-white.js";
 import {OPERATOR, helmFind, keepNewer, operatorKinds, kindsGuard, operatorCleanup} from "./compat.js";
+import {caSecretOf, KC_BIND_SECRET, VALUES as DIR_VALUES} from "./directory.js";
 
-export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.13.0", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
+export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.17.0", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
 const OP_KINDS = ["dxconnections", "dxscriptapplications", "dxpages", "dxdamcollections", "dxdatabases", "dxthemes",
-  "dxwcmlibraryimports", "dxwcmlibraryexports", "dxexports", "dxxmlaccesses", "dxwcmadmintasks"];
+  "dxwcmlibraryimports", "dxwcmlibraryexports", "dxexports", "dxxmlaccesses", "dxwcmadmintasks", "dxjavaextensions"];
 const OP_CRDS = OP_KINDS.map(k => `dx.europesip.com_${k}`);
 const OP_CRD_URL = `https://raw.githubusercontent.com/europesip/dx-delivery-operator/v${VERSIONS.operator}/charts/dx-delivery-operator/crds/`;
 const DIR = "lab-cicd";
 const OB = "lab-cicd/openbao";                    // created by install.sh: init keys, operator password (mode 700)
 
-export const keycloakOn = f => !!f.keycloak && f.dir === "openldap" && f.platform !== "openshift" && f.preset !== "webinar";
+// Keycloak federates the directory of DX: the OpenLDAP of the labs, or an existing LDAP / Active Directory (#52)
+export const keycloakOn = f => !!f.keycloak && ["openldap", "ldap", "ad"].includes(f.dir) && f.platform !== "openshift" && f.preset !== "webinar" && f.preset !== "basic";
 export const cicdOn = f => (!!(f.cicdOpenbao || f.cicdArgo || f.cicdOperator) || keycloakOn(f)) && f.platform !== "openshift" && f.preset !== "webinar";
 export const vaultOn = f => cicdOn(f) && !!f.cicdOpenbao && !!f.useVault;
 export const cicdNs = f => (f.cicdSameNs !== false ? f.SHARED_NS : f.CICD_NS || "dx-cicd").trim();
@@ -144,7 +146,7 @@ if obj.status ~= nil and obj.status.conditions ~= nil then
 end
 return hs`;
   const kinds = ["DXScriptApplication", "DXPage", "DXDamCollection", "DXDatabase", "DXConnection", "DXTheme",
-    "DXWCMLibraryImport", "DXWCMLibraryExport", "DXExport", "DXXMLAccess", "DXWCMAdminTask"];
+    "DXWCMLibraryImport", "DXWCMLibraryExport", "DXExport", "DXXMLAccess", "DXWCMAdminTask", "DXJavaExtension"];
   return `# Argo CD ${VERSIONS.argocdApp} (chart oci://ghcr.io/argoproj/argo-helm/argo-cd ${VERSIONS.argocd}): GitOps, it keeps the cluster equal to a Git repository.
 # The UI is reached with kubectl port-forward (see RUNBOOK.md); no Application is created: point it at your repository.
 dex:
@@ -307,7 +309,7 @@ function obSecrets(s, f){
   if (s.deps.ldap) ext.push(["demo-users", "password", "DEMO_PASSWORD", "password of the demo users (Enter = the same as wpsadmin)"]);
   if (s.deps.llm) ext.push(["ai", "key", s.LLM_PROVIDER === "bedrock" ? "AWS_BEARER_TOKEN_BEDROCK" : s.LLM_PROVIDER === "anthropic" ? "ANTHROPIC_API_KEY" : "OPENROUTER_API_KEY",
     s.LLM_PROVIDER === "bedrock" ? "AWS Bedrock API key" : s.LLM_PROVIDER === "anthropic" ? "Anthropic API key" : "OpenRouter API key"]);
-  if (s.dir === "ad") ext.push(["ad", "bindPassword", "AD_BIND_PASSWORD", "Active Directory bind password"]);
+  if (s.dirExt && !s.dirExt.existingSecret) ext.push(["ad", "bindPassword", "DIR_BIND_PASSWORD", `bind password of the directory (${s.dirExt.bindDn})`]);
   if (s.db === "oracle") ext.push(["oracle", "password", "ORACLE_DX_PASSWORD", `Oracle password of ${s.ORACLE_DX_USER}`]);
   const int = [];
   if (s.deps.ldap) int.push(["ldap-admin", "password"]);
@@ -496,7 +498,12 @@ metadata:
   name: keycloak
   namespace: ${s.SHARED_NS}
 spec:
-  instances: 1
+  instances: 1${(() => { const c = s.dirExt, ca = c && caSecretOf(c); return ca ? `
+  # The CA of your directory: Keycloak federates it over LDAPS (realm-dx.yaml)
+  truststores:
+    directory-ca:
+      secret:
+        name: ${ca}` : ""; })()}
   db:
     vendor: postgres
     host: ${s.PG_HOST}
@@ -537,10 +544,22 @@ ${f.kcTheme ? `  # The EUROPESIP login theme (ConfigMap keycloak-theme-europesip
 ` : ""}`;
 }
 
+// The LDAP federation of the realm: the OpenLDAP of the labs, or your directory (#52, read-only, vendor "ad" for
+// Active Directory), with the bind account copied by install.sh into keycloak-ldap-bind
+function kcLdap(s){
+  const c = s.dirExt;
+  if (!c) return {name: "openldap", bind: "{ secret: { name: openldap-admin, key: LDAP_ADMIN_PASSWORD } }", bindDn: '["cn=admin,dc=dxdemo,dc=com"]', dnPh: "",
+    vendor: "other", url: `ldap://${s.LDAP_HOST}:389`, users: "ou=users,dc=dxdemo,dc=com", scope: "1", classes: "inetOrgPerson", user: "uid", rdn: "uid", uuid: "entryUUID", pagination: "false"};
+  const login = c.login === "mail" ? (c.ad ? "sAMAccountName" : "uid") : c.login;
+  return {name: c.ad ? "active-directory" : "directory", bind: `{ secret: { name: ${KC_BIND_SECRET}, key: bindPassword } }`, bindDn: '["${LDAP_BIND_DN}"]',
+    dnPh: `    LDAP_BIND_DN: { secret: { name: ${KC_BIND_SECRET}, key: bindUser } }\n`,
+    vendor: c.kcVendor, url: `${c.ssl ? "ldaps" : "ldap"}://${c.host}:${c.port}`, users: c.users, scope: "2",
+    classes: c.ad ? `person, organizationalPerson, ${c.userClass}` : c.userClass, user: login, rdn: c.kcRdn, uuid: c.kcUuid, pagination: c.ad ? "true" : "false"};
+}
 function kcRealm(s, lang, f = {}){
-  const dx = `https://${s.DX_HOST}`;
-  return `# Realm "dx": the users of the OpenLDAP (User Federation, read-only, imported on login) and DX Compose as an OIDC client.
-# The secrets come in as placeholders from Secrets (LDAP bind password from openldap-admin, client secret from
+  const dx = `https://${s.DX_HOST}`, L = kcLdap(s), who = s.dirExt ? (s.dirExt.ad ? "your Active Directory" : "your LDAP directory") : "the OpenLDAP";
+  return `# Realm "dx": the users of ${who} (User Federation, read-only, imported on login) and DX Compose as an OIDC client.
+# The secrets come in as placeholders from Secrets (LDAP bind ${s.dirExt ? `account from ${KC_BIND_SECRET}` : "password from openldap-admin"}, client secret from
 # keycloak-realm). A realm import only creates the realm: later changes go through the Keycloak admin console.
 apiVersion: k8s.keycloak.org/v2beta1
 kind: KeycloakRealmImport
@@ -550,8 +569,8 @@ metadata:
 spec:
   keycloakCRName: keycloak
   placeholders:
-    LDAP_BIND_PASSWORD: { secret: { name: openldap-admin, key: LDAP_ADMIN_PASSWORD } }
-    DX_CLIENT_SECRET: { secret: { name: keycloak-realm, key: clientSecret } }
+    LDAP_BIND_PASSWORD: ${L.bind}
+${L.dnPh}    DX_CLIENT_SECRET: { secret: { name: keycloak-realm, key: clientSecret } }
   realm:
     realm: dx
     displayName: "HCL DX Compose"
@@ -577,29 +596,29 @@ ${f.kcTheme ? "    loginTheme: europesip\n" : ""}    enabled: true
           post.logout.redirect.uris: "${dx}/wps/portal"
     components:
       org.keycloak.storage.UserStorageProvider:
-        - name: openldap
+        - name: ${L.name}
           providerId: ldap
           config:
             enabled: ["true"]
-            vendor: ["other"]
-            connectionUrl: ["ldap://${s.LDAP_HOST}:389"]
+            vendor: ["${L.vendor}"]
+            connectionUrl: ["${L.url}"]
             authType: ["simple"]
-            bindDn: ["cn=admin,dc=dxdemo,dc=com"]
+            bindDn: ${L.bindDn}
             bindCredential: ["\${LDAP_BIND_PASSWORD}"]
-            usersDn: ["ou=users,dc=dxdemo,dc=com"]
-            searchScope: ["1"]
-            userObjectClasses: ["inetOrgPerson"]
-            usernameLDAPAttribute: ["uid"]
-            rdnLDAPAttribute: ["uid"]
-            uuidLDAPAttribute: ["entryUUID"]
+            usersDn: ["${L.users}"]
+            searchScope: ["${L.scope}"]
+            userObjectClasses: ["${L.classes}"]
+            usernameLDAPAttribute: ["${L.user}"]
+            rdnLDAPAttribute: ["${L.rdn}"]
+            uuidLDAPAttribute: ["${L.uuid}"]
             editMode: ["READ_ONLY"]
             importEnabled: ["true"]
             syncRegistrations: ["false"]
             trustEmail: ["true"]
-            pagination: ["false"]
+            pagination: ["${L.pagination}"]
           subComponents:
             org.keycloak.storage.ldap.mappers.LDAPStorageMapper:
-              - { name: username, providerId: user-attribute-ldap-mapper, config: { ldap.attribute: [uid], user.model.attribute: [username], read.only: ["true"], always.read.value.from.ldap: ["false"], is.mandatory.in.ldap: ["true"] } }
+              - { name: username, providerId: user-attribute-ldap-mapper, config: { ldap.attribute: [${L.user}], user.model.attribute: [username], read.only: ["true"], always.read.value.from.ldap: ["false"], is.mandatory.in.ldap: ["true"] } }
               - { name: first name, providerId: user-attribute-ldap-mapper, config: { ldap.attribute: [givenName], user.model.attribute: [firstName], read.only: ["true"], always.read.value.from.ldap: ["true"], is.mandatory.in.ldap: ["false"] } }
               - { name: last name, providerId: user-attribute-ldap-mapper, config: { ldap.attribute: [sn], user.model.attribute: [lastName], read.only: ["true"], always.read.value.from.ldap: ["true"], is.mandatory.in.ldap: ["true"] } }
               - { name: email, providerId: user-attribute-ldap-mapper, config: { ldap.attribute: [mail], user.model.attribute: [email], read.only: ["true"], always.read.value.from.ldap: ["false"], is.mandatory.in.ldap: ["false"] } }
@@ -612,7 +631,7 @@ function kcDxLayer(s, f){
   return `# DX layer: sign-in through Keycloak (OpenID Connect), on top of the LDAP layer. Added to every DX helm upgrade from
 # the LDAP step on. Documentation: DX Compose CF239 > Configuring DX Compose to use an OIDC identity provider.
 # Peculiarities found in the lab (docs/third-party.md of the installer):
-#  - Keycloak federates the same OpenLDAP as DX: mapIdentityToRegistryUser="true" makes the OIDC user the LDAP user of DX
+#  - Keycloak federates the same directory as DX: mapIdentityToRegistryUser="true" makes the OIDC user the LDAP user of DX
 #    (its groups, roles and preferredLanguage).
 #  - No discovery URL: Liberty only accepts an HTTPS one. The browser signs in at the public URL; DX gets the token and the
 #    keys inside the cluster (http), so it needs no CA for Keycloak. The issuer is the public URL.
@@ -728,6 +747,8 @@ kubectl -n ${cns} rollout status deploy/argocd-server --timeout=300s`,
   find: helmFind([OPERATOR.chart, ...OPERATOR.oldCharts]), why: "its CRDs are cluster-wide: applying older ones would downgrade them for every namespace",
   body: `# The CRDs of this version first: Helm only installs CRDs on the first install, not on upgrades
 kubectl apply --server-side --force-conflicts ${OP_CRDS.map(c => `-f ${OP_CRD_URL}${c}.yaml`).join(" ")}
+# Chart defaults otherwise: no fixed UID (podSecurityContext runAsNonRoot, RuntimeDefault seccomp; the image runs as
+# UID 1000), and Java extensions (DXJavaExtension, javaExtensions.enabled) off: no webhook, no cert-manager needed
 helm upgrade --install ${OPERATOR.release} oci://ghcr.io/europesip/charts/${OPERATOR.chart} --version ${VERSIONS.operator} -n ${cns} \\
   --set dxclient.acceptLicense=true ${W} --timeout 10m`})}`));
     OP.push(mk("OP-2", T(lang, "Operator check: the hello sample on a page", "Comprobación del operador: el ejemplo hello en una página"),
@@ -749,7 +770,7 @@ kubectl -n ${cns} wait dxscriptapplication/dxop-hello dxpage/dxop-hello --for=co
     add(`${KC_DIR}/realm-dx.yaml`, kcRealm(s, lang, form));
     if (form.kcTheme) add(`${KC_DIR}/theme-europesip.yaml`, kcTheme(s));
     add(`${KC_DIR}/custom-values.keycloak.yaml`, kcDxLayer(s, form));
-    KC.push(mk("K-1", T(lang, "Keycloak (SSO) with the OpenLDAP users", "Keycloak (SSO) con los usuarios del OpenLDAP"),
+    KC.push(mk("K-1", s.dirExt ? T(lang, "Keycloak (SSO) with the users of your directory", "Keycloak (SSO) con los usuarios de tu directorio") : T(lang, "Keycloak (SSO) with the OpenLDAP users", "Keycloak (SSO) con los usuarios del OpenLDAP"),
       T(lang, `Official Keycloak operator, its database in PostgreSQL and the realm "dx" with the LDAP federation and the DX client. DX starts signing in through Keycloak with the LDAP step (stage 2).`,
               `Operador oficial de Keycloak, su base de datos en PostgreSQL y el realm «dx» con la federación del LDAP y el cliente de DX. DX empieza a entrar por Keycloak con el paso del LDAP (etapa 2).`),
 `for c in keycloaks keycloakrealmimports keycloakoidcclients keycloaksamlclients; do
@@ -780,7 +801,9 @@ kubectl -n ${sh} wait keycloakrealmimport/realm-dx --for=condition=Done --timeou
   let out = steps.map(st => ({...st}));
   if (vault) out = vaultSteps(s, F, out, cns, lang);
   if (keycloakOn(form)) out = out.map(st => {
-    let cmd = st.cmd.split("  -f lab-ldap/custom-values.ldap.yaml \\\n").join("  -f lab-ldap/custom-values.ldap.yaml \\\n  -f lab-keycloak/custom-values.keycloak.yaml \\\n");
+    let cmd = st.cmd;
+    for (const v of ["lab-ldap/custom-values.ldap.yaml", DIR_VALUES])   // the OIDC layer goes with the directory layer
+      cmd = cmd.split(`  -f ${v} \\\n`).join(`  -f ${v} \\\n  -f lab-keycloak/custom-values.keycloak.yaml \\\n`);
     // the optional IQ checks: with OIDC the DX REST login answers without a cookie, the portal login form opens the session
     cmd = cmd.replace(/curl -sk -c cookies\.txt -o \/dev\/null -H 'Content-Type: application\/json' \\\n  -d '\{"username":"([^"]*)","password":"(.*?)"\}' (https:\/\/\S+)\/dx\/api\/core\/v1\/auth\/login/g,
       (_, u, p, base) => `curl -sk -c cookies.txt -o /dev/null --data-urlencode 'j_username=${u}' --data-urlencode 'j_password=${p}' ${base}/wps/j_security_check   # OIDC: form login`);
@@ -849,7 +872,7 @@ export function cicdInstallSh(form, s, text){
   let t = text;
   if (keycloakOn(form))   // Keycloak first, while its operator still runs (it removes the finalizers of its resources)
     t = t.replace(`  for r in $(helm list -n ${s.SHARED_NS} -q);`, `  kubectl -n ${s.SHARED_NS} delete keycloakrealmimports,keycloaks --all --wait=true --timeout=5m 2>/dev/null
-  kubectl -n ${s.SHARED_NS} delete deploy/keycloak-operator svc/keycloak-operator secret/keycloak-admin secret/keycloak-db secret/keycloak-realm secret/keycloak-tls --ignore-not-found
+  kubectl -n ${s.SHARED_NS} delete deploy/keycloak-operator svc/keycloak-operator secret/keycloak-admin secret/keycloak-db secret/keycloak-realm secret/keycloak-tls${s.dirExt ? ` secret/${KC_BIND_SECRET}${caSecretOf(s.dirExt) && !s.dirExt.caSecret ? ` secret/${caSecretOf(s.dirExt)}` : ""}` : ""} --ignore-not-found
   for r in $(helm list -n ${s.SHARED_NS} -q);`);
   const tools = !!(form.cicdOpenbao || form.cicdArgo || form.cicdOperator);
   // ExternalSecrets first, while External Secrets Operator still runs: it removes their finalizers (otherwise the

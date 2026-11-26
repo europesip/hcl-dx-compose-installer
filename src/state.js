@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 EUROPESIP
 import {CORE_OFF} from "./runtime.js";
+import {dirConfig, EXT_DIRS} from "./directory.js";
 
 // Form values of the installer and how they map to the state object of the engine (core.js).
 // The external dependencies (OpenLDAP, PostgreSQL, LiteLLM, EUROPESIP MCP) are not asked for: they
@@ -20,7 +21,7 @@ export const DEFAULTS = {
   helm: "4",
   // Deployment
   preset: "",                        // all | custom | webinar
-  lab1b: false, dir: "openldap", db: "postgres",
+  lab1b: false, dir: "openldap", db: "postgres",   // dir: openldap (demo users, installed) | ldap (an existing LDAP) | ad (Active Directory) | none
   lab3: true, lab3b: false, iqdb: false, iqrag: false, IQ_LLM: "claude",
   lab4: true, lab5: false, dxcLicense: false,
   sops: false, SOPS_KEYS: "",        // webinar: encrypt the base secrets with SOPS (age); only PUBLIC keys, one per line (src/sops.js)
@@ -38,6 +39,13 @@ export const DEFAULTS = {
   OPENROUTER_API_KEY: "", LAB_PASSWORD: "EuropeS1P",
   demoSame: true, DEMO_PASSWORD: "",
   LLM_PROVIDER: "openrouter", BEDROCK_API_KEY: "", BEDROCK_REGION: "us-east-1", ANTHROPIC_API_KEY: "",   // the AI: OpenRouter (recommended), AWS Bedrock or Claude directly (Anthropic API)   // password of the demo users of the LDAP (by default, the same as wpsadmin)
+  // An existing directory (#52, src/directory.js), dir ldap or ad: every empty value takes the default of its kind
+  // (ldap: uid, inetOrgPerson, groupOfUniqueNames/uniqueMember · ad: sAMAccountName, user, group/member). The bind
+  // password is never stored: install.sh asks for it (or DIR_BIND_PASSWORD), or it comes from OpenBao or DIR_BIND_SECRET
+  DIR_HOST: "", DIR_PORT: "", DIR_SSL: true, DIR_CA_FILE: "", DIR_CA_SECRET: "", DIR_BASE_DN: "", DIR_USER_BASE: "", DIR_GROUP_BASE: "",
+  DIR_BIND_DN: "", DIR_BIND_SECRET: "", DIR_LOGIN_ATTR: "", DIR_USER_CLASS: "", DIR_GROUP_CLASS: "", DIR_MEMBER_ATTR: "",
+  DIR_ADMIN_GROUP: "", DIR_TEST_IMAGE: "", ORBITA_DEMO_PEOPLE: "",
+  // Before #52 (still read when the DIR_* values are empty): the Active Directory of the wizard
   AD_HOST: "", AD_PORT: "389", AD_BASE_DN: "", AD_BIND_USER: "", AD_BIND_PASSWORD: "", AD_CA_FILE: "",
   ORACLE_JDBC_URL: "", ORACLE_DX_USER: "wpsuser", ORACLE_DX_PASSWORD: "", ORACLE_CA_FILE: "",
   // Basic preset (headless, #32): an existing pull secret in DX_NS instead of regcred, and a cert-manager ClusterIssuer
@@ -71,7 +79,8 @@ export const PRESETS = {
 export function applyPreset(f, preset){
   // DX Core only with "custom" (and "basic", headless): "all" and the webinar need the Web Engine
   const rt = preset === "all" || preset === "webinar" ? {DX_RUNTIME: "compose"} : {};
-  return normalise({...f, preset, ...(PRESETS[preset] || {}), ...rt});
+  const dir = preset === "basic" && EXT_DIRS.includes(f.dir) ? {dir: f.dir} : {};   // basic: an existing directory stays (#52)
+  return normalise({...f, preset, ...(PRESETS[preset] || {}), ...rt, ...dir});
 }
 
 // Dependencies between the options: an option without what it needs is switched off
@@ -84,7 +93,9 @@ export function normalise(f){
   if (n.preset === "webinar") Object.assign(n, PRESETS.webinar);
   if (n.preset === "all" || n.preset === "webinar" || !n.DX_RUNTIME) n.DX_RUNTIME = "compose";
   if (n.preset === "basic") {
-    Object.assign(n, PRESETS.basic, {cicdOpenbao: false, cicdArgo: false, cicdOperator: false, keycloak: false, sops: false});
+    // an existing directory stays (DIR_*, or BASIC_LDAP_* from #35): src/directory.js puts it in lab-base
+    const dir = EXT_DIRS.includes(n.dir) ? n.dir : String(n.BASIC_LDAP_HOST || "").trim() ? "ldap" : "none";
+    Object.assign(n, PRESETS.basic, {dir, cicdOpenbao: false, cicdArgo: false, cicdOperator: false, keycloak: false, sops: false});
     // BASIC_PG (#35): its own PostgreSQL, a CloudNativePG Cluster in the DX namespace (the labs' shared namespace IS the
     // DX namespace), made with the CNPG operator that is already in the cluster (src/basic.js removes its install)
     if (n.BASIC_PG) Object.assign(n, {db: "postgres", SHARED_NS: n.DX_NS});
@@ -102,7 +113,7 @@ export function normalise(f){
 
 // The external dependencies that the chosen stages need
 export function depsOf(f){
-  const kc = !!f.keycloak && f.dir === "openldap" && f.platform !== "openshift" && f.preset !== "webinar";   // Keycloak keeps its database in PostgreSQL
+  const kc = !!f.keycloak && (f.dir === "openldap" || EXT_DIRS.includes(f.dir)) && f.platform !== "openshift" && f.preset !== "webinar" && f.preset !== "basic";   // Keycloak keeps its database in PostgreSQL
   return {ldap: f.dir === "openldap", pg: f.db === "postgres" || !!f.iqdb || !!f.lab5 || kc, llm: !!f.lab3, mcp: !!f.lab3b};
 }
 
@@ -116,7 +127,10 @@ export function toEngineState(f){
     INGRESS_CLASS: f.INGRESS_KIND === "other" ? trim(f.INGRESS_CLASS) : f.INGRESS_KIND,
     TLS_CERT: trim(f.TLS_CERT), TLS_KEY: trim(f.TLS_KEY),
     SC_RWO: trim(f.SC_RWO), SC_RWX: trim(f.SC_RWX),
-    dir: f.dir, db: f.db,
+    // the engine knows OpenLDAP, Active Directory (its stage 2 slot, also used for an existing LDAP) and none; the
+    // basic preset installs DX once, with the directory in lab-base (src/directory.js)
+    dir: f.preset === "basic" ? "none" : f.dir === "ldap" ? "ad" : f.dir, db: f.db,
+    dirExt: dirConfig(f),
     lab3: !!f.lab3, lab3b: !!f.lab3b, iqdb: !!f.iqdb, iqrag: !!f.iqrag, lab4: !!f.lab4,
     IQ_LLM: f.IQ_LLM,
     deps: depsOf(f),

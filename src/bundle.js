@@ -19,7 +19,8 @@ import {basicOn, applyBasic, BASIC_NOTE} from "./basic.js";
 import {coreOn, applyRuntime, CORE_NOTE} from "./runtime.js";
 import {applyDxConfig, tzError, dxConfigMd} from "./dxconfig.js";
 import {sopsOn, parseSopsKeys, sopsErrors, baseSecretFiles, harborPromptDemo, sopsRunbookNote, SOPS_FILES} from "./sops.js";
-import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, operatorCompat, CICD_DIR} from "./cicd.js";
+import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, operatorCompat, keycloakOn, CICD_DIR} from "./cicd.js";
+import {applyDirectory, dirErrors, dirWarnings, DIR_NOTE} from "./directory.js";
 import {compatScript, compatBuildInfo} from "./compat.js";
 export {zipBytes} from "./zip.js";
 
@@ -47,7 +48,7 @@ const finishPrep = lang => lang === "es"
 // The folders of the zip are named after what they hold (lab-base, lab-ldap, lab-bbdd...), not after
 // the numbered labs of the repository (1-dx, 2a-ldap, 2b-postgres...). The engine keeps the lab names
 // (the golden test compares it with the frozen wizard): the installer renames them in its output.
-export const FOLDERS = [["0-poc", "lab-poc"], ["1-dx", "lab-base"], ["1b-scriptapp", "lab-scriptapp"], ["2a-ldap", "lab-ldap"], ["2a-ad", "lab-ldap-ad"],
+export const FOLDERS = [["0-poc", "lab-poc"], ["1-dx", "lab-base"], ["1b-scriptapp", "lab-scriptapp"], ["2a-ldap", "lab-ldap"], ["2a-ad", "lab-directory"],
   ["2b-postgres", "lab-bbdd"], ["2b-oracle", "lab-bbdd-oracle"], ["3-iq", "lab-iq"], ["3b-mcp", "lab-mcp"], ["4-search", "lab-search"], ["5-orbita", "lab-orbita"]];
 const FOLDER_RE = FOLDERS.map(([a, b]) => [new RegExp(`(?<![\\w.-])${a}/`, "g"), b + "/"]);
 // "Lab 2B", "Lab 3" and so on in the comments and messages: the name of the folder instead
@@ -80,6 +81,12 @@ export function generate(form, lang){
   if (form.altRegistry && !altRegistryOn(form)) check.err.push(lang === "es" ? "Indica la dirección de tu repositorio de imágenes." : "Enter the address of your image registry.");
   if (cicd && form.cicdSameNs === false && !/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test((form.CICD_NS || "").trim())) check.err.push(lang === "es" ? "Namespace de CI/CD no válido." : "Invalid CI/CD namespace.");
   { const e = tzError(form, lang); if (e) check.err.push(e); }   // time zone of the DX containers (src/dxconfig.js)
+  if (s.dirExt) {   // an existing LDAP / Active Directory (src/directory.js): its settings; ÓRBITA does not map lab users onto it
+    check.err.push(...dirErrors(s.dirExt, lang)); check.warn = check.warn.filter(w => !/demo\.people/.test(w)); check.warn.push(...dirWarnings(s.dirExt, lang));
+    if (form.AD_BIND_PASSWORD && !vault) check.warn.push(lang === "es" ? "La contraseña de bind ya no se escribe en la carpeta: install.sh la pide (o lee DIR_BIND_PASSWORD)." : "The bind password is no longer written in the folder: install.sh asks for it (or reads DIR_BIND_PASSWORD).");
+    if (s.lab5) check.warn.push(lang === "es" ? "ÓRBITA con tu directorio: sus papeles de demo no se asignan a usuarios de tu directorio (RR. HH. = wpsadmin), salvo los de ORBITA_DEMO_PEOPLE."
+      : "ÓRBITA with your directory: its demo roles are not given to users of your directory (HR = wpsadmin), except the ones of ORBITA_DEMO_PEOPLE.");
+  }
   engine.ensureLitellmKey();                 // the same key in every file of this page load
   const lk = t => vault && typeof t === "string" ? t.split(engine.litellmKey).join("@@OB:litellm:masterKey@@") : t;
   let files = Object.fromEntries(Object.entries(engine.bundleFiles(s)).map(([p, f]) =>
@@ -88,6 +95,7 @@ export function generate(form, lang){
   files = applyDxConfig(form, files);   // time zone and prerequisites checker of the Advanced section (src/dxconfig.js)
   files = corporateCaFiles(files, s, {webinar: form.preset === "webinar"});   // OpenLDAP and PostgreSQL over SSL (src/corporate-ca.js)
   let raw = engine.directSteps(s).map(renameStep).map(st => ({...st, cmd: lk(st.cmd)}));
+  ({files, steps: raw} = applyDirectory(form, s, files, raw, lang, {vault, keycloak: keycloakOn(form)}));   // existing LDAP / AD (src/directory.js)
   ({files, steps: raw} = applyCicd(form, s, files, raw, lang));
   files = corporateCaKeycloak(files, s);
   const webinar = form.preset === "webinar";
@@ -161,6 +169,7 @@ export function generate(form, lang){
     out[0] = {...out[0], text: out[0].text.replace(/^(> (?:⚠️|🔐)[^\n]*\n)/m, `$1\n${note.replace("REG", form.REGISTRY.trim())}\n`)};
     for (const e of out) if (files[e.name.slice(P.length)]) files[e.name.slice(P.length)] = {...files[e.name.slice(P.length)], text: e.text};
   }
+  if (s.dirExt) out[0] = {...out[0], text: out[0].text.replace(/^(> (?:⚠️|🔐)[^\n]*\n)/m, `$1\n${(DIR_NOTE[lang] || DIR_NOTE.en)(s.dirExt)}\n`)};
   if (basicOn(form)) {   // preset basic (src/basic.js): only the DX namespace, existing pull secret, cert-manager issuer
     out.splice(0, out.length, ...applyBasic(form, s, out));
     out[0] = {...out[0], text: out[0].text.replace(/^(> (?:⚠️|🔐)[^\n]*\n)/m, `$1\n${(BASIC_NOTE[lang] || BASIC_NOTE.en).replace("NS", s.DX_NS)}\n`)};

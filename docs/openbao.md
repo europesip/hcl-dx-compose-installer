@@ -50,7 +50,7 @@ in the zip:
 | `wpsadmin` `password` | DX administrator |
 | `demo-users` `password` | demo users of the OpenLDAP (Enter = the same as wpsadmin) |
 | `ai` `key` | OpenRouter, Bedrock or Anthropic key |
-| `ad` `bindPassword` / `oracle` `password` | only if you use Active Directory / Oracle |
+| `ad` `bindPassword` / `oracle` `password` | only if you use your own LDAP or Active Directory (`DIR_BIND_PASSWORD`) / Oracle |
 
 **Internal secrets** are generated at random inside OpenBao:
 - the LDAP administrator;
@@ -139,8 +139,11 @@ kubectl -n dx-shared get secret argocd-initial-admin-secret -o jsonpath='{.data.
 
 ## DX Delivery Operator
 
-The operator (chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` 0.1.1) is installed once DX is
-running. To check it, `install.sh` also deploys the **hello** sample on a page ("DXOP Hello"):
+The operator (chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` 0.17.0, with the CRDs of that version,
+`DXJavaExtension` included) is installed once DX is running. The installer only sets `dxclient.acceptLicense=true`:
+the rest are the chart defaults, so the pod has no fixed UID (`runAsNonRoot`, `RuntimeDefault` seccomp; the image runs
+as UID 1000) and Java extensions (`javaExtensions.enabled`) stay off, without a webhook or cert-manager. A newer
+operator already in the cluster is kept, not downgraded. To check it, `install.sh` also deploys the **hello** sample on a page ("DXOP Hello"):
 `lab-cicd/dxop-hello.yaml`. Its image includes HCL DXClient, so you must accept the DXClient licence on the
 credentials page. Its user guide and examples are in
 [its repository](https://github.com/europesip/dx-delivery-operator).

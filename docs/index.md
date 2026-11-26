@@ -47,7 +47,7 @@ outside its scope.
 |---|---|
 | 0 · Prerequisites | Checks, namespaces, corporate CAs, OpenLDAP, PostgreSQL (CloudNativePG) |
 | 1 · Base DX | HCL DX Compose (Web Engine, DAM, Ring API...), Ingress and TLS |
-| 2 · LDAP | DX connected to OpenLDAP or Active Directory, sign-in by e-mail, administrators |
+| 2 · LDAP | DX connected to the demo OpenLDAP, your LDAP or Active Directory ([Directory](directory.md)), sign-in by e-mail, administrators |
 | 3 · External database | Web Engine transferred from Derby to PostgreSQL (or Oracle) |
 | 4 · AI Assistant | HCL DX IQ with LiteLLM (OpenRouter, AWS Bedrock or Anthropic), optional MCP server and RAG |
 | 5 · Search | Search V2 (OpenSearch) |

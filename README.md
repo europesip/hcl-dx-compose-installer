@@ -93,6 +93,7 @@ More questions: **[FAQ](docs/faq.md)**. Something fails: **[Frequent errors](doc
 | [Requirements](docs/requirements.md) | What you need to run the installer and the installation it generates: cluster, storage, sizing, tools, accounts |
 | [Docker and Helm](docs/deploy.md) | Every option to run the installer, authentication, what to do with the download |
 | [AWS environments](docs/aws.md) | What each AWS option creates, its price, how to delete it, ROSA and your Red Hat account |
+| [Directory](docs/directory.md) | Stage 2: the demo OpenLDAP, your LDAP or your Active Directory; the bind password, the connection test, Keycloak and the admin group |
 | [Advanced CI/CD: OpenBao](docs/openbao.md) | OpenBao secrets manager, Argo CD and the DX Delivery Operator: unsealing, and why a DX password change needs a helm upgrade |
 | [Third-party software](docs/third-party.md) | OpenLDAP, PostgreSQL, LiteLLM, MCP, OpenBao, Argo CD and Keycloak: the peculiarities and tricks found in the lab |
 | [Security](docs/security.md) | Where each credential goes, limited outbound access, the original image, good practice |
