@@ -24,6 +24,10 @@ Traefik is the Ingress controller installed by default, and two fixes found in t
   secret. `server/aws/eks-create.sh` puts Traefik behind the Network Load Balancer by default (`INGRESS=nginx` keeps
   ingress-nginx, whose project is retired upstream); `eks-destroy.sh` deletes either. `uninstall.sh` leaves the
   controller in place (it is shared by the cluster): `helm uninstall traefik -n traefik` removes it.
+- **Own registry, *HCL images only*: DXClient too.** The push Jobs of Hello DX and ÓRBITA run HCL DXClient, a chart
+  default (`hclcr.io/dx-public/dxclient`) that the folder did not write, so it was still pulled from hclcr.io. It now
+  comes from your registry (`<registry>/dx-public/dxclient:…`), with the pull secret copied to the namespace of the
+  release. The DX Delivery Operator is unchanged (its image already brings DXClient). Found in the AWS test of 2.14.0.
 
 - **ÓRBITA on Traefik.** The ÓRBITA chart creates its Ingress with class `nginx` by default, which a Traefik never
   serves: `/orbita-api` answered 404 from DX on the EC2 environment, a PoC k3s or any cluster with Traefik. The step

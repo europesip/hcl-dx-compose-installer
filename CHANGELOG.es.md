@@ -25,6 +25,11 @@ la 2.13.0 en AWS.
   inventario y su namespace recibe el pull secret. `server/aws/eks-create.sh` pone Traefik tras el Network Load Balancer
   por defecto (`INGRESS=nginx` mantiene ingress-nginx, cuyo proyecto está retirado); `eks-destroy.sh` borra cualquiera de
   los dos. `uninstall.sh` deja el controlador (lo comparte el clúster): `helm uninstall traefik -n traefik` lo quita.
+- **Registro propio, *solo imágenes de HCL*: también DXClient.** Los Jobs de push de Hello DX y ÓRBITA ejecutan HCL
+  DXClient, un valor por defecto de los charts (`hclcr.io/dx-public/dxclient`) que la carpeta no escribía, así que seguía
+  descargándose de hclcr.io. Ahora viene de tu registro (`<registro>/dx-public/dxclient:…`), con el pull secret copiado al
+  namespace del release. El DX Delivery Operator no cambia (su imagen ya trae DXClient). Encontrado en la prueba en AWS de
+  la 2.14.0.
 
 - **ÓRBITA con Traefik.** El chart de ÓRBITA crea su Ingress con la clase `nginx` por defecto, que un Traefik no sirve
   nunca: `/orbita-api` respondía 404 desde DX en el entorno EC2, en un k3s de PoC o en cualquier clúster con Traefik. El

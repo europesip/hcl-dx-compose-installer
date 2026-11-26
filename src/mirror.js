@@ -26,7 +26,7 @@
 // The images a chart uses by default are not in the generated files: CHART_IMAGES lists them per chart version (taken
 // from `helm template` of that version with the values of the folder). A chart version that is not listed is an error
 // of the generation (test/mirror.test.mjs), so a version bump cannot silently leave a public image behind.
-import {altRegistryOn} from "./registry.js";
+import {altRegistryOn, DXCLIENT_IMAGE} from "./registry.js";
 import {coreOn} from "./runtime.js";
 import {cicdOn, cicdNs} from "./cicd.js";
 import {basicOn} from "./basic.js";
@@ -67,7 +67,7 @@ export const imageSource = ref => { const i = parseImage(ref); return imageStr(`
 // ---- What the charts pull by default (not written in the folder) ----------------------------------------------------
 // key: the values key of the image · style: "repo" (repository + tag), "registry" (registry + repository + tag) or
 // "full" (one string) · pull: where the chart takes its pull secrets ("obj" = [{name}], "str" = [name])
-const DXCLIENT = "hclcr.io/dx-public/dxclient:v95_CF239_20261103-1404";
+const DXCLIENT = DXCLIENT_IMAGE;   // src/registry.js
 const orbita = v => ({images: [["image", "repo", `ghcr.io/europesip/orbita/orbita-api:${v}`], ["database.create.image", "full", "docker.io/library/postgres:18.1-alpine"],
   ["scriptapps.bundle.image", "full", `ghcr.io/europesip/orbita/orbita-scriptapps:${v}`], ["scriptapps.dxclient.image", "full", DXCLIENT]],
   pull: [["imagePullSecrets", "obj"], ["scriptapps.job.imagePullSecrets", "obj"]]});

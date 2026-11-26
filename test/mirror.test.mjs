@@ -180,3 +180,17 @@ test("scope hcl (default): the folder is the one of the HCL-only option, with no
     assert.ok(!a.steps.some(x => /check-images/.test(x.cmd)), preset);
   }
 });
+
+test("scope hcl: DXClient of Hello DX and ÓRBITA from the registry, with its pull secret; the operator is left alone", () => {
+  const g = gen({...CICD}, "all");
+  const sh = g.entries.find(e => e.name === "dx-install/install.sh").text;
+  const img = `${REG}/dx-public/dxclient:v95_CF239_20261103-1404`;
+  assert.ok(sh.includes(`--set scriptapps.dxclient.image=${img} --set 'scriptapps.job.imagePullSecrets[0].name=regcred' --set scriptapps.dxclient.acceptLicense=true`));
+  assert.ok(sh.includes(`--set dxclient.image=${img} --set 'job.imagePullSecrets[0].name=regcred' --set dxclient.acceptLicense=true`), "Hello DX");
+  assert.match(sh, /kubectl -n dx-demo get secret regcred [^\n]*\| kubectl -n dx-shared create secret generic regcred --type=kubernetes\.io\/dockerconfigjson[^\n]*\n\s*rhelm upgrade --install orbita /);
+  assert.doesNotMatch(sh, /dx-delivery-operator --version [^\n]*\\\n[^\n]*dxclient\.image/, "the operator image brings DXClient");
+  assert.ok(!sh.includes("hclcr.io/dx-public"));
+  assert.ok(g.runbook.includes(`scriptapps.dxclient.image=${img}`), "RUNBOOK.md shows the same command");
+  const anon = gen({REGISTRY_USER: "", REGISTRY_PASSWORD: ""}, "all");
+  assert.doesNotMatch(anon.entries.find(e => e.name === "dx-install/install.sh").text, /imagePullSecrets\[0\]/);
+});
