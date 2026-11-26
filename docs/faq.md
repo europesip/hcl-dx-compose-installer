@@ -71,7 +71,9 @@ and RUNBOOK.md repeats it. Everything together asks for about 9.3 CPU and 20.6 G
 Yes: on the credentials page, *Use another image registry*. Usual in air-gapped environments, where the security team
 controls and scans every image. The registry must already hold a copy of the HCL images and charts with the same names
 and paths as in hclcr.io (or proxy / mirror hclcr.io); otherwise change the image paths in the custom values before
-installing. The third-party images (OpenLDAP, PostgreSQL, LiteLLM...) still come from their public registries.
+installing. With *HCL images only* (the default) the third-party images (OpenLDAP, PostgreSQL, LiteLLM...) still come
+from their public registries; choose *All images and charts* for an air-gapped installation where nothing comes from a
+public registry: [air-gapped.md](air-gapped.md).
 
 **Can I change the time zone of DX, or switch off the HCL prerequisites checker?**
 Yes: *Advanced › DX settings* on the details page. The time zone (IANA name, `Europe/Madrid` by default) sets `TZ` in

@@ -73,8 +73,9 @@ RUNBOOK.md la repite. Todo junto pide unas 9,3 CPU y 20,6 GiB (busca ~13 CPU y ~
 Sí: en la página de credenciales, *Usar otro repositorio de imágenes*. Es habitual en entornos air-gapped, donde el equipo
 de seguridad controla y analiza cada imagen. El repositorio debe tener ya una copia de las imágenes y charts de HCL con los
 mismos nombres y rutas que en hclcr.io (o hacer de proxy / mirror de hclcr.io); si no, cambia las rutas de las imágenes en
-los custom values antes de instalar. Las imágenes de terceros (OpenLDAP, PostgreSQL, LiteLLM...) siguen viniendo de sus
-registros públicos.
+los custom values antes de instalar. Con *Solo las imágenes de HCL* (por defecto) las imágenes de terceros (OpenLDAP,
+PostgreSQL, LiteLLM...) siguen viniendo de sus registros públicos; elige *Todas las imágenes y charts* para una
+instalación air-gapped en la que nada viene de un registro público: [air-gapped.es.md](air-gapped.es.md).
 
 **¿Puedo cambiar la zona horaria de DX, o desactivar el comprobador de requisitos de HCL?**
 Sí: *Avanzado › Ajustes de DX* en la página de detalles. La zona horaria (nombre IANA, `Europe/Madrid` por defecto) fija

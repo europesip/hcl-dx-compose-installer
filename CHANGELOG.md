@@ -9,6 +9,19 @@ installation is the same as in 2.0.x.
 
 ## Unreleased
 
+- **Own registry for every image and chart, for air-gapped installations** (#51). *Use another image registry* gets a
+  scope: *HCL images only* (default, the folder is the same as before) or **All images and charts**. With the second
+  one nothing comes from a public registry: the folder brings an inventory for the chosen preset (`mirror/IMAGES.txt`,
+  `mirror/images.json`, source → target), `mirror/mirror-images.sh` (skopeo, crane or oras for the images, helm pull +
+  helm push for the charts, `--dry-run`, `--save` / `--load` for a registry with no Internet; logins as environment
+  placeholders, no secrets) and a pre-flight, `mirror/check-images.sh`, that `install.sh` runs as its first step after
+  creating the pull secret in every namespace (and on their `default` ServiceAccount). Every image and chart reference is
+  rewritten: values and manifests, the Helm repositories (`helm repo add` → `oci://`), the operator charts, the
+  Keycloak operator and DX Delivery Operator CRD manifests (downloaded into `mirror/manifests/`), and the images the
+  charts use by default (`mirror/values/<chart>.yaml`). Also the ldapsearch test pod of an existing directory (#52) and the DX Delivery Operator 0.17.0. Path layout: `<registry>/<original registry>/<path>` (default)
+  or flat. The CA of the registry goes to `internals-ca/registry-ca.crt`. Headless answers: `REGISTRY_SCOPE`,
+  `REGISTRY_LAYOUT`, `REGISTRY_CHARTS_PATH`, `MIRROR_TOOL`, `MIRROR_PREFLIGHT`. Guide and known limits:
+  [docs/air-gapped.md](docs/air-gapped.md). The frozen engine is untouched (output layer `src/mirror.js`).
 - **Directory: your LDAP or Active Directory, not only the demo OpenLDAP** (#52). Stage 2 of the page now offers
   *OpenLDAP with demo users* (default, unchanged), *Your LDAP*, *Your Active Directory* or *No directory*. With an
   existing directory no OpenLDAP is installed: `lab-directory/custom-values.directory.yaml` gives DX the native LDAP

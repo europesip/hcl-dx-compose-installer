@@ -15,6 +15,7 @@
 // work, then the complete layer (overrides + LDAPS + the corporate CAs) and finally closes plain LDAP.
 const KAPPLY = "--dry-run=client -o yaml | kubectl apply -f -";
 const CAS = "internals-ca", PKI = "prep-pki";
+export const CORPORATE_CA_DIR = CAS;   // also the CA of the own image registry (src/mirror.js)
 const SUBJ = cn => `"/C=ES/O=EUROPESIP/OU=Corporate IT/CN=${cn}"`;
 const CA = {ldap: {file: "corporate-directory-ca", cn: "EUROPESIP Corporate Directory Root CA"},
             pg:   {file: "corporate-database-ca",  cn: "EUROPESIP Corporate Database Root CA"}};

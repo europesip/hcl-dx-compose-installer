@@ -9,6 +9,20 @@ es la misma que en la 2.0.x.
 
 ## Sin publicar
 
+- **Registro propio para todas las imágenes y charts, para instalaciones air-gapped** (#51). *Usar otro repositorio de
+  imágenes* tiene ahora un alcance: *Solo las imágenes de HCL* (por defecto, la carpeta es la misma que antes) o **Todas
+  las imágenes y charts**. Con el segundo no viene nada de un registro público: la carpeta trae un inventario del preset
+  elegido (`mirror/IMAGES.txt`, `mirror/images.json`, origen → destino), `mirror/mirror-images.sh` (skopeo, crane u oras
+  para las imágenes, helm pull + helm push para los charts, `--dry-run`, `--save` / `--load` para un registro sin
+  Internet; los logins como variables de entorno de ejemplo, sin secretos) y una comprobación previa,
+  `mirror/check-images.sh`, que `install.sh` ejecuta como primer paso tras crear el pull secret en cada namespace (y en
+  su ServiceAccount `default`). Se reescriben todas las referencias a imágenes y charts: values y manifiestos, los
+  repositorios de Helm (`helm repo add` → `oci://`), los charts de los operadores, los manifiestos del operador de
+  Keycloak y de las CRDs del DX Delivery Operator (descargados en `mirror/manifests/`) y las imágenes que los charts usan
+  por defecto (`mirror/values/<chart>.yaml`). También el pod de prueba ldapsearch de un directorio existente (#52) y el DX Delivery Operator 0.17.0. Esquema de rutas: `<registro>/<registro original>/<ruta>` (por defecto) o
+  plano. La CA del registro va en `internals-ca/registry-ca.crt`. Respuestas headless: `REGISTRY_SCOPE`,
+  `REGISTRY_LAYOUT`, `REGISTRY_CHARTS_PATH`, `MIRROR_TOOL`, `MIRROR_PREFLIGHT`. Guía y límites conocidos:
+  [docs/air-gapped.es.md](docs/air-gapped.es.md). El motor congelado no cambia (capa de salida `src/mirror.js`).
 - **Directorio: tu LDAP o Active Directory, no solo el OpenLDAP de demo** (#52). La etapa 2 de la página ofrece ahora
   *OpenLDAP con usuarios de demo* (por defecto, sin cambios), *Tu LDAP*, *Tu Active Directory* o *Sin directorio*. Con
   un directorio existente no se instala ningún OpenLDAP: `lab-directory/custom-values.directory.yaml` da a DX el bloque

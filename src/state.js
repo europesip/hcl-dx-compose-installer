@@ -32,6 +32,10 @@ export const DEFAULTS = {
   // Credentials
   HCL_HARBOR_USER: "", HCL_HARBOR_TOKEN: "",
   altRegistry: false, REGISTRY: "", REGISTRY_USER: "", REGISTRY_PASSWORD: "", HCL_EMAIL: "",   // own image registry instead of hclcr.io
+  // Own registry, scope (#51, src/mirror.js): hcl = only the HCL images and charts (as before) · all = every image and chart
+  // (air-gapped). With "all": the path layout (host = <registry>/<original host>/<path>, flat = <registry>/<path>), the
+  // folder of the non-OCI Helm charts with the flat layout, the tool of mirror-images.sh and the pre-flight of install.sh
+  REGISTRY_SCOPE: "hcl", REGISTRY_LAYOUT: "host", REGISTRY_CHARTS_PATH: "charts", MIRROR_TOOL: "auto", MIRROR_PREFLIGHT: "strict",
   OPENROUTER_API_KEY: "", LAB_PASSWORD: "EuropeS1P",
   demoSame: true, DEMO_PASSWORD: "",
   LLM_PROVIDER: "openrouter", BEDROCK_API_KEY: "", BEDROCK_REGION: "us-east-1", ANTHROPIC_API_KEY: "",   // the AI: OpenRouter (recommended), AWS Bedrock or Claude directly (Anthropic API)   // password of the demo users of the LDAP (by default, the same as wpsadmin)
