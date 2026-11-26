@@ -18,7 +18,8 @@ import {basicOn, applyBasic, BASIC_NOTE} from "./basic.js";
 import {coreOn, applyRuntime, CORE_NOTE} from "./runtime.js";
 import {applyDxConfig, tzError, dxConfigMd} from "./dxconfig.js";
 import {sopsOn, parseSopsKeys, sopsErrors, baseSecretFiles, harborPromptDemo, sopsRunbookNote, SOPS_FILES} from "./sops.js";
-import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, CICD_DIR} from "./cicd.js";
+import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, operatorCompat, CICD_DIR} from "./cicd.js";
+import {compatScript, compatBuildInfo} from "./compat.js";
 export {zipBytes} from "./zip.js";
 
 export const engine = createEngine();
@@ -167,6 +168,11 @@ export function generate(form, lang){
     if (coreOn(form)) out[0] = {...out[0], text: out[0].text.replace(/^(> (?:⚠️|🔐)[^\n]*\n)/m, `$1\n${CORE_NOTE[lang] || CORE_NOTE.en}\n`)};
     for (const e of out) if (files[e.name.slice(P.length)]) files[e.name.slice(P.length)] = {...files[e.name.slice(P.length)], text: e.text};
   }
+  { const operator = operatorCompat(form, s);   // what the folder was generated with, never downgrade, operator kinds (src/compat.js, #2)
+    for (const e of out) {
+      if (/^dx-install\/(install|prepare|demo)\.sh$/.test(e.name)) e.text = compatScript(e.text, {operator});
+      if (e.name === P + "BUILD-INFO.txt") e.text = compatBuildInfo(e.text, {operator});
+    } }
   runbook = out[0].text;
   if (vault) {   // nothing secret may be left in the zip
     const left = out.filter(e => typeof e.text === "string" && /@@OB:/.test(e.text)).map(e => e.name);
