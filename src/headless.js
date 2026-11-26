@@ -37,6 +37,7 @@ const ENUMS = {
   INGRESS_KIND: ["traefik", "nginx", "other"], helm: ["3", "4"], preset: ["all", "custom", "webinar", "basic"],
   dir: ["openldap", "ad", "none"], db: ["postgres", "oracle", "none"], IQ_LLM: ["claude", "qwen"],
   LLM_PROVIDER: ["openrouter", "bedrock", "anthropic"], openbaoMode: ["install", "existing"], DX_RUNTIME: ["compose", "core"],
+  REGISTRY_SCOPE: ["hcl", "all"], REGISTRY_LAYOUT: ["host", "flat"], MIRROR_TOOL: ["auto", "skopeo", "crane", "oras"], MIRROR_PREFLIGHT: ["strict", "warn", "off"],
 };
 const DESCRIPTIONS = {
   preset: "all: every stage and extra · webinar: stages 0-5 as in the webinar (prepare.sh + demo.sh) · custom: what you choose · basic: a simple test portal as Lab 1 (Derby), only the DX namespace, for an unattended Job",
@@ -55,6 +56,11 @@ const DESCRIPTIONS = {
   DX_HOST: "Host name of the portal (e.g. dx.example.com); poc defaults to dx-demo.127.0.0.1.nip.io",
   DX_NS: "Namespace of HCL DX", SHARED_NS: "Namespace of the third-party tools (OpenLDAP, PostgreSQL, LiteLLM...)",
   dxcLicense: "true = you accept the HCL DXClient licence (needed by the DX Delivery Operator)",
+  REGISTRY_SCOPE: "With altRegistry: hcl (default) = only the HCL charts and images come from REGISTRY · all = every image and chart (air-gapped): inventory mirror/IMAGES.txt, mirror/mirror-images.sh, pull secrets in every namespace and a pre-flight in install.sh (docs/air-gapped.md)",
+  REGISTRY_LAYOUT: "REGISTRY_SCOPE all: host (default) = <REGISTRY>/<original registry>/<path> (e.g. .../docker.io/library/postgres, .../hclcr.io/dx-compose/webengine) · flat = <REGISTRY>/<path>",
+  REGISTRY_CHARTS_PATH: "REGISTRY_SCOPE all, layout flat: folder of the charts that come from Helm repositories that are not OCI (default charts: <REGISTRY>/charts/<chart>)",
+  MIRROR_TOOL: "REGISTRY_SCOPE all: tool of mirror/mirror-images.sh for the images: auto (default, the first of skopeo, crane, oras), skopeo, crane or oras",
+  MIRROR_PREFLIGHT: "REGISTRY_SCOPE all: pre-flight of install.sh (mirror/check-images.sh): strict (default) stops if an image or chart is missing · warn only reports · off skips it (MIRROR_PREFLIGHT in the environment overrides it)",
 };
 
 /** JSON Schema (draft 2020-12) of the answers: the keys of the wizard form, their types and allowed values. */

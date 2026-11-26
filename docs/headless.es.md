@@ -59,6 +59,7 @@ una errata no pase desapercibida. Ejemplos: [`docs/headless-examples/`](https://
 | `lab1b`, `dir`, `db`, `lab3`, `lab3b`, `iqdb`, `iqrag`, `lab4`, `lab5`, `keycloak`, `cicd*`... | Las etapas y extras de la página |
 | `DX_TIMEZONE` | Zona horaria de todos los contenedores de DX (`configuration.containerTimezone`, también en Search): un nombre IANA, `Europe/Madrid` por defecto (`UTC`, `Europe/London`...). Un nombre no válido es un error. Con sindicación de WCM o DAM Staging, todos los entornos de DX deben usar la misma zona horaria |
 | `prereqsChecker` | `true` (por defecto, como el chart): el sidecar comprobador de requisitos de HCL en los pods con volúmenes, que los comprueba cada día a las 08:00 y escribe el resultado en su log. `false`: sin sidecar |
+| `altRegistry`, `REGISTRY`, `REGISTRY_USER`, `REGISTRY_SCOPE`, `REGISTRY_LAYOUT`, `MIRROR_TOOL`, `MIRROR_PREFLIGHT` | Tu propio registro de imágenes. `REGISTRY_SCOPE` `hcl` (por defecto): solo las imágenes y charts de HCL; `all`: todas las imágenes y charts, para instalaciones air-gapped (inventario, script de copia, comprobación previa): [air-gapped.es.md](air-gapped.es.md) |
 
 La lista completa, con tipos y valores por defecto: `dx-installer schema`.
 

@@ -9,6 +9,19 @@ installation is the same as in 2.0.x.
 
 ## Unreleased
 
+- **Own registry for every image and chart, for air-gapped installations** (#51). *Use another image registry* gets a
+  scope: *HCL images only* (default, the folder is the same as before) or **All images and charts**. With the second
+  one nothing comes from a public registry: the folder brings an inventory for the chosen preset (`mirror/IMAGES.txt`,
+  `mirror/images.json`, source → target), `mirror/mirror-images.sh` (skopeo, crane or oras for the images, helm pull +
+  helm push for the charts, `--dry-run`, `--save` / `--load` for a registry with no Internet; logins as environment
+  placeholders, no secrets) and a pre-flight, `mirror/check-images.sh`, that `install.sh` runs as its first step after
+  creating the pull secret in every namespace (and on their `default` ServiceAccount). Every image and chart reference is
+  rewritten: values and manifests, the Helm repositories (`helm repo add` → `oci://`), the operator charts, the
+  Keycloak operator and DX Delivery Operator CRD manifests (downloaded into `mirror/manifests/`), and the images the
+  charts use by default (`mirror/values/<chart>.yaml`). Path layout: `<registry>/<original registry>/<path>` (default)
+  or flat. The CA of the registry goes to `internals-ca/registry-ca.crt`. Headless answers: `REGISTRY_SCOPE`,
+  `REGISTRY_LAYOUT`, `REGISTRY_CHARTS_PATH`, `MIRROR_TOOL`, `MIRROR_PREFLIGHT`. Guide and known limits:
+  [docs/air-gapped.md](docs/air-gapped.md). The frozen engine is untouched (output layer `src/mirror.js`).
 - **Older folders against a newer cluster** (#2). A generated folder records what it was generated with: bundle format
   2, the installer version and the pinned charts at the top of `install.sh` (also `prepare.sh` and `demo.sh`), in its
   header and in `BUILD-INFO.txt` (`bundle.format`, `operator`). The DX Delivery Operator, OpenBao, External Secrets

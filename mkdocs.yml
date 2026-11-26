@@ -25,6 +25,7 @@ nav:
   - External databases: databases.md
   - DX Core phase 2: dx-core-phase2.md
   - AWS environments: aws.md
+  - "Air-gapped: own registry": air-gapped.md
   - "Advanced CI/CD: OpenBao": openbao.md
   - Third-party software: third-party.md
   - Security: security.md
@@ -41,6 +42,7 @@ nav:
       - Bases de datos externas: databases.es.md
       - DX Core, fase 2: dx-core-phase2.es.md
       - Entornos en AWS: aws.es.md
+      - "Air-gapped: registro propio": air-gapped.es.md
       - "CI/CD avanzado: OpenBao": openbao.es.md
       - Software de terceros: third-party.es.md
       - Seguridad: security.es.md

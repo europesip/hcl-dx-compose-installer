@@ -8,6 +8,9 @@
 // The engine (core.js, frozen) always writes hclcr.io: this output layer swaps it. The engine gets the HCL account
 // e-mail as HCL_HARBOR_USER (it only decides whether the PostgreSQL table script can be included), and here the
 // registry user takes its place in the pull secret and the registry login.
+//
+// With the scope "All images and charts" (REGISTRY_SCOPE "all", #51) src/mirror.js moves the third-party images and
+// charts too, and with its "host" layout the HCL ones go to <registry>/hclcr.io (the same path scheme for every image).
 
 export const altRegistryOn = f => !!f.altRegistry && !!(f.REGISTRY || "").trim();
 const hostOf = r => r.replace(/^https?:\/\//, "").split("/")[0];
@@ -21,10 +24,11 @@ export function registryForm(f){
 // Applied to every text of the zip (files, install.sh, RUNBOOK.md)
 export function applyRegistry(f, entries){
   if (!altRegistryOn(f)) return entries;
-  const reg = f.REGISTRY.trim().replace(/^https?:\/\//, "").replace(/\/+$/, ""), host = hostOf(reg);
+  const base = f.REGISTRY.trim().replace(/^https?:\/\//, "").replace(/\/+$/, ""), host = hostOf(base);
+  const reg = f.REGISTRY_SCOPE === "all" && f.REGISTRY_LAYOUT !== "flat" ? `${base}/hclcr.io` : base;   // src/mirror.js (#51)
   const user = (f.REGISTRY_USER || "").trim(), email = (f.HCL_EMAIL || "").trim();
   return entries.map(e => {
-    if (typeof e.text !== "string" || /\.sql$/.test(e.name)) return e;
+    if (typeof e.text !== "string" || /\.sql$/.test(e.name) || /^dx-install\/mirror\//.test(e.name)) return e;   // mirror/ lists the sources (#51)
     let t = e.text;
     // the registry user instead of the HCL e-mail where it is a login (pull secret, helm login, OpenBao)
     if (email && user && email !== user && /secrets\.yaml$|install\.sh$|demo\.sh$|prepare\.sh$|openbao-secrets\.sh$|RUNBOOK\.md$/.test(e.name))

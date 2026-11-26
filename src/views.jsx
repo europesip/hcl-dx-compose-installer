@@ -463,6 +463,12 @@ export function Details({t, lang, form, set, go, back}){
             {F("REGISTRY", t.altHost, {mono: true, placeholder: "harbor.company.com/hcl", hint: t.altHostHint})}
             <div className="grid gap-4 sm:grid-cols-2">{F("REGISTRY_USER", t.altUser, {mono: true, hint: t.altUserHint})}{!vault && F("REGISTRY_PASSWORD", t.altPw, {secret: true})}</div>
             {F("HCL_EMAIL", t.altEmail, {placeholder: "name@company.com", hint: t.altEmailHint})}
+            <Field label={t.altScope} hint={form.REGISTRY_SCOPE === "all" ? t.altScopeAllT : t.altScopeHclT}>
+              <Segmented value={form.REGISTRY_SCOPE === "all" ? "all" : "hcl"} onChange={v => set({REGISTRY_SCOPE: v})} options={[["hcl", t.altScopeHcl], ["all", t.altScopeAll]]} />
+            </Field>
+            {form.REGISTRY_SCOPE === "all" && <Field label={t.altLayout} hint={form.REGISTRY_LAYOUT === "flat" ? t.altLayoutFlatT : t.altLayoutHostT}>
+              <Segmented value={form.REGISTRY_LAYOUT === "flat" ? "flat" : "host"} onChange={v => set({REGISTRY_LAYOUT: v})} options={[["host", t.altLayoutHost], ["flat", t.altLayoutFlat]]} />
+            </Field>}
           </div>}
           {!form.altRegistry && <SecurityNote t={t} lang={lang} kind="harbor" />}
         </Card>
@@ -577,6 +583,7 @@ export function Details({t, lang, form, set, go, back}){
         {t.altBody.map(x => <p key={x}>{x}</p>)}
         <p className="pt-2 font-semibold text-slate-900 dark:text-white">{t.altNeedT}</p>
         <ul className="list-disc space-y-1 pl-5">{t.altNeed.map(x => <li key={x}>{x}</li>)}</ul>
+        <p className="pt-2">{t.altAllI}</p>
         <Callout tone="warn" className="mt-3">{t.altWarn}</Callout>
       </Modal>
       <Modal open={aiAsk} title={t.aiTitle} onClose={() => setAiAsk(false)} actions={<Button onClick={() => setAiAsk(false)}>{t.pgOk}</Button>}>
