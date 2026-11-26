@@ -9,6 +9,16 @@ installation is the same as in 2.0.x.
 
 ## Unreleased
 
+- **DX settings in the Advanced section: time zone and HCL prerequisites checker** (#3). Two new options on the
+  details page, each with an (i) explanation: *Time zone of the DX containers* (IANA name, default `Europe/Madrid`,
+  with suggestions; an invalid name is refused with a clear message) and *HCL prerequisites checker* (on by default, as
+  in the chart). They set `configuration.containerTimezone` (also in the Search values, so DX and Search stay in the
+  same zone) and `configuration.prereqsChecker.enabled` of `lab-base/custom-values.yaml`. The comment of the checker is
+  corrected: it is a sidecar in the pods with volumes that checks them every day at 08:00 and only writes to its log; it
+  never blocks a pod. RUNBOOK.md, the webinar Word/PDF script and BUILD-INFO.txt describe both settings, with the HCL
+  warning: with WCM syndication or DAM Staging, every DX environment must use the same time zone. Headless answers:
+  `DX_TIMEZONE`, `prereqsChecker`. With the defaults the values are the same as before (only the comments change);
+  the frozen engine is untouched (output layer `src/dxconfig.js`).
 - **`install.sh` inside a Pod** (#34): the cluster check uses `kubectl get --raw /version` instead of
   `kubectl version`, which goes to `localhost:8080` with kubectl 1.35 when there is only the in-cluster ServiceAccount
   and no kubeconfig. The summary shows `in-cluster (ServiceAccount)` when there is no kubeconfig context. Output layer

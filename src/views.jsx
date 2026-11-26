@@ -13,6 +13,7 @@ import {kcHost} from "./cicd.js";
 import {parseSopsKeys} from "./sops.js";
 import {resources, fmt} from "./resources.js";
 import {DISCLAIMER, LICENSE_URL} from "./disclaimer.js";
+import {tzError, tzSuggestions, TZ_DEFAULT} from "./dxconfig.js";
 
 const C = t => ({copyLabel: t.copy, copiedLabel: t.copied});
 const Bullet = ({children}) => <li className="flex gap-2.5"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-blue" /><span>{children}</span></li>;
@@ -428,6 +429,8 @@ function PgText({t}){
 export function Details({t, lang, form, set, go, back}){
   const [adv, setAdv] = useState(false), [pgAsk, setPgAsk] = useState(false), [aiAsk, setAiAsk] = useState(false);
   const [harborAsk, setHarborAsk] = useState(false), [airAsk, setAirAsk] = useState(false), [altRead, setAltRead] = useState(false);
+  const [dxInfo, setDxInfo] = useState(""), tzErr = tzError(form, lang), tzList = useMemo(tzSuggestions, []);   // DX settings (#3, src/dxconfig.js)
+  const iBtn = (label, onClick) => <button type="button" onClick={onClick} className="text-xs font-semibold text-brand-blue hover:underline dark:text-blue-300"><span className="mr-1 inline-grid h-4 w-4 place-items-center rounded-full border border-current text-[10px] font-bold align-middle">i</span>{label}</button>;
   const needsHost = form.platform !== "poc";
   const canVault = !!form.cicdOpenbao && form.platform !== "openshift" && form.preset !== "webinar", vault = canVault && !!form.useVault;
   const pgMissing = form.db === "postgres" && !PG_OK.test(((form.altRegistry ? form.HCL_EMAIL : form.HCL_HARBOR_USER) || "").trim());
@@ -527,9 +530,23 @@ export function Details({t, lang, form, set, go, back}){
       </div>
       {(form.lab1b || form.lab5 || (form.cicdOperator && form.platform !== "openshift" && form.preset !== "webinar")) && <Card className="mt-5"><Check checked={form.dxcLicense} onChange={v => set({dxcLicense: v})}>{t.dxcLicense}</Check></Card>}
       <div className="mt-5">
-        <button type="button" onClick={() => setAdv(!adv)} className="text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">{adv ? "▾" : "▸"} {t.advanced}</button>
-        {adv && (
+        <button type="button" onClick={() => setAdv(!adv)} className="text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">{adv || tzErr ? "▾" : "▸"} {t.advanced}</button>
+        {(adv || !!tzErr) && (
           <Card className="mt-3 space-y-5 rise">
+            <div><H2>{t.dxSettings}</H2><div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Field label={t.tz} hint={t.tzHint}>
+                  <Input mono list="dx-tz-list" value={form.DX_TIMEZONE ?? TZ_DEFAULT} onChange={e => set({DX_TIMEZONE: e.target.value})} placeholder={TZ_DEFAULT} aria-invalid={!!tzErr} />
+                  <datalist id="dx-tz-list">{tzList.map(z => <option key={z} value={z} />)}</datalist>
+                </Field>
+                {iBtn(t.tzWhat, () => setDxInfo("tz"))}
+                {tzErr && <Callout tone="error">{tzErr}</Callout>}
+              </div>
+              <div className="space-y-1 sm:pt-7">
+                <Check checked={form.prereqsChecker !== false} onChange={v => set({prereqsChecker: v})}>{t.prereqs}</Check>
+                <div className="ml-8">{iBtn(t.prereqsWhat, () => setDxInfo("prereqs"))}</div>
+              </div>
+            </div></div>
             <div><H2>{t.names}</H2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{NAME_KEYS.map(k => F(k, k, {mono: true}))}
               {form.keycloak && form.dir === "openldap" && form.platform !== "openshift" && F("KC_HOST", t.kcHost, {mono: true, placeholder: kcHost(form), hint: t.kcHostHint})}</div></div>
             <div className="grid gap-4 sm:grid-cols-3">
@@ -540,7 +557,11 @@ export function Details({t, lang, form, set, go, back}){
           </Card>
         )}
       </div>
-      <Nav t={t} back={back} next={() => pgMissing ? setPgAsk(true) : go("download")} />
+      <Nav t={t} back={back} nextDisabled={!!tzErr} next={() => pgMissing ? setPgAsk(true) : go("download")} />
+      <Modal open={!!dxInfo} title={dxInfo === "tz" ? t.tzTitle : t.prereqsTitle} onClose={() => setDxInfo("")} actions={<Button onClick={() => setDxInfo("")}>{t.pgOk}</Button>}>
+        {(dxInfo === "tz" ? t.tzBody : t.prereqsBody).map(x => <p key={x}>{x}</p>)}
+        {dxInfo === "tz" && <Callout tone="warn" className="mt-3">{t.tzWarn}</Callout>}
+      </Modal>
       <Modal open={harborAsk} title={t.harborTitle} onClose={() => setHarborAsk(false)} actions={<Button onClick={() => setHarborAsk(false)}>{t.pgOk}</Button>}>
         {t.harborBody.map(x => <p key={x}>{x}</p>)}
         <p>{t.harborHow}</p>

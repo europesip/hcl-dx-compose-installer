@@ -8,6 +8,7 @@ import {keyChanges, sourceOf, isSecretStep, secretValues, maskText, filesOfStep}
 import {disclaimerBlocks} from "./disclaimer.js";
 import {STAGES, STAGE_DOCS} from "./engine/stages.js";
 import {resources, fmt, FULL} from "./resources.js";
+import {dxConfigScript} from "./dxconfig.js";
 
 // Appendix: what the installer can do beyond the webinar (the webinar mode does not offer these options)
 const BEYOND = {
@@ -448,6 +449,7 @@ export function buildScript(gen, lang, summaryRows, {mask = true} = {}){
     if (STAGE_DOCS[n].length) B.push({t: "links", title: t.docs, items: STAGE_DOCS[n]});
     B.push({t: "h2", text: t.why}); B.push({t: "p", text: st[n].why});
     B.push({t: "h2", text: t.tell}); B.push({t: "bullets", items: st[n].points});
+    if (n === 1) { const c = dxConfigScript(gen.form || {}, lang); B.push({t: "bullets", items: c.points}); B.push({t: "callout", tone: "warn", text: c.warn}); }   // time zone and checker (#3)
     if (n === 0) B.push({t: "callout", tone: "warn", text: t.llmCredit});
     // Where the lab departs from the HCL documentation, and why (issues.md of the labs)
     if (n === 4) { B.push({t: "h2", text: t.important}); B.push({t: "callout", tone: "error", text: t.baseUrl}); B.push({t: "callout", tone: "warn", text: t.keyDocs}); B.push({t: "callout", tone: "info", text: t.mcpTls}); }
