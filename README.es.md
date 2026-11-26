@@ -95,6 +95,7 @@ Más preguntas: **[Preguntas frecuentes](docs/faq.es.md)**. Si algo falla: **[Er
 | [Requisitos](docs/requirements.es.md) | Qué necesitas para ejecutar el instalador y la instalación que genera: clúster, almacenamiento, tamaño, herramientas, cuentas |
 | [Docker y Helm](docs/deploy.es.md) | Todas las opciones para ejecutar el instalador, la autenticación, qué hacer con la descarga |
 | [Entornos de AWS](docs/aws.es.md) | Qué crea cada opción de AWS, su precio, cómo borrarla, ROSA y tu cuenta de Red Hat |
+| [Directorio](docs/directory.es.md) | Etapa 2: el OpenLDAP de demo, tu LDAP o tu Active Directory; la contraseña de bind, la prueba de conexión, Keycloak y el grupo de administradores |
 | [CI/CD avanzado: OpenBao](docs/openbao.es.md) | Gestor de secretos OpenBao, Argo CD y el DX Delivery Operator: desbloqueo, y por qué cambiar una contraseña de DX necesita un helm upgrade |
 | [Software de terceros](docs/third-party.es.md) | OpenLDAP, PostgreSQL, LiteLLM, MCP, OpenBao, Argo CD y Keycloak: las peculiaridades y trucos encontrados en el laboratorio |
 | [Seguridad](docs/security.es.md) | Adónde va cada credencial, salida a Internet limitada, la imagen original, buenas prácticas |

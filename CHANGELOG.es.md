@@ -9,6 +9,22 @@ es la misma que en la 2.0.x.
 
 ## Sin publicar
 
+- **Directorio: tu LDAP o Active Directory, no solo el OpenLDAP de demo** (#52). La etapa 2 de la página ofrece ahora
+  *OpenLDAP con usuarios de demo* (por defecto, sin cambios), *Tu LDAP*, *Tu Active Directory* o *Sin directorio*. Con
+  un directorio existente no se instala ningún OpenLDAP: `lab-directory/custom-values.directory.yaml` da a DX el bloque
+  LDAP nativo del chart (`type: other`, `serverType` Custom o Microsoft Active Directory, `customLdapSecret`), LDAPS con
+  la CA del directorio, `preferredLanguage` y, solo cuando el directorio no tiene la forma que espera el chart, un
+  configuration override con sus filtros, clases de objeto, bases de búsqueda y atributo de login (`uid`, `mail`,
+  `sAMAccountName`, `userPrincipalName`). `install.sh` prueba la conexión antes de DX (ldapsearch desde un pod
+  temporal), da el rol Administrator al grupo de administradores (XMLAccess), y Keycloak federa el mismo directorio
+  (solo lectura, proveedor `ad` para Active Directory). **La contraseña de bind nunca se escribe en la carpeta**:
+  `install.sh` la pide o lee `DIR_BIND_PASSWORD` (OpenBao: `dx/<DX_NS>/ad bindPassword`; o un Secret existente). ÓRBITA
+  no da sus papeles de demo a usuarios de tu directorio salvo que lo diga `ORBITA_DEMO_PEOPLE`. Cada ajuste es un valor
+  por defecto que se puede cambiar, también en modo headless (`dir` `ldap` / `ad`, `DIR_*`). La opción Active Directory
+  cambia: la carpeta es `lab-directory/` (antes `lab-ldap-ad/`), ya no hay Secret `dx-ad-bind` con la contraseña en
+  claro, y las claves `AD_*` se siguen leyendo; el preset basic conserva `BASIC_LDAP_*` con los mismos valores y además
+  acepta `DIR_*`. BUILD-INFO.txt nombra el directorio (sin directorio decía OpenLDAP). Ver
+  [docs/directory.es.md](docs/directory.es.md).
 - **DX Delivery Operator 0.17.0** (antes 0.13.0; #53). El extra de CI/CD instala el chart
   `oci://ghcr.io/europesip/charts/dx-delivery-operator` 0.17.0 y aplica antes sus doce CRDs, incluido el nuevo
   `DXJavaExtension` (que también borra `--cleanup` y tiene comprobación de salud en Argo CD). El instalador sigue fijando

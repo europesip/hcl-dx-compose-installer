@@ -48,7 +48,7 @@ réplicas, alta disponibilidad, bastionado) que quedan fuera de su alcance.
 |---|---|
 | 0 · Requisitos previos | Comprobaciones, namespaces, CAs corporativas, OpenLDAP, PostgreSQL (CloudNativePG) |
 | 1 · DX base | HCL DX Compose (Web Engine, DAM, Ring API...), Ingress y TLS |
-| 2 · LDAP | DX conectado a OpenLDAP o Active Directory, acceso por correo, administradores |
+| 2 · LDAP | DX conectado al OpenLDAP de demo, a tu LDAP o a Active Directory ([Directorio](directory.es.md)), acceso por correo, administradores |
 | 3 · Base de datos externa | Web Engine transferido de Derby a PostgreSQL (u Oracle) |
 | 4 · Asistente de IA | HCL DX IQ con LiteLLM (OpenRouter, AWS Bedrock o Anthropic), servidor MCP y RAG opcionales |
 | 5 · Búsqueda | Search V2 (OpenSearch) |

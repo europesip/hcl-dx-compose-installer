@@ -50,7 +50,7 @@ in the zip:
 | `wpsadmin` `password` | DX administrator |
 | `demo-users` `password` | demo users of the OpenLDAP (Enter = the same as wpsadmin) |
 | `ai` `key` | OpenRouter, Bedrock or Anthropic key |
-| `ad` `bindPassword` / `oracle` `password` | only if you use Active Directory / Oracle |
+| `ad` `bindPassword` / `oracle` `password` | only if you use your own LDAP or Active Directory (`DIR_BIND_PASSWORD`) / Oracle |
 
 **Internal secrets** are generated at random inside OpenBao:
 - the LDAP administrator;

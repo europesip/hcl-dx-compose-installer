@@ -68,7 +68,7 @@ test("the operator needs the DXClient license", () => {
   assert.match(all({cicdOperator: true, dxcLicense: false, lab1b: false, lab5: false}).check.err.join(" "), /DXClient/);
 });
 
-test("Keycloak: independent of OpenBao, needs the OpenLDAP, adds the DX layer and form logins", () => {
+test("Keycloak: independent of OpenBao, needs a directory, adds the DX layer and form logins", () => {
   const g = all({keycloak: true});
   assert.deepEqual(g.check.err, []);
   assert.ok(g.entries.some(e => e.name === "dx-install/lab-keycloak/custom-values.keycloak.yaml"));
@@ -79,7 +79,8 @@ test("Keycloak: independent of OpenBao, needs the OpenLDAP, adds the DX layer an
   assert.match(sh, /j_security_check/);
   const ids = g.steps.map(s => s.origId);
   assert.ok(ids.indexOf("K-1") > ids.indexOf("D-4"), "after PostgreSQL");
-  assert.equal(all({keycloak: true, dir: "ad"}).entries.some(e => e.name.includes("lab-keycloak")), false);
+  assert.equal(all({keycloak: true, dir: "none"}).entries.some(e => e.name.includes("lab-keycloak")), false);
+  assert.equal(all({keycloak: true, dir: "ad", DIR_HOST: "dc01.example.com", DIR_BASE_DN: "DC=example,DC=com", DIR_BIND_DN: "svc@example.com"}).entries.some(e => e.name.includes("lab-keycloak/realm-dx.yaml")), true);   // #52
   // with OpenBao, its secrets are ExternalSecrets
   const v = all({keycloak: true, cicdOpenbao: true, useVault: true});
   assert.match(v.entries.find(e => e.name.endsWith("lab-keycloak/keycloak-secrets.yaml")).text, /kind: ExternalSecret/);
