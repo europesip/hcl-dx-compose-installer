@@ -34,7 +34,7 @@ export const SCHEMA_VERSION = 1;
 const UI_ONLY = ["envConfirmed"];   // state of the pages, not an answer
 const ENUMS = {
   envSource: ["", "own", "wsl", "linux", "aws"], awsKind: ["ec2", "eks", "rosa"], platform: ["kubernetes", "openshift", "poc"],
-  INGRESS_KIND: ["traefik", "nginx", "other"], helm: ["3", "4"], preset: ["all", "custom", "webinar", "basic"],
+  INGRESS_KIND: ["traefik", "nginx", "other"], TRAEFIK_SERVICE: ["LoadBalancer", "NodePort", "ClusterIP"], helm: ["3", "4"], preset: ["all", "custom", "webinar", "basic"],
   dir: ["openldap", "ldap", "ad", "none"], db: ["postgres", "oracle", "none"], IQ_LLM: ["claude", "qwen"],
   LLM_PROVIDER: ["openrouter", "bedrock", "anthropic"], openbaoMode: ["install", "existing"], DX_RUNTIME: ["compose", "core"],
   REGISTRY_SCOPE: ["hcl", "all"], REGISTRY_LAYOUT: ["host", "flat"], MIRROR_TOOL: ["auto", "skopeo", "crane", "oras"], MIRROR_PREFLIGHT: ["strict", "warn", "off"],
@@ -72,6 +72,10 @@ const DESCRIPTIONS = {
   DX_RUNTIME: "The DX server: compose (default) = DX Compose, the Web Engine on Open Liberty · core = DX Core, the traditional HCL DX 9.5 server on WebSphere Application Server (phase 1: base portal and DAM on Derby; only with the custom and basic presets; no LDAP, external database, IQ, Search, Leap or CI/CD options yet)",
   DX_TIMEZONE: "Time zone of every DX container (configuration.containerTimezone of hcl-dx-deployment, and the same in hcl-dx-search): an IANA name such as Europe/Madrid (default), Europe/London, America/New_York or UTC. With WCM syndication or DAM Staging, every DX environment must use the same time zone",
   prereqsChecker: "true (default, as the chart) = the HCL prerequisites checker: a sidecar (prereqs-checker) in the pods with volumes (DAM, Persistence Node) that checks them every day at 08:00 and writes the result to its log, never blocking a pod; false = no sidecar",
+  INGRESS_KIND: "Ingress controller of DX, ÓRBITA and Keycloak: traefik (default), nginx (ingress-nginx, already in the cluster) or other (INGRESS_CLASS)",
+  INGRESS_INSTALL: "true (default) = with INGRESS_KIND traefik on Kubernetes, the first step installs Traefik (chart traefik/traefik) when the cluster has no IngressClass traefik yet, and does nothing when it has one (k3s); false = never install it. Not for the PoC, OpenShift (Routes) or the basic preset",
+  TRAEFIK_NS: "INGRESS_INSTALL: namespace of the Traefik release (default traefik)",
+  TRAEFIK_SERVICE: "INGRESS_INSTALL: type of the Traefik Service: LoadBalancer (default), NodePort or ClusterIP",
   platform: "kubernetes (your cluster), openshift, or poc (k3s on one machine)",
   DX_HOST: "Host name of the portal (e.g. dx.example.com); poc defaults to dx-demo.127.0.0.1.nip.io",
   DX_NS: "Namespace of HCL DX", SHARED_NS: "Namespace of the third-party tools (OpenLDAP, PostgreSQL, LiteLLM...)",

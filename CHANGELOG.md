@@ -7,9 +7,23 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
-## 2.13.1 · 2026-11-26
+## 2.14.0 · 2026-11-26
 
-Two fixes found in the end-to-end test of 2.13.0 on AWS (#58).
+Traefik is the Ingress controller installed by default, and two fixes found in the end-to-end test of 2.13.0 on AWS.
+
+- **Traefik, installed by default** (#60). The Ingress class was already Traefik by default, but the folder expected
+  the controller to be in the cluster: k3s brings one, a generic cluster without it left DX unreachable. Now, on
+  Kubernetes, the first step of stage 0 installs Traefik with Helm (chart `traefik/traefik` 42.4.3, Traefik v3.7.20,
+  namespace `traefik`, `LoadBalancer` Service, IngressClass `traefik` that is not the default class, 10 minute read
+  timeouts for DAM uploads, `lab-base/traefik-values.yaml`) **only when the cluster has no IngressClass `traefik`**; with
+  one (k3s on the EC2 instance or the PoC, a Traefik installed before) it does nothing. Every decision is a default:
+  the wizard option *Install Traefik if the cluster has none* and the headless answers `INGRESS_INSTALL` (`true`),
+  `TRAEFIK_NS` (`traefik`) and `TRAEFIK_SERVICE` (`LoadBalancer`, `NodePort`, `ClusterIP`). ingress-nginx and other
+  classes work as before (never installed), OpenShift keeps its Routes, and the basic preset never installs it. With
+  your own registry for every image (#51) Traefik's chart and image are in the inventory and its namespace gets the pull
+  secret. `server/aws/eks-create.sh` puts Traefik behind the Network Load Balancer by default (`INGRESS=nginx` keeps
+  ingress-nginx, whose project is retired upstream); `eks-destroy.sh` deletes either. `uninstall.sh` leaves the
+  controller in place (it is shared by the cluster): `helm uninstall traefik -n traefik` removes it.
 
 - **ÓRBITA on Traefik.** The ÓRBITA chart creates its Ingress with class `nginx` by default, which a Traefik never
   serves: `/orbita-api` answered 404 from DX on the EC2 environment, a PoC k3s or any cluster with Traefik. The step

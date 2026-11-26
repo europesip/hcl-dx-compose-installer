@@ -24,7 +24,7 @@ El instalador es ligero: el chart pide 20m de CPU y 96 MiB (límite 768 MiB, par
 |---|---|
 | **Kubernetes** | Un clúster al que llegues con `kubectl` como administrador (crea namespaces, CRDs de los requisitos previos, recursos de Ingress). Probado en k3s y Amazon EKS; los scripts también admiten OpenShift (crear un clúster ROSA desde el instalador aún no está probado de principio a fin). O deja que el instalador cree uno: k3s en tu PC (WSL2), en una máquina Linux o en AWS EC2 |
 | **Almacenamiento** | Una clase de almacenamiento `ReadWriteOnce` y otra `ReadWriteMany` (DAM y otros volúmenes compartidos). Por defecto `dx-deploy-rwo` / `dx-deploy-rwx`; Longhorn, EBS + EFS... |
-| **Ingress** | Traefik (el de k3s), ingress-nginx u otra clase; en OpenShift, rutas |
+| **Ingress** | Traefik por defecto: la instalación lo instala cuando el clúster no tiene la IngressClass `traefik` (k3s ya trae una; `INGRESS_INSTALL` false para no instalarlo nunca). O ingress-nginx u otra clase que ya tengas; en OpenShift, rutas |
 | **DNS y TLS** | Un nombre para el portal que resuelva al Ingress (`nip.io` vale para una PoC). Tu certificado, o uno autofirmado que generan los scripts |
 | **CloudNativePG existente** | El paso de PostgreSQL instala su propio operador CloudNativePG. En un clúster que ya tenga uno, no ejecutes ese paso hasta que esté [#24](https://github.com/europesip/hcl-dx-compose-installer/issues/24) |
 

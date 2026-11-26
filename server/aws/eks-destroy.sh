@@ -17,15 +17,15 @@ if aws_ eks describe-cluster --name "$NAME" >/dev/null 2>&1; then
   export KUBECONFIG="$OUT/kubeconfig-destroy"
   aws eks update-kubeconfig --name "$NAME" --region "$REGION" --kubeconfig "$KUBECONFIG" >/dev/null
   # Workloads first, so that the volumes can be released, then every PVC (their EBS disks and EFS
-  # access points are deleted by the CSI drivers), then the load balancer of ingress-nginx.
+  # access points are deleted by the CSI drivers), then the load balancer of the Ingress controller (Traefik or ingress-nginx).
   for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
     case "$ns" in kube-system|kube-public|kube-node-lease|default) continue ;; esac
-    for r in $(helm list -n "$ns" -q 2>/dev/null); do [ "$r" = ingress-nginx ] && continue; log "helm uninstall $r -n $ns"; helm uninstall "$r" -n "$ns" --wait --timeout 10m >/dev/null 2>&1 || true; done
+    for r in $(helm list -n "$ns" -q 2>/dev/null); do case "$r" in ingress-nginx|traefik) continue ;; esac; log "helm uninstall $r -n $ns"; helm uninstall "$r" -n "$ns" --wait --timeout 10m >/dev/null 2>&1 || true; done
   done
   kubectl delete clusters.postgresql.cnpg.io -A --all --wait=true --timeout=5m >/dev/null 2>&1 || true
   # Deleting the namespaces deletes their PVCs: the CSI drivers then delete the EBS disks and EFS access points
   for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
-    case "$ns" in kube-system|kube-public|kube-node-lease|default|ingress-nginx) continue ;; esac
+    case "$ns" in kube-system|kube-public|kube-node-lease|default|ingress-nginx|traefik) continue ;; esac
     kubectl delete ns "$ns" --wait=false >/dev/null 2>&1 || true
   done
   kubectl delete pvc -n default --all --wait=false >/dev/null 2>&1 || true
@@ -33,8 +33,10 @@ if aws_ eks describe-cluster --name "$NAME" >/dev/null 2>&1; then
     n=$(kubectl get pv --no-headers 2>/dev/null | wc -l)
     [ "$n" = 0 ] && break; [ $((i % 6)) = 1 ] && log "$n volumes still being deleted"; sleep 10
   done
-  helm uninstall ingress-nginx -n ingress-nginx --wait --timeout 10m >/dev/null 2>&1 || true
-  kubectl -n ingress-nginx delete svc --all --wait=true >/dev/null 2>&1 || true
+  for c in traefik:traefik ingress-nginx:ingress-nginx; do   # release:namespace of the Ingress controller (eks-create.sh INGRESS)
+    helm uninstall "${c%%:*}" -n "${c#*:}" --wait --timeout 10m >/dev/null 2>&1 || true
+    kubectl -n "${c#*:}" delete svc --all --wait=true >/dev/null 2>&1 || true
+  done
 else
   log "the EKS cluster $NAME does not exist (cleaning what may be left)"
 fi

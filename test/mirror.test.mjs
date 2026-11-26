@@ -109,7 +109,7 @@ test("scope all: the scripts are valid bash, the pre-flight is the first step, t
 test("scope all: pull secrets in every namespace, CNPG and Keycloak, and nothing secret in mirror/", () => {
   const g = gen({...ALL, ...CICD, cicdSameNs: false, CICD_NS: "dx-cicd"}, "all");
   const st = g.steps.find(x => x.origId === "D-MR");
-  assert.match(st.cmd, /for ns in dx-demo dx-shared dx-cicd; do/);
+  assert.match(st.cmd, /for ns in dx-demo dx-shared dx-cicd( traefik)?; do/);
   assert.match(st.cmd, /create secret docker-registry regcred --docker-server=harbor\.example\.com --docker-username='robot'/);
   assert.match(st.cmd, /patch serviceaccount default/);
   assert.match(g.files["lab-bbdd/cluster-dx-pg.yaml"].text, /imagePullSecrets:[^\n]*\n\s*- name: regcred/);

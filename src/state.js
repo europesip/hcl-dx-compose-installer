@@ -16,6 +16,9 @@ export const DEFAULTS = {
   DX_HOST: "",
   INGRESS_KIND: "traefik",           // traefik | nginx | other
   INGRESS_CLASS: "",
+  // Traefik is installed by the folder when the cluster has no IngressClass traefik (2.14.0, src/ingress.js): Kubernetes
+  // only (not the PoC, OpenShift or the basic preset). false = never, the cluster brings its own controller
+  INGRESS_INSTALL: true, TRAEFIK_NS: "traefik", TRAEFIK_SERVICE: "LoadBalancer",
   TLS_CERT: "", TLS_KEY: "",
   SC_RWO: "dx-deploy-rwo", SC_RWX: "dx-deploy-rwx",
   helm: "4",

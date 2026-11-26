@@ -16,7 +16,7 @@ NAME=dx-compose-poc REGION=eu-west-1 ./ec2-destroy.sh    # borra todo lo etiquet
 | Script | Qué crea | Precio aprox. (eu-west-1) |
 |---|---|---|
 | `ec2-create.sh` | una m6i.4xlarge (Ubuntu 24.04, 200 GB gp3) con k3s, Helm, Longhorn y las StorageClasses `dx-deploy-rwo` / `dx-deploy-rwx`, Traefik; DX en `dx-demo.<IP>.nip.io` | ~0,89 USD/hora · ~21 USD/día · ~646 USD/mes |
-| `eks-create.sh` | EKS con 2 × m6i.2xlarge en su propia VPC, EBS CSI (RWO), EFS CSI y un sistema de ficheros EFS (RWX), ingress-nginx tras un NLB, un kubeconfig con su propio token | ~1,08 USD/hora · ~26 USD/día · ~789 USD/mes |
+| `eks-create.sh` | EKS con 2 × m6i.2xlarge en su propia VPC, EBS CSI (RWO), EFS CSI y un sistema de ficheros EFS (RWX), Traefik tras un NLB (`INGRESS=nginx` para ingress-nginx), un kubeconfig con su propio token | ~1,08 USD/hora · ~26 USD/día · ~789 USD/mes |
 | `rosa-create.sh` | ROSA con planos de control alojados, 2 workers, EBS y EFS (experimental) | ~2 USD/hora · ~48 USD/día · ~1.451 USD/mes |
 
 Cuestan dinero mientras existen: bórralos al terminar. Un mes significa 24×7; la página muestra el coste por hora, por

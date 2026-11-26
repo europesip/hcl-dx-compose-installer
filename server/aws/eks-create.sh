@@ -5,7 +5,8 @@
 #   - managed node group (NODES x NODE_TYPE) in its own VPC (eksctl), one NAT gateway;
 #   - EBS CSI driver  -> StorageClass dx-deploy-rwo (gp3, ReadWriteOnce);
 #   - EFS CSI driver + an EFS file system -> StorageClass dx-deploy-rwx (ReadWriteMany, DAM binaries);
-#   - ingress-nginx behind a Network Load Balancer (IngressClass nginx);
+#   - the Ingress controller behind a Network Load Balancer: Traefik by default (IngressClass traefik),
+#     INGRESS=nginx for ingress-nginx (IngressClass nginx; the ingress-nginx project is retired upstream);
 #   - a kubeconfig with a token of its own (it does not need the AWS CLI to use it).
 # Everything carries the tag dx-installer=NAME, so eks-destroy.sh finds and deletes it.
 #
@@ -18,7 +19,10 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 : "${NODE_TYPE:=m6i.2xlarge}"
 : "${NODES:=2}"
 : "${NODE_DISK_GB:=100}"
+: "${INGRESS:=traefik}"                  # traefik (default) | nginx
+: "${TRAEFIK_VERSION:=42.4.3}"           # Traefik chart (Traefik v3.7.20), the same as install.sh (src/ingress.js)
 : "${INGRESS_NGINX_VERSION:=4.15.1}"
+case "$INGRESS" in traefik|nginx) ;; *) echo "INGRESS must be traefik or nginx" >&2; exit 1 ;; esac
 need aws eksctl kubectl helm python3
 check_name
 whoami_aws
@@ -130,16 +134,33 @@ kubectl exec sc-test -- sh -c 'cat /x/t /o/t' | sed 's/^/  /'
 kubectl delete pod sc-test --wait=true
 kubectl delete pvc rwx-test rwo-test --wait=true
 
-step "ingress-nginx behind a Network Load Balancer"
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx >/dev/null 2>&1 || true
-helm repo update ingress-nginx >/dev/null
-helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --version "$INGRESS_NGINX_VERSION" -n ingress-nginx --create-namespace \
-  --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"=nlb \
-  --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-additional-resource-tags"="$TAG_KEY=$NAME" \
-  --set controller.config.proxy-body-size=0 --wait --timeout 10m 2>&1 | tail -3 | sed 's/^/  /'
+NLB_TAGS="$TAG_KEY=$NAME"
+if [ "$INGRESS" = traefik ]; then
+  step "Traefik behind a Network Load Balancer (IngressClass traefik)"
+  helm repo add traefik https://traefik.github.io/charts >/dev/null 2>&1 || true
+  helm repo update traefik >/dev/null
+  # 10 minute timeouts for large DAM uploads, as the Traefik of the EC2 instance and of install.sh
+  helm upgrade --install traefik traefik/traefik --version "$TRAEFIK_VERSION" -n traefik --create-namespace \
+    --set ingressClass.enabled=true --set ingressClass.name=traefik --set ingressClass.isDefaultClass=false \
+    --set providers.kubernetesIngress.publishedService.enabled=true \
+    --set ports.web.transport.respondingTimeouts.readTimeout=600s --set ports.websecure.transport.respondingTimeouts.readTimeout=600s \
+    --set service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"=nlb \
+    --set service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-additional-resource-tags"="$NLB_TAGS" \
+    --wait --timeout 10m 2>&1 | tail -3 | sed 's/^/  /'
+  LB_NS=traefik LB_SVC=traefik
+else
+  step "ingress-nginx behind a Network Load Balancer (IngressClass nginx)"
+  helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx >/dev/null 2>&1 || true
+  helm repo update ingress-nginx >/dev/null
+  helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --version "$INGRESS_NGINX_VERSION" -n ingress-nginx --create-namespace \
+    --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"=nlb \
+    --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-additional-resource-tags"="$NLB_TAGS" \
+    --set controller.config.proxy-body-size=0 --wait --timeout 10m 2>&1 | tail -3 | sed 's/^/  /'
+  LB_NS=ingress-nginx LB_SVC=ingress-nginx-controller
+fi
 LB=""
 for i in $(seq 1 60); do
-  LB=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+  LB=$(kubectl -n "$LB_NS" get svc "$LB_SVC" -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
   [ -n "$LB" ] && break; sleep 10
 done
 [ -n "$LB" ] || die "the load balancer has no name after 10 minutes"
@@ -190,14 +211,14 @@ HCL DX Compose on Amazon EKS ($NAME, $REGION)
   kubeconfig    : export KUBECONFIG=$KC
   DX host name  : $HOST  (nip.io resolves it to one IP of the load balancer $LB;
                   for a stable name, create a DNS CNAME to $LB)
-  Ingress class : nginx  ·  StorageClasses: dx-deploy-rwo (EBS gp3) / dx-deploy-rwx (EFS $FS)
+  Ingress class : $INGRESS  ·  StorageClasses: dx-deploy-rwo (EBS gp3) / dx-deploy-rwx (EFS $FS)
 It costs money while it exists. Delete everything with:
   NAME=$NAME REGION=$REGION ./eks-destroy.sh
 EOF
 sed 's/^/  /' "$OUT/README.txt"
-python3 - "$NAME" "$REGION" "$HOST" "$KC" "$LB" "$FS" "$NODE_TYPE" "$NODES" <<'EOF'
+python3 - "$NAME" "$REGION" "$HOST" "$KC" "$LB" "$FS" "$NODE_TYPE" "$NODES" "$INGRESS" <<'EOF'
 import json, sys
-n, r, h, kc, lb, fs, t, c = sys.argv[1:]
-print("::result:: " + json.dumps({"type": "eks", "name": n, "region": r, "dxHost": h, "ingress": "nginx", "loadBalancer": lb,
+n, r, h, kc, lb, fs, t, c, ing = sys.argv[1:]
+print("::result:: " + json.dumps({"type": "eks", "name": n, "region": r, "dxHost": h, "ingress": ing, "loadBalancer": lb,
   "efs": fs, "nodes": f"{c} x {t}", "scRwo": "dx-deploy-rwo", "scRwx": "dx-deploy-rwx", "platform": "kubernetes", "kubeconfig": kc}))
 EOF

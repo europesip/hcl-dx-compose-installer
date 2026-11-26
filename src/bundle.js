@@ -22,6 +22,7 @@ import {sopsOn, parseSopsKeys, sopsErrors, baseSecretFiles, harborPromptDemo, so
 import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, operatorCompat, keycloakOn, CICD_DIR} from "./cicd.js";
 import {applyDirectory, dirErrors, dirWarnings, DIR_NOTE} from "./directory.js";
 import {compatScript, compatBuildInfo} from "./compat.js";
+import {applyIngress, ingressErrors} from "./ingress.js";
 export {zipBytes} from "./zip.js";
 
 export const engine = createEngine();
@@ -121,6 +122,8 @@ export function generate(form, lang){
     if (f && at >= 0) { files = {...files, [f.path]: {text: f.text}}; raw.splice(at + 1, 0, adminRoleStep(s, lang)); } }   // DX namespace live, OpenLDAP secret apart, IQ key in a Secret
   raw = corporateCaSteps(raw, s, files, lang, {webinar});
   if (!webinar) raw = mirrorSteps(form, s, raw, lang);   // own registry, all images: pull secrets and pre-flight (src/mirror.js, #51)
+  ({files, steps: raw} = applyIngress(form, s, files, raw, lang, {webinar, mirror: mirrorOn(form)}));   // Traefik when the cluster has none (src/ingress.js)
+  check.err.push(...ingressErrors(form, lang));
   const pgSql = !!engine.pgSqlFor(s);
   const out = [], P = "dx-install/";
   let steps, prep, demo, runbook;
