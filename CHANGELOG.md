@@ -9,6 +9,16 @@ installation is the same as in 2.0.x.
 
 ## Unreleased
 
+- **Older folders against a newer cluster** (#2). A generated folder records what it was generated with: bundle format
+  2, the installer version and the pinned charts at the top of `install.sh` (also `prepare.sh` and `demo.sh`), in its
+  header and in `BUILD-INFO.txt` (`bundle.format`, `operator`). The DX Delivery Operator, OpenBao, External Secrets
+  Operator and Argo CD are never downgraded: if the cluster already runs a newer chart, the step keeps it and says so
+  (the operator is looked for in every namespace, its CRDs are cluster-wide, and its CRDs are not re-applied).
+  `install.sh` stops at the start, with the versions that differ, when a newer operator in the cluster does not serve
+  the kinds of the folder; step OP-2 checks them before applying the hello sample. `--cleanup` deletes every kind of the
+  operator the cluster serves, one by one. Without CI/CD only the version lines are new.
+  See [docs/troubleshooting.md](docs/troubleshooting.md).
+
 - **DX Delivery Operator 0.13.0** (was the *Script Application operator* 0.11.0; operator #52): the CI/CD extra
   installs the renamed operator, chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` and CRDs from
   `europesip/dx-delivery-operator`; every text of the wizard, the RUNBOOK and the docs uses the new name. Includes the

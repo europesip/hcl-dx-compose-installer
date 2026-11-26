@@ -133,7 +133,8 @@ test("cleanup: operator resources and ExternalSecrets go before their operators 
   const sh = all({...CICD, useVault: true}).entries.find(e => e.name.endsWith("install.sh")).text;
   const block = sh.slice(sh.indexOf("if [ $CLEANUP = 1 ]"), sh.indexOf("exit 0", sh.indexOf("if [ $CLEANUP = 1 ]")));
   const i = s => block.indexOf(s);
-  assert.ok(i("delete dxpages,dxthemes,dxscriptapplications") > 0 && i("delete dxpages,dxthemes,dxscriptapplications") < i("delete externalsecret --all --wait"));
+  const op = i("kubectl api-resources --api-group=dx.europesip.com --namespaced");   // every kind the cluster serves (#2)
+  assert.ok(op > 0 && op < i("delete externalsecret --all --wait"));
   assert.ok(i("delete externalsecret --all --wait") < i("helm uninstall"), "before any helm uninstall");
 });
 

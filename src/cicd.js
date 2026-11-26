@@ -17,10 +17,12 @@
 //     generated at random inside OpenBao.
 import {SECRET_KEYS} from "./state.js";
 import {EUROPESIP_WHITE_PNG} from "./brand/europesip-white.js";
+import {OPERATOR, helmFind, keepNewer, operatorKinds, kindsGuard, operatorCleanup} from "./compat.js";
 
 export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.13.0", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
-const OP_CRDS = ["dxconnections", "dxscriptapplications", "dxpages", "dxdamcollections", "dxdatabases", "dxthemes",
-  "dxwcmlibraryimports", "dxwcmlibraryexports", "dxexports", "dxxmlaccesses", "dxwcmadmintasks"].map(k => `dx.europesip.com_${k}`);
+const OP_KINDS = ["dxconnections", "dxscriptapplications", "dxpages", "dxdamcollections", "dxdatabases", "dxthemes",
+  "dxwcmlibraryimports", "dxwcmlibraryexports", "dxexports", "dxxmlaccesses", "dxwcmadmintasks"];
+const OP_CRDS = OP_KINDS.map(k => `dx.europesip.com_${k}`);
 const OP_CRD_URL = `https://raw.githubusercontent.com/europesip/dx-delivery-operator/v${VERSIONS.operator}/charts/dx-delivery-operator/crds/`;
 const DIR = "lab-cicd";
 const OB = "lab-cicd/openbao";                    // created by install.sh: init keys, operator password (mode 700)
@@ -682,14 +684,15 @@ export function applyCicd(form, s, files, steps, lang){
     add(`${DIR}/secret-store.yaml`, storeYaml(s, cns));
     add(`${DIR}/openbao-secrets.sh`, obSecrets(s, form), 0o100755);
     const install = form.openbaoMode === "existing" ? "" : `helm repo add openbao https://openbao.github.io/openbao-helm
-helm upgrade --install openbao openbao/openbao --version ${VERSIONS.openbao} -n ${cns} -f ${DIR}/openbao-values.yaml \\
-  --set server.dataStorage.storageClass=${s.SC_RWO}
+${keepNewer({label: "OpenBao", pinned: VERSIONS.openbao, find: helmFind(["openbao"], cns), body: `helm upgrade --install openbao openbao/openbao --version ${VERSIONS.openbao} -n ${cns} -f ${DIR}/openbao-values.yaml \\
+  --set server.dataStorage.storageClass=${s.SC_RWO}`})}
 `;
     C.push(mk("C-1", T(lang, "Secrets manager: OpenBao and External Secrets Operator", "Gestor de secretos: OpenBao y External Secrets Operator"),
       T(lang, `OpenBao (open-source Vault) keeps the secrets; External Secrets Operator turns them into Kubernetes Secrets. The unseal keys are written to ${OB}/openbao-init.txt: keep them safe.`,
               `OpenBao (Vault de código abierto) guarda los secretos; External Secrets Operator los convierte en Secrets de Kubernetes. Las claves de desbloqueo se escriben en ${OB}/openbao-init.txt: guárdalas bien.`),
       `${newNs}${install}helm repo add external-secrets https://charts.external-secrets.io
-helm upgrade --install external-secrets external-secrets/external-secrets --version ${VERSIONS.eso} -n ${cns} --set installCRDs=true ${W} --timeout 10m
+${keepNewer({label: "External Secrets Operator", pinned: VERSIONS.eso, find: helmFind(["external-secrets"], cns),
+  body: `helm upgrade --install external-secrets external-secrets/external-secrets --version ${VERSIONS.eso} -n ${cns} --set installCRDs=true ${W} --timeout 10m`})}
 ./${DIR}/openbao-init.sh`));
     C.push(mk("C-2", T(lang, "The secrets of this installation in OpenBao", "Los secretos de esta instalación en OpenBao"),
       T(lang, "It asks (hidden) for the external secrets that are not in OpenBao yet and generates the internal ones at random. The operator can also enter them beforehand in the OpenBao UI (see RUNBOOK.md).",
@@ -703,14 +706,16 @@ kubectl wait clustersecretstore/openbao-dx --for=condition=Ready --timeout=120s`
   if (form.cicdArgo) {
     add(`${DIR}/argocd-values.yaml`, argoValues(!!form.cicdOperator));
     C.push(mk("C-3", "Argo CD (GitOps)", T(lang, "Keeps the cluster equal to a Git repository. No Application is created: point it at your own repository.", "Mantiene el clúster igual que un repositorio Git. No se crea ninguna Application: apúntalo a tu propio repositorio."),
-      `${form.cicdOpenbao ? "" : newNs}helm upgrade --install argocd oci://ghcr.io/argoproj/argo-helm/argo-cd --version ${VERSIONS.argocd} -n ${cns} -f ${DIR}/argocd-values.yaml ${W} --timeout 10m
+      `${form.cicdOpenbao ? "" : newNs}${keepNewer({label: "Argo CD", pinned: VERSIONS.argocd, find: helmFind(["argo-cd"], cns),
+  body: `helm upgrade --install argocd oci://ghcr.io/argoproj/argo-helm/argo-cd --version ${VERSIONS.argocd} -n ${cns} -f ${DIR}/argocd-values.yaml ${W} --timeout 10m`})}
 kubectl -n ${cns} rollout status deploy/argocd-server --timeout=300s`,
       {manual: T(lang, `Argo CD UI: kubectl -n ${cns} port-forward svc/argocd-server 8080:443, then https://localhost:8080 (user admin; password: kubectl -n ${cns} get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d).`,
                        `Interfaz de Argo CD: kubectl -n ${cns} port-forward svc/argocd-server 8080:443 y https://localhost:8080 (usuario admin; contraseña: kubectl -n ${cns} get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d).`)}));
   }
   const OP = [];
   if (form.cicdOperator) {
-    add(`${DIR}/dxop-hello.yaml`, helloYaml(s, cns));
+    const hello = helloYaml(s, cns);
+    add(`${DIR}/dxop-hello.yaml`, hello);
     const adm = vault
       ? (add(`${DIR}/dxop-secrets.yaml`, esFile("Operator: the DX administrator it pushes with", [externalSecret(s, {name: "dxop-dx-admin", namespace: cns, type: "Opaque", labels: {}, data: {username: "wpsadmin", password: labRef("dxop-dx-admin")}})])),
          `kubectl apply -f ${DIR}/dxop-secrets.yaml\n${waitEs(cns, ["dxop-dx-admin"])}`)
@@ -719,15 +724,18 @@ kubectl -n ${cns} rollout status deploy/argocd-server --timeout=300s`,
     OP.push(mk("OP-1", T(lang, "DX Delivery Operator", "DX Delivery Operator"),
       T(lang, "Deploys Script Applications, pages, DAM files and databases from Kubernetes resources and keeps them in DX (github.com/europesip/dx-delivery-operator). Its image includes HCL DXClient: you accepted its license in the installer.",
               "Despliega Script Applications, páginas, ficheros del DAM y bases de datos desde recursos de Kubernetes y los mantiene en DX (github.com/europesip/dx-delivery-operator). Su imagen incluye HCL DXClient: aceptaste su licencia en el instalador."),
-      `${form.cicdOpenbao || form.cicdArgo ? "" : newNs}# The CRDs of this version first: Helm only installs CRDs on the first install, not on upgrades
+      `${form.cicdOpenbao || form.cicdArgo ? "" : newNs}${keepNewer({label: "DX Delivery Operator", pinned: VERSIONS.operator,
+  find: helmFind([OPERATOR.chart, ...OPERATOR.oldCharts]), why: "its CRDs are cluster-wide: applying older ones would downgrade them for every namespace",
+  body: `# The CRDs of this version first: Helm only installs CRDs on the first install, not on upgrades
 kubectl apply --server-side --force-conflicts ${OP_CRDS.map(c => `-f ${OP_CRD_URL}${c}.yaml`).join(" ")}
-helm upgrade --install dxop oci://ghcr.io/europesip/charts/dx-delivery-operator --version ${VERSIONS.operator} -n ${cns} \\
-  --set dxclient.acceptLicense=true ${W} --timeout 10m`));
+helm upgrade --install ${OPERATOR.release} oci://ghcr.io/europesip/charts/${OPERATOR.chart} --version ${VERSIONS.operator} -n ${cns} \\
+  --set dxclient.acceptLicense=true ${W} --timeout 10m`})}`));
     OP.push(mk("OP-2", T(lang, "Operator check: the hello sample on a page", "Comprobación del operador: el ejemplo hello en una página"),
       T(lang, "A DXConnection, one HTML file in a ConfigMap and its page. Delete it with: kubectl delete -f lab-cicd/dxop-hello.yaml", "Una DXConnection, un HTML en un ConfigMap y su página. Para borrarlo: kubectl delete -f lab-cicd/dxop-hello.yaml"),
       `${adm}
 kubectl -n ${ns} get secret dx-tls-cert -o jsonpath='{.data.tls\\.crt}' | base64 -d > ${DIR}/dx-ca.crt
 kubectl -n ${cns} create secret generic dxop-dx-ca --from-file=ca.crt=${DIR}/dx-ca.crt --dry-run=client -o yaml | kubectl apply -f -
+${kindsGuard(operatorKinds(hello), VERSIONS.operator)}
 kubectl apply -f ${DIR}/dxop-hello.yaml
 kubectl -n ${cns} wait dxscriptapplication/dxop-hello dxpage/dxop-hello --for=condition=Ready --timeout=600s`,
       {manual: T(lang, `Open https://${s.DX_HOST}/wps/myportal and the "DXOP Hello" page.`, `Abre https://${s.DX_HOST}/wps/myportal y la página «DXOP Hola».`)}));
@@ -849,7 +857,8 @@ export function cicdInstallSh(form, s, text){
   if (form.cicdOpenbao) t = t.replace("  set +e\n", `  set +e\n  for n in ${[...new Set([s.DX_NS, s.SHARED_NS, cns])].join(" ")}; do kubectl -n $n delete externalsecret --all --wait=true --timeout=2m 2>/dev/null; done\n`);
   // The resources of the DX Delivery Operator too, while it runs (it removes their finalizers; deletionPolicy
   // Retain by default, so nothing is deleted in DX)
-  if (form.cicdOperator) t = t.replace("  set +e\n", `  set +e\n  kubectl -n ${cns} delete dxpages,dxthemes,dxscriptapplications,dxdamcollections,dxdatabases,dxwcmlibraryimports,dxwcmlibraryexports,dxexports,dxxmlaccesses,dxwcmadmintasks,dxconnections --all --wait=true --timeout=3m 2>/dev/null\n`);
+  // Every kind the cluster serves, one by one: a kind unknown to an older or newer operator does not cancel the rest (#2)
+  if (form.cicdOperator) t = t.replace("  set +e\n", `  set +e\n${operatorCleanup(cns, OP_KINDS)}`);
   if (vault) {
     t = t.replace('cd "$(dirname "$0")"\n', `cd "$(dirname "$0")"\nsource lab-cicd/openbao-lib.sh; OB_PATH=${s.DX_NS}   # obv <path> <key>: a value from OpenBao\n`);
     t = t.split(LAB).join(S("wpsadmin", "password")).replace(/'@@OB:([\w-]+):([\w.-]+)@@'/g, (_, p, k) => `"$(obv ${p} ${k} 2>/dev/null)"`);
@@ -904,6 +913,10 @@ export function cicdRunbook(form, s, text, lang){
   const i = t.indexOf(es ? "\n## Ejecutarlo" : "\n## Run it");
   return i < 0 ? t + "\n" + block : t.slice(0, i + 1) + block + "\n" + t.slice(i + 1);
 }
+
+// What the compatibility checks of install.sh need to know about the operator (src/compat.js)
+export const operatorCompat = (form, s) => cicdOn(form) && form.cicdOperator
+  ? {pinned: VERSIONS.operator, kinds: operatorKinds(helloYaml(s, cicdNs(form)))} : null;
 
 export const CICD_DIR = {en: "Advanced CI/CD: OpenBao, External Secrets, Argo CD and the DX Delivery Operator", es: "CI/CD avanzado: OpenBao, External Secrets, Argo CD y el DX Delivery Operator"};
 export {SECRET_KEYS};

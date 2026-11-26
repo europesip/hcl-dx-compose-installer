@@ -9,6 +9,16 @@ es la misma que en la 2.0.x.
 
 ## Sin publicar
 
+- **Carpetas anteriores en un clúster más nuevo** (#2). La carpeta generada guarda con qué se generó: formato 2, la
+  versión del instalador y los charts fijados al principio de `install.sh` (también `prepare.sh` y `demo.sh`), en su
+  cabecera y en `BUILD-INFO.txt` (`bundle.format`, `operator`). El DX Delivery Operator, OpenBao, External Secrets
+  Operator y Argo CD nunca bajan de versión: si el clúster ya tiene un chart más nuevo, el paso lo mantiene y lo dice
+  (el operador se busca en todos los namespaces, porque sus CRD son de todo el clúster, y sus CRD no se vuelven a
+  aplicar). `install.sh` se para al principio, con las versiones que no coinciden, cuando un operador más nuevo del
+  clúster no sirve los tipos de la carpeta; el paso OP-2 los comprueba antes de aplicar el ejemplo hello. `--cleanup`
+  borra uno a uno todos los tipos del operador que sirve el clúster. Sin CI/CD solo son nuevas las líneas de versiones.
+  Ver [docs/troubleshooting.es.md](docs/troubleshooting.es.md).
+
 - **DX Delivery Operator 0.13.0** (antes *operador de Script Applications* 0.11.0; operador #52): el extra de CI/CD
   instala el operador con su nombre nuevo, chart `oci://ghcr.io/europesip/charts/dx-delivery-operator` y CRDs de
   `europesip/dx-delivery-operator`; todos los textos del asistente, el RUNBOOK y la documentación usan el nombre nuevo.

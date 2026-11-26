@@ -70,6 +70,31 @@ One page of the HCL documentation sets `LITELLM_URL` and `LITELLM_API_KEY` in `e
 defines both variables again after yours, so its own ones win. The address goes in
 `configuration.litellm.liteLlmUrl` and the key in the Secret `iq-litellm-api-secret`, as the installer does.
 
+## A folder generated earlier fails against a newer operator or extra
+
+**Cause:** a generated folder pins the versions it was generated with (BUILD-INFO.txt: `installer.version`,
+`bundle.format`, `third-party charts`, `operator`). When the cluster was upgraded afterwards, for example to a newer
+DX Delivery Operator, an older folder used to downgrade the operator (its CRDs stayed newer), apply kinds that no longer
+existed (`ScriptApplication` became `DXScriptApplication` in operator 0.3.0), and its `--cleanup` deleted nothing when
+one kind was unknown.
+
+**What the folder does since bundle format 2** (`BUNDLE_FORMAT=2` at the top of `install.sh`):
+
+- The header of `install.sh` prints the installer version, the bundle format and the pinned charts.
+- The DX Delivery Operator, OpenBao, External Secrets Operator and Argo CD are **never downgraded**: when the cluster
+  already runs a newer chart (the operator is looked for in every namespace, because its CRDs are cluster-wide), the
+  step keeps it and says so.
+- Before anything is installed, `install.sh` compares the operator in the cluster with the one of the folder. If the
+  cluster runs a newer operator that no longer serves a kind (or API version) the folder uses, it **stops at the
+  start** and says which versions differ. Step OP-2 checks the same before it applies the hello sample.
+- `--cleanup` deletes every kind of the operator that the cluster serves, one by one, so no namespace is left
+  Terminating because of an unknown kind.
+
+**Fix:** generate the folder again with the current installer and the same options (the message says so), or, for a
+throw-away cluster, uninstall the newer operator first. With a folder of bundle format 1 (no `bundle.format` in
+BUILD-INFO.txt), edit by hand: the `--version` of step OP-1 (or 1-6), the `kind:` of `lab-cicd/dxop-hello.yaml` and the
+list of kinds in the `--cleanup` of `install.sh`.
+
 ## Asking for help
 
 Send:

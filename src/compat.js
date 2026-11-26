@@ -1,0 +1,115 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 EUROPESIP
+// Compatibility of a generated folder with what is already in the cluster (issue #2; output layer, the engine stays
+// as the golden test expects). A folder is kept to rebuild a demo or a PoC weeks later, when the cluster may run newer
+// versions of the extras it installs:
+//   - every folder records what it was generated with: the bundle format, the installer version and the pinned
+//     third-party charts, at the top of its scripts, in their header and in BUILD-INFO.txt;
+//   - an extra that may already be installed (the DX Delivery Operator, OpenBao, External Secrets Operator, Argo CD)
+//     is never downgraded: when the cluster runs a newer chart, the step keeps it and says so;
+//   - the DX Delivery Operator: before the folder applies its resources, the kinds it uses (and their API version)
+//     must be served by the CRDs in the cluster, or install.sh stops at the start with the versions that differ;
+//     --cleanup deletes every kind the cluster serves, one by one, so an unknown kind does not cancel the rest.
+
+import {APP_VERSION} from "./support.js";
+
+// 1: folders before this change (no record). 2: versions recorded, extras never downgraded, operator kinds checked.
+export const BUNDLE_FORMAT = 2;
+
+export const OPERATOR = {
+  release: "dxop",
+  chart: "dx-delivery-operator",
+  oldCharts: ["hcl-dx-scriptapp-operator"],     // the same operator before the rename (0.13.0), release dxop as well
+  group: "dx.europesip.com",
+};
+
+const sh1 = v => "'" + String(v).replace(/'/g, "'\\''") + "'";
+
+// Shell that prints "<version> <namespace>" of every Helm release of these charts, in all namespaces (or one)
+export const helmFind = (charts, ns = "") =>
+  `helm list ${ns ? `-n ${ns}` : "-A"} -o json 2>/dev/null | tr '{' '\\n' | sed -nE 's/.*"namespace":"([^"]*)".*"chart":"(${charts.join("|")})-([0-9][^"]*)".*/\\3 \\1/p'`;
+
+// A step body that runs only when the cluster has no newer release of the chart: "keep newer, never downgrade".
+// `find` prints "<version> <namespace>" lines (helmFind). The body keeps its literal --version (BUILD-INFO.txt).
+export function keepNewer({label, pinned, find, body, why = ""}){
+  const ind = body.split("\n").map(l => l ? "  " + l : l).join("\n");
+  return `# Never downgraded: if ${label} newer than ${pinned} (this folder) is already installed, it is kept${why ? `\n# (${why})` : ""}
+found=$(${find} | sort -V | tail -1 || true)
+if [ -n "$found" ] && [ "\${found%% *}" != ${pinned} ] && [ "$(printf '%s\\n' ${pinned} "\${found%% *}" | sort -V | tail -1)" = "\${found%% *}" ]; then
+  echo "${label} \${found%% *} found (namespace \${found#* }), newer than ${pinned} (the version of this folder): kept, not downgraded"
+else
+${ind}
+fi`;
+}
+
+// The kinds of the operator a YAML file uses, with their API version: [["dx.europesip.com/v1alpha1", "DXPage"], ...]
+export function operatorKinds(yaml){
+  const out = [];
+  for (const m of yaml.matchAll(/^apiVersion: (dx\.europesip\.com\/\S+)\nkind: (\S+)$/gm))
+    if (!out.some(([a, k]) => a === m[1] && k === m[2])) out.push([m[1], m[2]]);
+  return out;
+}
+
+// Shell that sets `dxop_missing` to the kinds (apiVersion/Kind) not served by the cluster (empty: all of them are)
+const servedCheck = kinds => `dxop_served=$(kubectl api-resources --api-group=${OPERATOR.group} --no-headers 2>/dev/null | awk '{print $(NF-2)"/"$NF}' || true)
+dxop_missing=''; for k in ${kinds.map(([a, k]) => `${a}/${k}`).join(" ")}; do printf '%s\\n' "$dxop_served" | grep -qx "$k" || dxop_missing="$dxop_missing \${k##*/}"; done`;
+
+// Step OP-2 (and the RUNBOOK): the kinds of the sample must be served before it is applied
+export function kindsGuard(kinds, pinned){
+  return `# The kinds of this folder must be served by the operator in the cluster (they were renamed once, in 0.3.0)
+${servedCheck(kinds)}
+[ -z "$dxop_missing" ] || { echo "The DX Delivery Operator in the cluster does not serve:$dxop_missing (this folder was generated for ${pinned}). Generate the folder again with the current installer, or install the operator ${pinned}." >&2; false; }`;
+}
+
+// install.sh: right after the cluster is reachable, before anything is installed
+function operatorPreflight(kinds, pinned){
+  return `# The DX Delivery Operator this folder expects (${pinned}, ${[...new Set(kinds.map(([a]) => a))].join(", ")}) and the one in the cluster
+dxop_found=$(${helmFind([OPERATOR.chart, ...OPERATOR.oldCharts])} | sort -V | tail -1 || true)
+if [ -n "$dxop_found" ] && [ "\${dxop_found%% *}" != ${pinned} ]; then
+  if [ "$(printf '%s\\n' ${pinned} "\${dxop_found%% *}" | sort -V | tail -1)" = ${pinned} ]; then
+    echo "\${Y}DX Delivery Operator \${dxop_found%% *} found (namespace \${dxop_found#* }): this folder upgrades it to ${pinned}.\${N}"
+  else
+    ${servedCheck(kinds).split("\n").join("\n    ")}
+    if [ -n "$dxop_missing" ]; then
+      echo "\${R}This folder was generated by installer v${APP_VERSION} for the DX Delivery Operator ${pinned}; the cluster runs \${dxop_found%% *} (namespace \${dxop_found#* }), which does not serve:$dxop_missing.\${N}"
+      echo "Generate the folder again with the current installer (same options), or uninstall the newer operator first."; exit 1
+    fi
+    echo "\${Y}DX Delivery Operator \${dxop_found%% *} found (namespace \${dxop_found#* }), newer than ${pinned}: it is kept, not downgraded, and serves every kind of this folder.\${N}"
+  fi
+fi
+`;
+}
+
+// --cleanup: every kind of the operator the cluster serves, one by one (DXConnection last: the others use it)
+export function operatorCleanup(ns, known){
+  return `  dxr=$(kubectl api-resources --api-group=${OPERATOR.group} --namespaced -o name 2>/dev/null); [ -n "$dxr" ] || dxr=${sh1(known.map(k => `${k}.${OPERATOR.group}`).join(" "))}
+  for r in $(printf '%s\\n' $dxr | grep -v '^dxconnections\\.') $(printf '%s\\n' $dxr | grep '^dxconnections\\.'); do kubectl -n ${ns} delete "$r" --all --wait=true --timeout=3m 2>/dev/null || echo "  could not delete every $r"; done
+`;
+}
+
+// The third-party charts a script installs, with their pinned version ("repo/chart version")
+export const pinnedCharts = text => [...new Set([...text.matchAll(/upgrade --install (\S+) (\S+) (?:[^\n]*?)--version (\S+)/g)].map(m => `${m[2].replace(/^oci:\/\//, "")} ${m[3]}`))];
+
+// Every script of the folder (install.sh, prepare.sh, demo.sh): what it was generated with, at the top and in the
+// header it prints; with the operator, the early check of its version and kinds
+export function compatScript(text, {operator} = {}){
+  if (!/^set -Eeuo pipefail$/m.test(text) || !/\nstep_0\(\) \{/.test(text)) return text;
+  const charts = pinnedCharts(text);
+  let t = text.replace('cd "$(dirname "$0")"\n', `cd "$(dirname "$0")"
+# What this folder was generated with (BUILD-INFO.txt has the rest). It never downgrades what the cluster already runs.
+BUNDLE_FORMAT=${BUNDLE_FORMAT}; INSTALLER_VERSION=${sh1(APP_VERSION)}
+PINNED_CHARTS=${sh1(charts.join(" · ") || "-")}
+`);
+  t = t.replace(/^(echo "  namespaces {6}: .*\n)/m, `$1echo "  generated with  : installer v$INSTALLER_VERSION · bundle format $BUNDLE_FORMAT"
+echo "  pinned charts   : $PINNED_CHARTS"
+`);
+  if (operator) t = t.replace(/^(echo "\$\{B\}HCL DX Compose · .*\n)/m, m => operatorPreflight(operator.kinds, operator.pinned) + m);
+  return t;
+}
+
+// BUILD-INFO.txt: the bundle format, and the operator version and kinds the folder expects
+export function compatBuildInfo(text, {operator} = {}){
+  return text.replace(/^(installer\.version : .*\n)/m, m => m
+    + `bundle.format     : ${BUNDLE_FORMAT} (versions recorded; extras already in the cluster are never downgraded)\n`
+    + (operator ? `operator          : ${OPERATOR.chart} ${operator.pinned} · kinds ${operator.kinds.map(([a, k]) => `${k} (${a})`).join(", ")}\n` : ""));
+}

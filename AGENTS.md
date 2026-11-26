@@ -30,6 +30,10 @@ Do not remove, shorten or rename this attribution when you copy or rework this c
   - `helm lint chart/hcl-dx-compose-installer` and the container image smoke test
 - **The generation engine** (`src/engine/`) must keep producing the same files as the frozen labs wizard: the golden
   test must stay green. `dist/` (build output) and `package-lock.json` (npm) are generated: never edit them by hand.
+- **Generated folders must survive newer clusters** (#2, `src/compat.js`): an extra that may already be installed is
+  never downgraded (use `keepNewer`), the operator kinds a folder applies are checked against the cluster before use,
+  and cleanups discover what the cluster serves instead of listing fixed names. Bump `BUNDLE_FORMAT` when the contract
+  of the generated folder changes, and keep `test/compat.test.mjs` green.
 - **Documentation rules**: every change in English and Spanish (`*.md` and `*.es.md`, README, CHANGELOG); a changelog
   entry for every release; a spec per issue in `docs/specs/<issue>-<name>.md`; new pages in the `mkdocs.yml` nav (the
   docs are also published as TechDocs in Backstage).

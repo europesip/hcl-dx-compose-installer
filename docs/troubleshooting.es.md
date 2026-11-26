@@ -69,6 +69,31 @@ Una página de la documentación de HCL pone `LITELLM_URL` y `LITELLM_API_KEY` e
 vuelve a definir las dos variables después de las tuyas, así que ganan las suyas. La dirección va en
 `configuration.litellm.liteLlmUrl` y la clave en el Secret `iq-litellm-api-secret`, como hace el instalador.
 
+## Una carpeta generada antes falla con un operador o un extra más nuevo
+
+**Causa:** la carpeta generada fija las versiones con las que se generó (BUILD-INFO.txt: `installer.version`,
+`bundle.format`, `third-party charts`, `operator`). Si el clúster se actualizó después, por ejemplo a un DX Delivery
+Operator más nuevo, una carpeta anterior bajaba de versión el operador (sus CRD seguían siendo las nuevas), aplicaba
+tipos que ya no existían (`ScriptApplication` pasó a `DXScriptApplication` en el operador 0.3.0) y su `--cleanup` no
+borraba nada cuando un tipo era desconocido.
+
+**Qué hace la carpeta desde el formato 2** (`BUNDLE_FORMAT=2` al principio de `install.sh`):
+
+- La cabecera de `install.sh` muestra la versión del instalador, el formato de la carpeta y los charts fijados.
+- El DX Delivery Operator, OpenBao, External Secrets Operator y Argo CD **nunca bajan de versión**: si el clúster ya
+  tiene un chart más nuevo (el operador se busca en todos los namespaces, porque sus CRD son de todo el clúster), el
+  paso lo mantiene y lo dice.
+- Antes de instalar nada, `install.sh` compara el operador del clúster con el de la carpeta. Si el clúster tiene un
+  operador más nuevo que ya no sirve un tipo (o una versión de la API) que usa la carpeta, **se para al principio** y
+  dice qué versiones no coinciden. El paso OP-2 comprueba lo mismo antes de aplicar el ejemplo hello.
+- `--cleanup` borra, uno a uno, todos los tipos del operador que sirve el clúster, así que ningún namespace se queda en
+  Terminating por un tipo desconocido.
+
+**Solución:** genera la carpeta otra vez con el instalador actual y las mismas opciones (lo dice el mensaje) o, en un
+clúster de pruebas, desinstala antes el operador más nuevo. Con una carpeta del formato 1 (sin `bundle.format` en
+BUILD-INFO.txt), corrige a mano: el `--version` del paso OP-1 (o 1-6), el `kind:` de `lab-cicd/dxop-hello.yaml` y la
+lista de tipos del `--cleanup` de `install.sh`.
+
 ## Pedir ayuda
 
 Envía:
