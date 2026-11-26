@@ -142,5 +142,16 @@ test("the operator CRDs of its version are applied before helm (Helm skips CRDs 
   const sh = all(CICD).entries.find(e => e.name.endsWith("install.sh")).text;
   const crd = sh.indexOf("dx.europesip.com_dxthemes.yaml"), helmAt = sh.indexOf("upgrade --install dxop");
   assert.ok(crd > 0 && crd < helmAt, "CRDs before the operator chart");
-  assert.match(sh, /retry kubectl apply --server-side --force-conflicts -f https:\/\/raw\.githubusercontent\.com\/europesip\/dx-delivery-operator\/v0\.13\.0\//);
+  assert.match(sh, /retry kubectl apply --server-side --force-conflicts -f https:\/\/raw\.githubusercontent\.com\/europesip\/dx-delivery-operator\/v0\.17\.0\//);
+});
+
+test("operator 0.17.0 (#53): every CRD of the chart, DXJavaExtension health in Argo CD, only the licence value set", () => {
+  const g = all(CICD), sh = g.entries.find(e => e.name.endsWith("install.sh")).text;
+  for (const k of ["dxconnections", "dxscriptapplications", "dxpages", "dxdamcollections", "dxdatabases", "dxthemes",
+    "dxwcmlibraryimports", "dxwcmlibraryexports", "dxexports", "dxxmlaccesses", "dxwcmadmintasks", "dxjavaextensions"])
+    assert.ok(sh.includes(`/v0.17.0/charts/dx-delivery-operator/crds/dx.europesip.com_${k}.yaml`), k);
+  assert.match(sh, /dx-delivery-operator --version 0\.17\.0 -n \S+ \\\n\s+--set dxclient\.acceptLicense=true --wait/);
+  assert.doesNotMatch(sh, /--set (javaExtensions|podSecurityContext|containerSecurityContext|securityContext)/);
+  const argo = g.entries.find(e => e.name.endsWith("argocd-values.yaml")).text;
+  assert.match(argo, /resource\.customizations\.health\.dx\.europesip\.com_DXJavaExtension: \|/);
 });
