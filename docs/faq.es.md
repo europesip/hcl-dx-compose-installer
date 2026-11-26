@@ -76,6 +76,14 @@ mismos nombres y rutas que en hclcr.io (o hacer de proxy / mirror de hclcr.io); 
 los custom values antes de instalar. Las imágenes de terceros (OpenLDAP, PostgreSQL, LiteLLM...) siguen viniendo de sus
 registros públicos.
 
+**¿Puedo cambiar la zona horaria de DX, o desactivar el comprobador de requisitos de HCL?**
+Sí: *Avanzado › Ajustes de DX* en la página de detalles. La zona horaria (nombre IANA, `Europe/Madrid` por defecto) fija
+`TZ` en todos los contenedores de DX y en Search: los logs y las tareas programadas la siguen; sin ella los contenedores
+van en UTC. Con sindicación de WCM o DAM Staging, todos los entornos de DX deben usar la misma zona horaria. El
+comprobador de requisitos (activado por defecto, como en el chart de HCL) es un sidecar en los pods con volúmenes (DAM,
+Persistence Node) que los comprueba cada día a las 08:00 y escribe el resultado en su log
+(`kubectl logs <pod> -c prereqs-checker`); nunca bloquea un pod.
+
 **¿Pueden los usuarios de DX entrar con Keycloak?**
 Sí: *Keycloak* en la sección avanzada del despliegue Personalizado (necesita el OpenLDAP de la etapa 2, no OpenBao). Lo
 que hizo falta para que funcionase: [Software de terceros](third-party.es.md).

@@ -56,6 +56,8 @@ Examples: [`docs/headless-examples/`](https://github.com/europesip/hcl-dx-compos
 | `DX_NS`, `SHARED_NS` | Namespaces of HCL DX and of the third-party tools |
 | `INGRESS_KIND`, `SC_RWO`, `SC_RWX`, `helm` | Ingress, storage classes, Helm 3 or 4 |
 | `lab1b`, `dir`, `db`, `lab3`, `lab3b`, `iqdb`, `iqrag`, `lab4`, `lab5`, `keycloak`, `cicd*`... | The stages and extras of the page |
+| `DX_TIMEZONE` | Time zone of every DX container (`configuration.containerTimezone`, also in Search): an IANA name, `Europe/Madrid` by default (`UTC`, `Europe/London`...). An invalid name is an error. With WCM syndication or DAM Staging, every DX environment must use the same time zone |
+| `prereqsChecker` | `true` (default, as the chart): the HCL prerequisites checker sidecar in the pods with volumes, which checks them every day at 08:00 and writes the result to its log. `false`: no sidecar |
 
 The full list, with types and defaults: `dx-installer schema`.
 

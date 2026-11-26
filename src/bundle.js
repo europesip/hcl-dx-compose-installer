@@ -16,6 +16,7 @@ import {resourcesMd} from "./resources.js";
 import {altRegistryOn, registryForm, applyRegistry, REGISTRY_NOTE} from "./registry.js";
 import {basicOn, applyBasic, BASIC_NOTE} from "./basic.js";
 import {coreOn, applyRuntime, CORE_NOTE} from "./runtime.js";
+import {applyDxConfig, tzError, dxConfigMd} from "./dxconfig.js";
 import {sopsOn, parseSopsKeys, sopsErrors, baseSecretFiles, harborPromptDemo, sopsRunbookNote, SOPS_FILES} from "./sops.js";
 import {applyCicd, cicdInstallSh, cicdRunbook, cicdOn, vaultOn, vaultForm, CICD_DIR} from "./cicd.js";
 export {zipBytes} from "./zip.js";
@@ -76,11 +77,13 @@ export function generate(form, lang){
   if (form.cicdOperator && cicd && !form.dxcLicense) check.err.push(lang === "es" ? "El DX Delivery Operator incluye HCL DXClient: acepta su licencia." : "The DX Delivery Operator includes HCL DXClient: accept its license.");
   if (form.altRegistry && !altRegistryOn(form)) check.err.push(lang === "es" ? "Indica la dirección de tu repositorio de imágenes." : "Enter the address of your image registry.");
   if (cicd && form.cicdSameNs === false && !/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test((form.CICD_NS || "").trim())) check.err.push(lang === "es" ? "Namespace de CI/CD no válido." : "Invalid CI/CD namespace.");
+  { const e = tzError(form, lang); if (e) check.err.push(e); }   // time zone of the DX containers (src/dxconfig.js)
   engine.ensureLitellmKey();                 // the same key in every file of this page load
   const lk = t => vault && typeof t === "string" ? t.split(engine.litellmKey).join("@@OB:litellm:masterKey@@") : t;
   let files = Object.fromEntries(Object.entries(engine.bundleFiles(s)).map(([p, f]) =>
     [renamePath(p), /\.sql$/.test(p) ? f : {...f, text: lk(alignFile(renamePath(p), renameText(f.text)))}]));   // the HCL table script is left as it is
   files = Object.fromEntries(Object.entries(files).map(([p, f]) => [p, p.endsWith("demo-users.ldif") ? {...f, text: peopleLdif(f.text)} : f]));   // real EUROPESIP people (src/people.js)
+  files = applyDxConfig(form, files);   // time zone and prerequisites checker of the Advanced section (src/dxconfig.js)
   files = corporateCaFiles(files, s, {webinar: form.preset === "webinar"});   // OpenLDAP and PostgreSQL over SSL (src/corporate-ca.js)
   let raw = engine.directSteps(s).map(renameStep).map(st => ({...st, cmd: lk(st.cmd)}));
   ({files, steps: raw} = applyCicd(form, s, files, raw, lang));
@@ -127,7 +130,8 @@ export function generate(form, lang){
   }
   runbook = cicdRunbook(form, s, buildRunbook(s, webinar ? {prep, demo} : {steps}, files, lang, {pgSql, dirs}), lang);
   { const i = runbook.search(/\n## (Run it|Ejecutarlo|Phase 1|Fase 1|CI\/CD|Advanced CI\/CD)/);   // resources before running it
-    runbook = i < 0 ? runbook + "\n" + resourcesMd(form, lang) : runbook.slice(0, i + 1) + resourcesMd(form, lang) + "\n" + runbook.slice(i + 1); }
+    const add = resourcesMd(form, lang) + "\n" + dxConfigMd(form, lang);   // and the DX settings (time zone, checker: src/dxconfig.js)
+    runbook = i < 0 ? runbook + "\n" + add : runbook.slice(0, i + 1) + add + "\n" + runbook.slice(i + 1); }
   runbook = runbook.replace(/^(# .*\n)/, m => m + "\n" + disclaimerMd(lang));   // scope disclaimer (#5)
   runbook = supportRunbook(runbook, s, steps, webinar, lang);
   if (sops) { const i = runbook.indexOf("\n#### 1-2 ·");   // what SOPS does in step 1-1, who can decrypt (src/sops.js)

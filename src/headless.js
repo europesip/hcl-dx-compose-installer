@@ -26,6 +26,7 @@ const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url),
 if (typeof globalThis.__APP_VERSION__ !== "string") globalThis.__APP_VERSION__ = pkg.version;
 const {DEFAULTS, applyPreset, SECRET_KEYS} = await import("./state.js");
 const {generate, zipBytes, secretValues} = await import("./bundle.js");
+const {tzError} = await import("./dxconfig.js");
 
 export const VERSION = pkg.version;
 export const SCHEMA_VERSION = 1;
@@ -48,6 +49,8 @@ const DESCRIPTIONS = {
   BASIC_LDAP_SUFFIX: "basic: base DN of the searches (e.g. dc=example,dc=com)",
   BASIC_LDAP_SECRET: "basic: Secret that already exists in DX_NS with bindUser and bindPassword (e.g. made by an ExternalSecret)",
   DX_RUNTIME: "The DX server: compose (default) = DX Compose, the Web Engine on Open Liberty · core = DX Core, the traditional HCL DX 9.5 server on WebSphere Application Server (phase 1: base portal and DAM on Derby; only with the custom and basic presets; no LDAP, external database, IQ, Search, Leap or CI/CD options yet)",
+  DX_TIMEZONE: "Time zone of every DX container (configuration.containerTimezone of hcl-dx-deployment, and the same in hcl-dx-search): an IANA name such as Europe/Madrid (default), Europe/London, America/New_York or UTC. With WCM syndication or DAM Staging, every DX environment must use the same time zone",
+  prereqsChecker: "true (default, as the chart) = the HCL prerequisites checker: a sidecar (prereqs-checker) in the pods with volumes (DAM, Persistence Node) that checks them every day at 08:00 and writes the result to its log, never blocking a pod; false = no sidecar",
   platform: "kubernetes (your cluster), openshift, or poc (k3s on one machine)",
   DX_HOST: "Host name of the portal (e.g. dx.example.com); poc defaults to dx-demo.127.0.0.1.nip.io",
   DX_NS: "Namespace of HCL DX", SHARED_NS: "Namespace of the third-party tools (OpenLDAP, PostgreSQL, LiteLLM...)",
@@ -92,6 +95,7 @@ export function validateAnswers(answers, {secrets = "omit"} = {}){
     if (answers.dir && answers.dir !== "none") errs.push("dir must be none with DX_RUNTIME core (no LDAP yet)");
     if (answers.db && answers.db !== "none") errs.push("db must be none with DX_RUNTIME core (Derby only for now)");
   }
+  if (typeof answers.DX_TIMEZONE === "string") { const e = tzError(answers); if (e) errs.push(`DX_TIMEZONE: ${e}`); }
   if (answers.BASIC_LDAP_HOST) {
     if (!/^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$/i.test(answers.BASIC_LDAP_HOST)) errs.push("BASIC_LDAP_HOST must be a host name");
     if (!/^[0-9]{2,5}$/.test(answers.BASIC_LDAP_PORT ?? "389")) errs.push("BASIC_LDAP_PORT must be a port number");

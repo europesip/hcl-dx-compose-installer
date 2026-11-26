@@ -73,6 +73,13 @@ controls and scans every image. The registry must already hold a copy of the HCL
 and paths as in hclcr.io (or proxy / mirror hclcr.io); otherwise change the image paths in the custom values before
 installing. The third-party images (OpenLDAP, PostgreSQL, LiteLLM...) still come from their public registries.
 
+**Can I change the time zone of DX, or switch off the HCL prerequisites checker?**
+Yes: *Advanced › DX settings* on the details page. The time zone (IANA name, `Europe/Madrid` by default) sets `TZ` in
+every DX container and in Search: logs and scheduled tasks follow it; without it the containers run in UTC. With WCM
+syndication or DAM Staging, every DX environment must use the same time zone. The prerequisites checker (on by default,
+as in the HCL chart) is a sidecar in the pods with volumes (DAM, Persistence Node) that checks them every day at 08:00
+and writes the result to its log (`kubectl logs <pod> -c prereqs-checker`); it never blocks a pod.
+
 **Can DX users sign in with Keycloak?**
 Yes: *Keycloak* in the advanced section of the Custom deployment (it needs the OpenLDAP of stage 2, not OpenBao). What
 we had to do to make it work: [Third-party software](third-party.md).
