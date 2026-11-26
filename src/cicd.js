@@ -19,9 +19,9 @@ import {SECRET_KEYS} from "./state.js";
 import {EUROPESIP_WHITE_PNG} from "./brand/europesip-white.js";
 import {OPERATOR, helmFind, keepNewer, operatorKinds, kindsGuard, operatorCleanup} from "./compat.js";
 
-export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.13.0", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
+export const VERSIONS = {openbao: "0.30.7", openbaoApp: "2.7.2", eso: "2.14.0", argocd: "10.15.0", argocdApp: "3.6.1", operator: "0.17.0", keycloak: "26.8.2", orbitaOidc: "3.1.2"};
 const OP_KINDS = ["dxconnections", "dxscriptapplications", "dxpages", "dxdamcollections", "dxdatabases", "dxthemes",
-  "dxwcmlibraryimports", "dxwcmlibraryexports", "dxexports", "dxxmlaccesses", "dxwcmadmintasks"];
+  "dxwcmlibraryimports", "dxwcmlibraryexports", "dxexports", "dxxmlaccesses", "dxwcmadmintasks", "dxjavaextensions"];
 const OP_CRDS = OP_KINDS.map(k => `dx.europesip.com_${k}`);
 const OP_CRD_URL = `https://raw.githubusercontent.com/europesip/dx-delivery-operator/v${VERSIONS.operator}/charts/dx-delivery-operator/crds/`;
 const DIR = "lab-cicd";
@@ -144,7 +144,7 @@ if obj.status ~= nil and obj.status.conditions ~= nil then
 end
 return hs`;
   const kinds = ["DXScriptApplication", "DXPage", "DXDamCollection", "DXDatabase", "DXConnection", "DXTheme",
-    "DXWCMLibraryImport", "DXWCMLibraryExport", "DXExport", "DXXMLAccess", "DXWCMAdminTask"];
+    "DXWCMLibraryImport", "DXWCMLibraryExport", "DXExport", "DXXMLAccess", "DXWCMAdminTask", "DXJavaExtension"];
   return `# Argo CD ${VERSIONS.argocdApp} (chart oci://ghcr.io/argoproj/argo-helm/argo-cd ${VERSIONS.argocd}): GitOps, it keeps the cluster equal to a Git repository.
 # The UI is reached with kubectl port-forward (see RUNBOOK.md); no Application is created: point it at your repository.
 dex:
@@ -728,6 +728,8 @@ kubectl -n ${cns} rollout status deploy/argocd-server --timeout=300s`,
   find: helmFind([OPERATOR.chart, ...OPERATOR.oldCharts]), why: "its CRDs are cluster-wide: applying older ones would downgrade them for every namespace",
   body: `# The CRDs of this version first: Helm only installs CRDs on the first install, not on upgrades
 kubectl apply --server-side --force-conflicts ${OP_CRDS.map(c => `-f ${OP_CRD_URL}${c}.yaml`).join(" ")}
+# Chart defaults otherwise: no fixed UID (podSecurityContext runAsNonRoot, RuntimeDefault seccomp; the image runs as
+# UID 1000), and Java extensions (DXJavaExtension, javaExtensions.enabled) off: no webhook, no cert-manager needed
 helm upgrade --install ${OPERATOR.release} oci://ghcr.io/europesip/charts/${OPERATOR.chart} --version ${VERSIONS.operator} -n ${cns} \\
   --set dxclient.acceptLicense=true ${W} --timeout 10m`})}`));
     OP.push(mk("OP-2", T(lang, "Operator check: the hello sample on a page", "Comprobación del operador: el ejemplo hello en una página"),
