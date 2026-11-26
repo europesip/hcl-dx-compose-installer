@@ -28,6 +28,12 @@ const VARIANTS = {
     ORACLE_JDBC_URL: "jdbc:oracle:thin:@//db.example.com:1521/X", ORACLE_DX_PASSWORD: "p"}, "custom"],
   "custom-core": [{DX_RUNTIME: "core", dir: "none", db: "none", lab3: false, lab4: false}, "custom"],
   basic: [{IMAGE_PULL_SECRET: "pull"}, "basic"], "basic-pg-ldap": [{IMAGE_PULL_SECRET: "pull", BASIC_PG: true, BASIC_LDAP_HOST: "ldap.example.com", BASIC_LDAP_SUFFIX: "dc=example,dc=com"}, "basic"],
+  "ext-ldap": [{dir: "ldap", DIR_HOST: "ldap.example.com", DIR_BASE_DN: "dc=example,dc=com", DIR_BIND_DN: "cn=reader,dc=example,dc=com"}, "all"],
+  "ext-ldap-keycloak": [{...CICD, dir: "ldap", DIR_HOST: "ldap.example.com", DIR_BASE_DN: "dc=example,dc=com", DIR_BIND_DN: "cn=reader,dc=example,dc=com"}, "all"],
+  "ext-ad": [{dir: "ad", DIR_HOST: "ad.example.com", DIR_BASE_DN: "dc=example,dc=com", DIR_BIND_DN: "cn=reader,dc=example,dc=com"}, "custom"],
+  "ext-ad-keycloak": [{...CICD, dir: "ad", DIR_HOST: "ad.example.com", DIR_BASE_DN: "dc=example,dc=com", DIR_BIND_DN: "cn=reader,dc=example,dc=com"}, "custom"],
+  "ext-ldap-test-image": [{dir: "ldap", DIR_HOST: "ldap.example.com", DIR_BASE_DN: "dc=example,dc=com", DIR_BIND_DN: "cn=r", DIR_TEST_IMAGE: "bitnami/openldap:2.6"}, "custom"],
+  "basic-ext-ldap": [{IMAGE_PULL_SECRET: "pull", dir: "ldap", DIR_HOST: "ldap.example.com", DIR_BASE_DN: "dc=example,dc=com", DIR_BIND_DN: "cn=r"}, "basic"],
   "all-anonymous": [{REGISTRY_USER: "", REGISTRY_PASSWORD: ""}, "all"], "all-flat": [{REGISTRY_LAYOUT: "flat"}, "all"],
 };
 const REG_REF = new RegExp(REG.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "[^\\s'\"]*", "g");

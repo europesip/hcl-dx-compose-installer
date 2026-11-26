@@ -18,7 +18,7 @@ installation is the same as in 2.0.x.
   creating the pull secret in every namespace (and on their `default` ServiceAccount). Every image and chart reference is
   rewritten: values and manifests, the Helm repositories (`helm repo add` → `oci://`), the operator charts, the
   Keycloak operator and DX Delivery Operator CRD manifests (downloaded into `mirror/manifests/`), and the images the
-  charts use by default (`mirror/values/<chart>.yaml`). Path layout: `<registry>/<original registry>/<path>` (default)
+  charts use by default (`mirror/values/<chart>.yaml`). Also the ldapsearch test pod of an existing directory (#52) and the DX Delivery Operator 0.17.0. Path layout: `<registry>/<original registry>/<path>` (default)
   or flat. The CA of the registry goes to `internals-ca/registry-ca.crt`. Headless answers: `REGISTRY_SCOPE`,
   `REGISTRY_LAYOUT`, `REGISTRY_CHARTS_PATH`, `MIRROR_TOOL`, `MIRROR_PREFLIGHT`. Guide and known limits:
   [docs/air-gapped.md](docs/air-gapped.md). The frozen engine is untouched (output layer `src/mirror.js`).

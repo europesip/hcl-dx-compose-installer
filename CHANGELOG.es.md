@@ -19,7 +19,7 @@ es la misma que en la 2.0.x.
   su ServiceAccount `default`). Se reescriben todas las referencias a imágenes y charts: values y manifiestos, los
   repositorios de Helm (`helm repo add` → `oci://`), los charts de los operadores, los manifiestos del operador de
   Keycloak y de las CRDs del DX Delivery Operator (descargados en `mirror/manifests/`) y las imágenes que los charts usan
-  por defecto (`mirror/values/<chart>.yaml`). Esquema de rutas: `<registro>/<registro original>/<ruta>` (por defecto) o
+  por defecto (`mirror/values/<chart>.yaml`). También el pod de prueba ldapsearch de un directorio existente (#52) y el DX Delivery Operator 0.17.0. Esquema de rutas: `<registro>/<registro original>/<ruta>` (por defecto) o
   plano. La CA del registro va en `internals-ca/registry-ca.crt`. Respuestas headless: `REGISTRY_SCOPE`,
   `REGISTRY_LAYOUT`, `REGISTRY_CHARTS_PATH`, `MIRROR_TOOL`, `MIRROR_PREFLIGHT`. Guía y límites conocidos:
   [docs/air-gapped.es.md](docs/air-gapped.es.md). El motor congelado no cambia (capa de salida `src/mirror.js`).

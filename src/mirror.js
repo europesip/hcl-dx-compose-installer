@@ -80,6 +80,7 @@ export const CHART_IMAGES = {
     ["initTLSSecret.image", "registry", "docker.io/alpine/openssl:latest"]], pull: [["global.imagePullSecrets", "str"]]},
   "cloudnative-pg@0.29.1": {images: [["image", "repo", "ghcr.io/cloudnative-pg/cloudnative-pg:1.30.1"]], pull: [["imagePullSecrets", "obj"]]},
   "dx-delivery-operator@0.13.0": {images: [["image", "repo", "ghcr.io/europesip/dx-delivery-operator:0.13.0"]], pull: [["imagePullSecrets", "obj"]]},
+  "dx-delivery-operator@0.17.0": {images: [["image", "repo", "ghcr.io/europesip/dx-delivery-operator:0.17.0"]], pull: [["imagePullSecrets", "obj"]]},
   "hcl-dx-scriptapp@0.1.4": {images: [["bundle.image", "full", "ghcr.io/europesip/hcl-dx-scriptapp-helm/europesip-hello-dx:1.0.4"], ["dxclient.image", "full", DXCLIENT]],
     pull: [["job.imagePullSecrets", "obj"]]},
   "litellm-helm@1.106.5": {images: [["image", "repo", "ghcr.io/berriai/litellm:1.106.5"]], pull: [["imagePullSecrets", "obj"]]},
@@ -149,6 +150,9 @@ export function inventory(f, entries){
   }
   for (const c of charts.values()) {
     const k = `${c.name}@${c.version}`;
+    c.target = c.hcl ? (flat(f) ? `${reg}/${c.source.replace(/^hclcr\.io\//, "")}` : `${reg}/${c.source}`)
+      : c.kind === "oci" ? (flat(f) ? `${reg}/${c.source.split("/").slice(1).join("/")}` : `${reg}/${c.source}`)
+      : (flat(f) ? `${reg}/${chartsPath(f)}` : `${reg}/${c.source.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`);
     if (c.hcl) {
       const h = HCL_IMAGES[k];
       if (!h) { err.push(`no image list for the HCL chart ${k} (src/mirror.js HCL_IMAGES)`); continue; }
@@ -158,9 +162,6 @@ export function inventory(f, entries){
       if (!d) { err.push(`no image list for the chart ${k} (src/mirror.js CHART_IMAGES)`); continue; }
       for (const [, , ref] of d.images) addImage(ref, `chart ${c.name} ${c.version}`);
     }
-    c.target = c.hcl ? (flat(f) ? `${reg}/${c.source.replace(/^hclcr\.io\//, "")}` : `${reg}/${c.source}`)
-      : c.kind === "oci" ? (flat(f) ? `${reg}/${c.source.split("/").slice(1).join("/")}` : `${reg}/${c.source}`)
-      : (flat(f) ? `${reg}/${chartsPath(f)}` : `${reg}/${c.source.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`);
   }
   for (const x of files.values()) for (const [re, fn] of FILE_IMAGES) { const m = x.path.match(re); if (m) for (const r of fn(m[1])) addImage(r, x.url.split("/").pop()); }
   // two different sources must never land on the same target
