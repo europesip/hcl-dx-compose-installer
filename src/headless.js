@@ -35,7 +35,7 @@ const UI_ONLY = ["envConfirmed"];   // state of the pages, not an answer
 const ENUMS = {
   envSource: ["", "own", "wsl", "linux", "aws"], awsKind: ["ec2", "eks", "rosa"], platform: ["kubernetes", "openshift", "poc"],
   INGRESS_KIND: ["traefik", "nginx", "other"], helm: ["3", "4"], preset: ["all", "custom", "webinar", "basic"],
-  dir: ["openldap", "ad", "none"], db: ["postgres", "oracle", "none"], IQ_LLM: ["claude", "qwen"],
+  dir: ["openldap", "ldap", "ad", "none"], db: ["postgres", "oracle", "none"], IQ_LLM: ["claude", "qwen"],
   LLM_PROVIDER: ["openrouter", "bedrock", "anthropic"], openbaoMode: ["install", "existing"], DX_RUNTIME: ["compose", "core"],
 };
 const DESCRIPTIONS = {
@@ -44,6 +44,26 @@ const DESCRIPTIONS = {
   TLS_ISSUER: "basic: cert-manager ClusterIssuer of the public certificate of the Ingress (Secret dx-tls-public)",
   BASIC_DAM: "basic: true (default) = Lab 1 complete (DAM, Content Composer, image processor and the persistence of DAM); false = the lightest portal, Web Engine with Derby, HAProxy and the Ring API only (about half the resources)",
   BASIC_PG: "basic: true = its own PostgreSQL (a CloudNativePG Cluster in DX_NS, made with the CNPG operator already in the cluster; never installs one) and the transfer from Derby (~15 min more); the setup SQL must be copied into lab-bbdd/ before install.sh, as in Lab 2B; false (default) = Derby",
+  dir: "The directory of DX (#52): openldap (default) = the OpenLDAP of the labs with demo users, installed by the folder · ldap = an LDAP directory that already exists · ad = Microsoft Active Directory · none = only wpsadmin. With ldap and ad no OpenLDAP is installed: DX (native LDAP block of the chart), Keycloak and the Administrator role use your directory (DIR_* settings)",
+  DIR_HOST: "ldap / ad: host name of the directory (e.g. ldap.example.com, dc01.example.com)",
+  DIR_PORT: "ldap / ad: port; empty = 636 with DIR_SSL, 389 without",
+  DIR_SSL: "ldap / ad: true (default) = LDAPS, with the CA of DIR_CA_FILE or DIR_CA_SECRET; false = plain LDAP (only inside the cluster)",
+  DIR_CA_FILE: "ldap / ad: path, on the machine that runs install.sh, of the PEM file of the CA that signed the certificate of the directory (Secret dx-directory-ca)",
+  DIR_CA_SECRET: "ldap / ad: instead of DIR_CA_FILE, a Secret that already exists in DX_NS (and SHARED_NS with Keycloak) with the CA certificate(s)",
+  DIR_BASE_DN: "ldap / ad: base DN (suffix) of the directory, e.g. dc=example,dc=com",
+  DIR_USER_BASE: "ldap / ad: where the users are searched; empty = DIR_BASE_DN",
+  DIR_GROUP_BASE: "ldap / ad: where the groups are searched; empty = DIR_BASE_DN",
+  DIR_BIND_DN: "ldap / ad: the read-only bind account (a DN, or user@domain in Active Directory). Its password is never in the folder: install.sh asks for it or reads DIR_BIND_PASSWORD (or OpenBao dx/<DX_NS>/ad bindPassword with the secrets manager)",
+  DIR_BIND_SECRET: "ldap / ad: instead of DIR_BIND_DN, a Secret that already exists in DX_NS with bindUser and bindPassword (e.g. made by an ExternalSecret)",
+  DIR_LOGIN_ATTR: "ldap / ad: the attribute users sign in with: uid, mail, sAMAccountName or userPrincipalName (or another one); empty = uid (ldap) or sAMAccountName (ad)",
+  DIR_USER_CLASS: "ldap / ad: object class of the users; empty = inetOrgPerson (ldap) or user (ad)",
+  DIR_GROUP_CLASS: "ldap / ad: object class of the groups; empty = groupOfUniqueNames (ldap) or group (ad)",
+  DIR_MEMBER_ATTR: "ldap / ad: member attribute of the groups; empty = uniqueMember (ldap) or member (ad)",
+  DIR_ADMIN_GROUP: "ldap / ad: DN of the group that gets the Administrator role of DX (XMLAccess, virtual resource PORTAL); empty = nobody of the directory",
+  DIR_TEST_IMAGE: "ldap / ad: image with ldapsearch for the connection test before DX; empty = docker.io/jpgouin/openldap:2.6.9-fix (the one of the lab OpenLDAP)",
+  ORBITA_DEMO_PEOPLE: "ldap / ad with ÓRBITA: who of your directory plays each role of the ÓRBITA demo, JSON {\"ventas-1\": {\"uid\": \"jdoe\"}}; empty = nobody (fictitious users, HR = wpsadmin)",
+  AD_HOST: "Deprecated (#52): use dir ad with DIR_HOST; still read when DIR_HOST is empty (AD_PORT, AD_BASE_DN, AD_BIND_USER and AD_CA_FILE too)",
+  AD_BIND_PASSWORD: "Deprecated (#52): no longer written in the folder; install.sh asks for the bind password (DIR_BIND_PASSWORD)",
   BASIC_LDAP_HOST: "basic: host of a directory that already exists (e.g. openldap.identity.svc.cluster.local); empty = no LDAP, only wpsadmin",
   BASIC_LDAP_PORT: "basic: port of that directory (389, no TLS)",
   BASIC_LDAP_SUFFIX: "basic: base DN of the searches (e.g. dc=example,dc=com)",
@@ -87,6 +107,9 @@ export function validateAnswers(answers, {secrets = "omit"} = {}){
   }
   if (!answers.preset) errs.push("preset is required (all, webinar, custom or basic)");
   if (answers.preset !== "basic" && (answers.IMAGE_PULL_SECRET || answers.TLS_ISSUER || answers.BASIC_DAM !== undefined || answers.BASIC_LDAP_HOST || answers.BASIC_PG)) errs.push("IMAGE_PULL_SECRET, TLS_ISSUER, BASIC_DAM, BASIC_PG and BASIC_LDAP_* are only for the basic preset");
+  { const ext = ["ldap", "ad"].includes(answers.dir), used = Object.keys(answers).filter(k => /^DIR_/.test(k) || k === "ORBITA_DEMO_PEOPLE");
+    if (used.length && !ext) errs.push(`${used.join(", ")}: only with dir ldap or ad`);
+    if (ext && answers.preset === "webinar") errs.push("dir ldap / ad is not available with the webinar preset (it shows the OpenLDAP of the labs)"); }
   if (answers.DX_RUNTIME === "core") {
     if (answers.preset === "all" || answers.preset === "webinar") errs.push("DX_RUNTIME core is only for the custom and basic presets (all and webinar need the Web Engine of DX Compose)");
     if (answers.BASIC_PG || answers.BASIC_LDAP_HOST) errs.push("BASIC_PG and BASIC_LDAP_* are not available with DX_RUNTIME core yet (phase 1: Derby, no LDAP)");

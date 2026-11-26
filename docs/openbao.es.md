@@ -51,7 +51,7 @@ se escribe nada secreto:
 | `wpsadmin` `password` | administrador de DX |
 | `demo-users` `password` | usuarios de demo del OpenLDAP (Enter = el mismo que wpsadmin) |
 | `ai` `key` | clave de OpenRouter, Bedrock o Anthropic |
-| `ad` `bindPassword` / `oracle` `password` | solo si usas Active Directory / Oracle |
+| `ad` `bindPassword` / `oracle` `password` | solo si usas tu propio LDAP o Active Directory (`DIR_BIND_PASSWORD`) / Oracle |
 
 **Los secretos internos** se generan al azar dentro de OpenBao:
 - el administrador del LDAP;

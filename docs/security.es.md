@@ -11,7 +11,8 @@ hace con cada valor, y que nada se envía ni se guarda donde no debe.
 
 | Lo que escribes | Adónde va | ¿Se guarda? |
 |---|---|---|
-| Usuario y CLI secret del registro de HCL, clave de OpenRouter, contraseñas, Active Directory, Oracle | **A ninguna parte.** La instalación se genera en tu navegador y los valores se escriben en los scripts del zip que descargas | No. La página recuerda tus elecciones en tu navegador, nunca las credenciales |
+| Usuario y CLI secret del registro de HCL, clave de OpenRouter, contraseñas, Oracle | **A ninguna parte.** La instalación se genera en tu navegador y los valores se escriben en los scripts del zip que descargas | No. La página recuerda tus elecciones en tu navegador, nunca las credenciales |
+| La contraseña de bind de tu LDAP / Active Directory | **No se escribe en el instalador** y nunca se guarda en el zip: `install.sh` la pide (o lee `DIR_BIND_PASSWORD`) y crea el Secret de Kubernetes; con OpenBao se guarda allí. Ver [Directorio](directory.es.md) | En un Secret de Kubernetes (o en OpenBao), dentro de tu clúster |
 | Las mismas credenciales con **Usar el gestor de secretos (OpenBao)** | **No se escriben en el instalador** (solo el usuario de Harbor). El operador las da de alta en OpenBao o cuando `install.sh` las pide; External Secrets Operator crea los Secrets de Kubernetes. Ver [CI/CD avanzado: OpenBao](openbao.es.md) | En OpenBao, dentro de tu clúster |
 | Claves de AWS, token o cuenta de servicio de Red Hat | Solo al **servidor de este instalador** (el contenedor o pod que tú ejecutas), y solo cuando le pides crear o borrar un entorno de AWS. Se las pasa al CLI de AWS / ROSA para esa operación | No. Nunca en disco ni en los logs; se enmascaran en la salida y se olvidan al terminar la operación |
 

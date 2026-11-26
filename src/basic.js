@@ -16,10 +16,11 @@
 //   Engine with Derby, HAProxy and the Ring API (about 2.6 CPU and 5 GiB);
 // - TLS_ISSUER: the Ingress gets a certificate from that cert-manager ClusterIssuer (Secret dx-tls-public); HAProxy
 //   keeps its own self-signed certificate behind it;
-// - BASIC_LDAP_HOST (#35): DX authenticates against a directory that already exists (no OpenLDAP is installed), as
-//   Lab 2A: the native LDAP block of the chart (type other) with the bind credentials of BASIC_LDAP_SECRET, a Secret
-//   that already exists in the DX namespace (bindUser, bindPassword), and the preferredLanguage property. wpsadmin
-//   (basic registry) still works;
+// - BASIC_LDAP_HOST (#35), or dir ldap / ad with the DIR_* settings (#52): DX authenticates against a directory that
+//   already exists (no OpenLDAP is installed): the native LDAP block of the chart (type other) in lab-base, with the
+//   bind credentials of BASIC_LDAP_SECRET / DIR_BIND_SECRET, a Secret that already exists in the DX namespace
+//   (bindUser, bindPassword), and the preferredLanguage property; src/directory.js writes it, with the connection
+//   test before DX. wpsadmin (basic registry) still works;
 // - BASIC_PG (#35): its own PostgreSQL, as Lab 2B, in the DX namespace (SHARED_NS = DX_NS, see state.js): the CNPG
 //   operator already in the cluster makes the Cluster (its install and removal are taken out), and the setup SQL is
 //   copied into lab-bbdd/ before install.sh, as in Lab 2B.
@@ -62,8 +63,6 @@ export function applyBasic(f, s, entries){
       t = t.replace(/^(\s*)persistence: true(\s*#.*)?$/m, (m, sp) =>
         `${sp}# basic preset, light (BASIC_DAM false): Web Engine with Derby, HAProxy and the Ring API only\n` +
         `${sp}persistence: false\n${sp}digitalAssetManagement: false\n${sp}imageProcessor: false\n${sp}contentComposer: false`);
-    if (f.BASIC_LDAP_HOST && e.name.endsWith("lab-base/custom-values.yaml"))   // the existing directory
-      t = t.replace(/^configuration:\n/m, "configuration:\n" + ldapBlock(f));
     if (f.BASIC_PG && /(^|\/)(install|uninstall)\.sh$|RUNBOOK\.md$/.test(e.name))   // the CNPG operator is already there: never install or remove it
       t = t.replace(/^.*helm repo add cnpg .*$\n?/gm, "")
         .replace(/^.*helm upgrade --install cnpg .*$/gm, "kubectl get crd clusters.postgresql.cnpg.io >/dev/null || { echo \"The CloudNativePG operator must already be in the cluster (basic preset, BASIC_PG)\"; exit 1; }")
@@ -75,27 +74,6 @@ export function applyBasic(f, s, entries){
     return t === e.text ? e : {...e, text: t};
   });
 }
-
-// configuration.webEngine of an existing directory (basic preset, BASIC_LDAP_HOST)
-const ldapBlock = f => `  # basic preset: an LDAP that already exists (BASIC_LDAP_HOST); wpsadmin (basic registry) still works
-  webEngine:
-    ldap:
-      type: "other"
-      host: "${f.BASIC_LDAP_HOST}"
-      port: ${Number(f.BASIC_LDAP_PORT || 389)}
-      sslEnabled: false
-      suffix: "${f.BASIC_LDAP_SUFFIX}"
-      serverType: "Custom"
-      id: "dx_ldap"
-      customLdapSecret: "${f.BASIC_LDAP_SECRET || "dx-ldap-bind"}"   # bindUser / bindPassword, already in the namespace
-    configOverrideFiles:
-      preferred-language.xml: |
-        <server description="DX Web Engine - preferredLanguage of the users">
-          <wplc-add-property>
-            <resource propertyName="preferredLanguage" dataType="String" entityTypes="PersonAccount" multiValued="false"/>
-          </wplc-add-property>
-        </server>
-`;
 
 export const BASIC_NOTE = {
   en: "> 🧪 **Basic preset:** a simple test portal (DX Compose with Derby, as Lab 1), for tests only. Only the namespace NS is created and deleted. For production-like installations use the full wizard.",

@@ -9,6 +9,21 @@ installation is the same as in 2.0.x.
 
 ## Unreleased
 
+- **Directory: your LDAP or Active Directory, not only the demo OpenLDAP** (#52). Stage 2 of the page now offers
+  *OpenLDAP with demo users* (default, unchanged), *Your LDAP*, *Your Active Directory* or *No directory*. With an
+  existing directory no OpenLDAP is installed: `lab-directory/custom-values.directory.yaml` gives DX the native LDAP
+  block of the chart (`type: other`, `serverType` Custom or Microsoft Active Directory, `customLdapSecret`), LDAPS with
+  the CA of the directory, `preferredLanguage`, and, only when the directory is not shaped like the chart expects, a
+  configuration override with its filters, object classes, search bases and login attribute (`uid`, `mail`,
+  `sAMAccountName`, `userPrincipalName`). `install.sh` tests the connection before DX (ldapsearch from a temporary
+  pod), gives the Administrator role to the admin group (XMLAccess), and Keycloak federates the same directory
+  (read-only, vendor `ad` for Active Directory). **The bind password is never written in the folder**: `install.sh`
+  asks for it or reads `DIR_BIND_PASSWORD` (OpenBao: `dx/<DX_NS>/ad bindPassword`; or an existing Secret). ÓRBITA does
+  not give its demo roles to users of your directory unless `ORBITA_DEMO_PEOPLE` says so. Every setting is a default
+  that can be changed, also in headless mode (`dir` `ldap` / `ad`, `DIR_*`). The Active Directory option changes: the
+  folder is `lab-directory/` (was `lab-ldap-ad/`), there is no `dx-ad-bind` Secret with the password in clear, and the
+  `AD_*` keys are still read; the basic preset keeps `BASIC_LDAP_*` with the same values and also takes `DIR_*`.
+  BUILD-INFO.txt names the directory (it said OpenLDAP without one). See [docs/directory.md](docs/directory.md).
 - **Older folders against a newer cluster** (#2). A generated folder records what it was generated with: bundle format
   2, the installer version and the pinned charts at the top of `install.sh` (also `prepare.sh` and `demo.sh`), in its
   header and in `BUILD-INFO.txt` (`bundle.format`, `operator`). The DX Delivery Operator, OpenBao, External Secrets
