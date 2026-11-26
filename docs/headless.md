@@ -123,6 +123,9 @@ The Job installs with real `helm` (never Argo CD), so its ServiceAccount needs w
 namespaces, and everything the HCL chart creates in them (Roles, RoleBindings, StatefulSets, PVCs...). See the
 documentation of the HCL DX plugin of Backstage for the ServiceAccount it uses.
 
+`install.sh` also runs inside a Pod with only that in-cluster ServiceAccount, without a kubeconfig: it checks the
+cluster with `kubectl get --raw /version` and its summary shows the context as `in-cluster (ServiceAccount)`.
+
 ## Command line
 
 ```bash

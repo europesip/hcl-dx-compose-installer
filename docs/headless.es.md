@@ -126,6 +126,9 @@ El Job instala con `helm` real (nunca con Argo CD), así que su ServiceAccount n
 crear namespaces y todo lo que el chart de HCL crea dentro (Roles, RoleBindings, StatefulSets, PVCs...). La
 documentación del plugin HCL DX de Backstage explica la ServiceAccount que usa.
 
+`install.sh` también funciona dentro de un Pod que solo tiene esa ServiceAccount del clúster, sin kubeconfig: comprueba
+el clúster con `kubectl get --raw /version` y el resumen muestra el contexto como `in-cluster (ServiceAccount)`.
+
 ## Línea de comandos
 
 ```bash
