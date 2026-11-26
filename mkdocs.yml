@@ -10,9 +10,10 @@ docs_dir: docs
 plugins:
   - techdocs-core
 
-# docs/specs/ (one spec per issue) is kept in the repository but left out of the site
+# docs/specs/ (one spec per issue) and docs/design/ are kept in the repository but left out of the site
 exclude_docs: |
   specs/
+  design/
   headless-examples/
 
 nav:
