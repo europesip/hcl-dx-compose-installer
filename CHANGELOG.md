@@ -7,6 +7,18 @@ To go back to an earlier release, run its image (`ghcr.io/europesip/hcl-dx-compo
 with `image.tag` set to that version if you pinned it). The new options are off by default: without them, the generated
 installation is the same as in 2.0.x.
 
+## 2.13.1 · 2026-11-26
+
+Two fixes found in the end-to-end test of 2.13.0 on AWS (#58).
+
+- **ÓRBITA on Traefik.** The ÓRBITA chart creates its Ingress with class `nginx` by default, which a Traefik never
+  serves: `/orbita-api` answered 404 from DX on the EC2 environment, a PoC k3s or any cluster with Traefik. The step
+  now sets `ingress.className` to the class of the cluster (Traefik or the one written in *Other*); with ingress-nginx
+  nothing changes. Existing installations: `helm upgrade orbita … --reuse-values --set ingress.className=traefik`.
+- **`install.sh --yes` without a terminal** (a CI job, a Pod, a background shell) with OpenBao: `lab-cicd/openbao-secrets.sh`
+  stopped with `/dev/tty: No such device or address`. It now says which variable to export (`HCL_HARBOR_TOKEN`,
+  `WPSADMIN_PASSWORD`...) and the demo users take the wpsadmin password, as pressing Enter does.
+
 ## 2.13.0 · 2026-11-26
 
 DX Delivery Operator 0.17.0, your own LDAP or Active Directory, your own registry for every image (air-gapped), time zone and HCL prerequisites checker, version pinning of older folders, and `install.sh` inside a Pod.

@@ -7,6 +7,18 @@ Para volver a una versión anterior, ejecuta su imagen (`ghcr.io/europesip/hcl-d
 con `image.tag` en esa versión si la fijaste). Las opciones nuevas vienen desactivadas: sin ellas, la instalación generada
 es la misma que en la 2.0.x.
 
+## 2.13.1 · 2026-11-26
+
+Dos correcciones encontradas en la prueba completa de la 2.13.0 en AWS (#58).
+
+- **ÓRBITA con Traefik.** El chart de ÓRBITA crea su Ingress con la clase `nginx` por defecto, que un Traefik no sirve
+  nunca: `/orbita-api` respondía 404 desde DX en el entorno EC2, en un k3s de PoC o en cualquier clúster con Traefik. El
+  paso indica ahora `ingress.className` con la clase del clúster (Traefik o la escrita en *Otro*); con ingress-nginx no
+  cambia nada. Instalaciones existentes: `helm upgrade orbita … --reuse-values --set ingress.className=traefik`.
+- **`install.sh --yes` sin terminal** (un job de CI, un Pod, una shell en segundo plano) con OpenBao:
+  `lab-cicd/openbao-secrets.sh` se paraba con `/dev/tty: No such device or address`. Ahora dice qué variable exportar
+  (`HCL_HARBOR_TOKEN`, `WPSADMIN_PASSWORD`...) y los usuarios de la demo toman la contraseña de wpsadmin, como al pulsar Intro.
+
 ## 2.13.0 · 2026-11-26
 
 DX Delivery Operator 0.17.0, tu propio LDAP o Active Directory, tu propio registro para todas las imágenes (air-gapped), zona horaria y comprobador de requisitos de HCL, fijación de versiones de las carpetas anteriores e `install.sh` dentro de un Pod.

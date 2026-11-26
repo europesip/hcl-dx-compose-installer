@@ -107,6 +107,11 @@ export function generate(form, lang){
   const DAM_POD = "kubectl apply -f lab-poc/prepare-dam-volume.yaml";
   raw = raw.map(st => typeof st.cmd === "string" && st.cmd.includes(DAM_POD) ? {...st, cmd: st.cmd.replace(DAM_POD,
     `until kubectl -n default get serviceaccount default >/dev/null 2>&1; do sleep 2; done   # a new k3s creates it a few seconds after it starts\n${DAM_POD}`)} : st);
+  // ÓRBITA: its chart creates an Ingress of class nginx by default, which a Traefik (or any other class) never serves,
+  // so /orbita-api answered 404 from DX. The Ingress takes the class of the cluster (#58, found in the AWS test of 2.13.0)
+  if (s.INGRESS_CLASS && s.INGRESS_CLASS !== "nginx" && !s.openshift)
+    raw = raw.map(st => typeof st.cmd === "string" && /helm upgrade --install orbita /.test(st.cmd) && !st.cmd.includes("ingress.className")
+      ? {...st, cmd: st.cmd.replace("  --set dx.host=", `  --set ingress.className=${s.INGRESS_CLASS} --set dx.host=`)} : st);
   { const at = raw.findIndex(x => x.id === "1-4");   // DX checked with kubectl port-forward before it is published
     if (at >= 0) raw.splice(at + 1, 0, portForwardStep(s, lang)); }
   { const k = "lab-search/custom-values.search.yaml", f = files[k];   // the new Search Admin UI (content sources, crawlers), off by default in the chart
